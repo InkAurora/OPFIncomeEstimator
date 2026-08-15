@@ -1,0 +1,196 @@
+schema_version: "1.2"
+
+scenario:
+  name: salaried_loans_investments
+  start_date: 2024-01-01
+  default_months: 24
+
+customer:
+  currency: BRL
+  primary_account_ref: primary_checking
+
+institutions:
+  - institution_ref: bank_primary
+    institution_id: fictional-bank-001
+    institution_name: Fictional Bank
+  - institution_ref: bank_reserve
+    institution_id: fictional-bank-002
+    institution_name: Example Digital Bank
+
+accounts:
+  - account_ref: primary_checking
+    institution_ref: bank_primary
+    account_label: Primary checking account
+    account_type: CHECKING
+    opening_balance_minor: 250000
+  - account_ref: reserve_savings
+    institution_ref: bank_reserve
+    account_label: Reserve savings account
+    account_type: SAVINGS
+    opening_balance_minor: 100000
+
+salary:
+  amount_minor: 650000
+  day_of_month: 5
+  payer: Example Employer Ltd.
+  description: MONTHLY SALARY EXAMPLE EMPLOYER
+  destination_account_ref: primary_checking
+
+fixed_expenses:
+  - rule_id: housing
+    category: housing
+    amount_minor: 180000
+    day_of_month: 10
+    payee: Example Property Management
+    description: MONTHLY RENT
+    source_account_ref: primary_checking
+  - rule_id: electricity
+    category: utilities
+    amount_minor: 18000
+    day_of_month: 12
+    payee: Example Energy Utility
+    description: ELECTRICITY BILL
+    source_account_ref: primary_checking
+  - rule_id: internet
+    category: utilities
+    amount_minor: 12000
+    day_of_month: 15
+    payee: Example Internet Provider
+    description: HOME INTERNET
+    source_account_ref: primary_checking
+  - rule_id: mobile_phone
+    category: communications
+    amount_minor: 7000
+    day_of_month: 18
+    payee: Example Mobile Operator
+    description: MOBILE PHONE PLAN
+    source_account_ref: primary_checking
+  - rule_id: health_insurance
+    category: health
+    amount_minor: 45000
+    day_of_month: 20
+    payee: Example Health Insurance
+    description: HEALTH INSURANCE
+    source_account_ref: primary_checking
+
+variable_expenses:
+  count_min: 12
+  count_max: 24
+  amount_min_minor: 1500
+  amount_max_minor: 25000
+  day_min: 1
+  day_max: 28
+  source_account_ref: primary_checking
+  merchants:
+    - entity: Example Supermarket
+      description: PIX PAYMENT SUPERMARKET
+    - entity: Example Pharmacy
+      description: PIX PAYMENT PHARMACY
+    - entity: Example Restaurant
+      description: DEBIT PURCHASE RESTAURANT
+    - entity: Example Transit Service
+      description: TRANSIT PAYMENT
+
+own_transfers:
+  - rule_id: monthly_reserve
+    source_account_ref: primary_checking
+    destination_account_ref: reserve_savings
+    amount_minor: 50000
+    day_of_month: 6
+    outgoing_description: TRANSFER TO OWN RESERVE
+    incoming_description: TRANSFER FROM OWN PRIMARY
+
+credit_cards:
+  - card_ref: main_card
+    institution_ref: bank_primary
+    card_label: Main credit card
+    credit_limit_minor: 500000
+    statement_close_day: 20
+    payment_due_day: 5
+    payment_account_ref: primary_checking
+    payment_description: CREDIT CARD INVOICE PAYMENT
+    payment_policy: FULL_AUTOPAY
+    utilization_policy:
+      maximum_basis_points: 8000
+      on_exceed: DECLINE
+
+card_purchase_rules:
+  - rule_id: recurring_household_purchase
+    card_ref: main_card
+    merchant: Example Household Store
+    description: MONTHLY CARD PURCHASE HOUSEHOLD
+    amount_minor: 50000
+    day_of_month: 10
+    start_month_index: 0
+    interval_months: 1
+    occurrences: 24
+    installment_count: 1
+  - rule_id: installment_electronics_purchase
+    card_ref: main_card
+    merchant: Example Electronics
+    description: INSTALLMENT CARD PURCHASE ELECTRONICS
+    amount_minor: 180000
+    day_of_month: 21
+    start_month_index: 0
+    interval_months: 1
+    occurrences: 1
+    installment_count: 6
+  - rule_id: close_day_remainder_purchase
+    card_ref: main_card
+    merchant: Example Furniture
+    description: INSTALLMENT CARD PURCHASE ON STATEMENT CLOSE
+    amount_minor: 10001
+    day_of_month: 20
+    start_month_index: 2
+    interval_months: 1
+    occurrences: 1
+    installment_count: 3
+
+loans:
+  - loan_ref: personal_loan
+    institution_ref: bank_primary
+    loan_label: Personal loan
+    loan_type: PERSONAL
+    principal_minor: 360001
+    annual_interest_basis_points: 1200
+    term_months: 36
+    amortization_system: CONSTANT_PRINCIPAL
+    disbursement_account_ref: primary_checking
+    disbursement_month_index: 1
+    disbursement_day_of_month: 8
+    payment_account_ref: primary_checking
+    payment_day_of_month: 12
+    disbursement_description: PERSONAL LOAN DISBURSEMENT
+    payment_description: PERSONAL LOAN INSTALLMENT
+    payment_policy: FULL_AUTOPAY
+
+investments:
+  - investment_ref: fixed_income_reserve
+    institution_ref: bank_reserve
+    investment_label: Fixed-income reserve
+    investment_type: FIXED_INCOME
+    opening_balance_minor: 50000
+    monthly_return_basis_points: 75
+    return_description: MONTHLY FIXED-INCOME RETURN
+
+investment_contribution_rules:
+  - rule_id: monthly_investment_contribution
+    investment_ref: fixed_income_reserve
+    account_ref: reserve_savings
+    amount_minor: 30000
+    day_of_month: 7
+    start_month_index: 0
+    interval_months: 1
+    occurrences: 24
+    description: MONTHLY INVESTMENT CONTRIBUTION
+
+investment_redemption_rules:
+  - rule_id: planned_investment_redemption
+    investment_ref: fixed_income_reserve
+    account_ref: primary_checking
+    amount_minor: 120000
+    day_of_month: 18
+    start_month_index: 12
+    interval_months: 1
+    occurrences: 1
+    description: PLANNED INVESTMENT REDEMPTION

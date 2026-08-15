@@ -11,6 +11,19 @@ from finances_simulator.domain.cards import (
 )
 from finances_simulator.domain.customer import CustomerTwin
 from finances_simulator.domain.events import EconomicType, FinancialEvent
+from finances_simulator.domain.investments import (
+    Investment,
+    InvestmentBalanceSnapshot,
+    InvestmentTransaction,
+    InvestmentTransactionType,
+)
+from finances_simulator.domain.loans import (
+    Loan,
+    LoanBalanceSnapshot,
+    LoanPayment,
+    LoanPaymentStatus,
+    LoanStatus,
+)
 
 __all__ = [
     "Account",
@@ -24,5 +37,14 @@ __all__ = [
     "EconomicType",
     "FinancialEvent",
     "InvoiceStatus",
+    "Investment",
+    "InvestmentBalanceSnapshot",
+    "InvestmentTransaction",
+    "InvestmentTransactionType",
     "LedgerEntry",
+    "Loan",
+    "LoanBalanceSnapshot",
+    "LoanPayment",
+    "LoanPaymentStatus",
+    "LoanStatus",
 ]

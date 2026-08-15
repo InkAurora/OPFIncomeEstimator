@@ -8,11 +8,12 @@ The implementation should initially target 24-month simulations and allow longer
 
 ### Current implementation status
 
-Phase 2's implementation slice is available as engine `0.2.0` with contract schema `1.1`. The
-bundled `salaried_multi_account_card` scenario covers multiple institutions and accounts, routed
-cash flows, paired own transfers, card utilization, statement cycles, full automatic payments, and
-installments. Engine `0.1.0` and contract `1.0` remain frozen for `salaried_basic`; its committed
-golden output remains byte-for-byte stable. See
+Phase 3's implementation slice is available as engine `0.3.0` with contract schema `1.2`. The
+bundled `salaried_loans_investments` scenario extends multiple accounts and cards with a
+constant-principal loan, fixed-income investment flows and returns, monthly product balances, and
+private net worth. Engines `0.2.0`/`0.1.0` and contracts `1.1`/`1.0` remain frozen with byte-stable
+reference outputs. See
+[`contracts-v1-2.md`](../finances_simulator/docs/contracts-v1-2.md),
 [`contracts-v1-1.md`](../finances_simulator/docs/contracts-v1-1.md) and
 [`contracts-v1.md`](../finances_simulator/docs/contracts-v1.md).
 
@@ -177,6 +178,7 @@ OWN_TRANSFER
 EXPENSE
 INVESTMENT_CONTRIBUTION
 INVESTMENT_REDEMPTION
+INVESTMENT_RETURN
 LOAN_DISBURSEMENT
 LOAN_PAYMENT
 REFUND
@@ -217,6 +219,9 @@ customer_ground_truth
 customer_month_ground_truth
 transaction_ground_truth
 credit_card_transaction_ground_truth
+loan_payment_ground_truth
+investment_transaction_ground_truth
+balance_sheet_ground_truth
 ```
 
 Observed project-owned output:
@@ -231,10 +236,14 @@ credit_limits
 credit_card_invoices
 credit_card_invoice_items
 loans
+loan_payments
+loan_balances
 investments
+investment_transactions
+investment_balances
 ```
 
-Exact implemented fields live in the versioned `1.0` and `1.1` contract documents.
+Exact implemented fields live in the versioned `1.0`, `1.1`, and `1.2` contract documents.
 
 ## 5. Delivery phases
 
@@ -308,7 +317,13 @@ Acceptance criteria:
 - card purchases reconcile with invoices;
 - credit utilization follows the configured policy.
 
-### Phase 3 — V2: loans and investments
+### Phase 3 — V2: loans and investments — implemented
+
+Engine `0.3.0` and schema `1.2` implement this bounded slice. Loans use fixed nominal annual rates,
+constant-principal amortization, calendar-month schedules, integer half-up interest, and full
+automatic payment. Investments use money-valued fixed-income balances, scheduled contributions and
+redemptions, deterministic non-negative monthly returns, and silent decline of over-redemptions.
+Monthly private balance sheets reconcile deposits and investments against card and loan debt.
 
 Implement:
 
@@ -429,9 +444,9 @@ The completed first delivery contained only:
 - command-line generation;
 - reconciliation, leakage, and reproducibility tests.
 
-Cards were outside that first slice and were added by Phase 2. Loans, investments, population
-generation, life events, and observation degradation remain outside implemented scope. The first
-slice proved the three-level architecture before domain expansion.
+Cards were outside that first slice and were added by Phase 2. Loans, investments, and net worth were
+added by Phase 3. Population generation, life events, and observation degradation remain outside
+implemented scope. The first slice proved the three-level architecture before domain expansion.
 
 ## 8. Definition of done
 

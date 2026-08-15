@@ -15,6 +15,7 @@ from finances_simulator.simulation.cards import simulate_cards
 from finances_simulator.simulation.engine import SimulationRun
 from finances_simulator.simulation.primitives import (
     V1_PROFILE,
+    VersionProfile,
     deterministic_id,
     make_rng_stream,
     make_run_id,
@@ -35,6 +36,7 @@ def simulate_v1(
     *,
     seed: int,
     months: int | None = None,
+    _profile: VersionProfile = V1_PROFILE,
 ) -> SimulationRun:
     """Create schema-1.1 hidden state, events, and reconciled deposit ledgers."""
 
@@ -46,13 +48,13 @@ def simulate_v1(
     namespace = simulation_namespace(
         fingerprint,
         seed,
-        simulator_version=V1_PROFILE.simulator_version,
+        simulator_version=_profile.simulator_version,
     )
     run_id = make_run_id(
         fingerprint,
         seed,
         simulation_months,
-        simulator_version=V1_PROFILE.simulator_version,
+        simulator_version=_profile.simulator_version,
     )
     customer_id = deterministic_id(namespace, "customer", "primary")
     income_source_id = deterministic_id(namespace, "income_source", "salary-primary")
@@ -309,7 +311,7 @@ def simulate_v1(
         customer_twin=twin,
         events=ordered_events,
         ledger_entries=ledger_entries,
-        profile=V1_PROFILE,
+        profile=_profile,
         cards=tuple(sorted(cards_by_ref.values(), key=lambda card: card.card_id)),
         card_purchases=card_simulation.purchases,
         card_installments=card_simulation.installments,

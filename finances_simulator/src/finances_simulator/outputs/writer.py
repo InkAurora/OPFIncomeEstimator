@@ -12,7 +12,9 @@ from pydantic import BaseModel
 
 from finances_simulator.generation import GeneratedScenario
 from finances_simulator.ground_truth.projector_v1 import GroundTruthBundleV1
+from finances_simulator.ground_truth.projector_v2 import GroundTruthBundleV2
 from finances_simulator.observations.projector_v1 import ObservationBundleV1
+from finances_simulator.observations.projector_v2 import ObservationBundleV2
 
 
 class OutputDirectoryNotEmptyError(FileExistsError):
@@ -75,11 +77,31 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
             schema_version=profile.contract_schema_version,
         ),
     }
-    if isinstance(truth, GroundTruthBundleV1):
+    if isinstance(truth, GroundTruthBundleV1 | GroundTruthBundleV2):
         private_datasets["credit_card_transaction_ground_truth"] = _write_jsonl(
             private_directory / "credit_card_transaction_ground_truth.jsonl",
             truth.credit_card_transactions,
             schema_version=profile.contract_schema_version,
+        )
+    if isinstance(truth, GroundTruthBundleV2):
+        private_datasets.update(
+            {
+                "loan_payment_ground_truth": _write_jsonl(
+                    private_directory / "loan_payment_ground_truth.jsonl",
+                    truth.loan_payments,
+                    schema_version=profile.contract_schema_version,
+                ),
+                "investment_transaction_ground_truth": _write_jsonl(
+                    private_directory / "investment_transaction_ground_truth.jsonl",
+                    truth.investment_transactions,
+                    schema_version=profile.contract_schema_version,
+                ),
+                "balance_sheet_ground_truth": _write_jsonl(
+                    private_directory / "balance_sheet_ground_truth.jsonl",
+                    truth.balance_sheets,
+                    schema_version=profile.contract_schema_version,
+                ),
+            }
         )
     observed_datasets = {
         "accounts": _write_jsonl(
@@ -98,7 +120,7 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
             schema_version=profile.contract_schema_version,
         ),
     }
-    if isinstance(observations, ObservationBundleV1):
+    if isinstance(observations, ObservationBundleV1 | ObservationBundleV2):
         observed_datasets.update(
             {
                 "credit_cards": _write_jsonl(
@@ -124,6 +146,41 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
                 "credit_card_invoice_items": _write_jsonl(
                     observed_directory / "credit_card_invoice_items.jsonl",
                     observations.credit_card_invoice_items,
+                    schema_version=profile.contract_schema_version,
+                ),
+            }
+        )
+    if isinstance(observations, ObservationBundleV2):
+        observed_datasets.update(
+            {
+                "loans": _write_jsonl(
+                    observed_directory / "loans.jsonl",
+                    observations.loans,
+                    schema_version=profile.contract_schema_version,
+                ),
+                "loan_payments": _write_jsonl(
+                    observed_directory / "loan_payments.jsonl",
+                    observations.loan_payments,
+                    schema_version=profile.contract_schema_version,
+                ),
+                "loan_balances": _write_jsonl(
+                    observed_directory / "loan_balances.jsonl",
+                    observations.loan_balances,
+                    schema_version=profile.contract_schema_version,
+                ),
+                "investments": _write_jsonl(
+                    observed_directory / "investments.jsonl",
+                    observations.investments,
+                    schema_version=profile.contract_schema_version,
+                ),
+                "investment_transactions": _write_jsonl(
+                    observed_directory / "investment_transactions.jsonl",
+                    observations.investment_transactions,
+                    schema_version=profile.contract_schema_version,
+                ),
+                "investment_balances": _write_jsonl(
+                    observed_directory / "investment_balances.jsonl",
+                    observations.investment_balances,
                     schema_version=profile.contract_schema_version,
                 ),
             }

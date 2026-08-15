@@ -14,6 +14,12 @@ from finances_simulator.domain.cards import (
 )
 from finances_simulator.domain.customer import CustomerTwin
 from finances_simulator.domain.events import EconomicType, FinancialEvent
+from finances_simulator.domain.investments import (
+    Investment,
+    InvestmentBalanceSnapshot,
+    InvestmentTransaction,
+)
+from finances_simulator.domain.loans import Loan, LoanBalanceSnapshot, LoanPayment
 from finances_simulator.ledger import post_events
 from finances_simulator.simulation.primitives import (
     V0_PROFILE,
@@ -48,6 +54,12 @@ class SimulationRun:
     card_installments: tuple[CardInstallment, ...] = ()
     card_invoices: tuple[CardInvoice, ...] = ()
     credit_limit_snapshots: tuple[CreditLimitSnapshot, ...] = ()
+    loans: tuple[Loan, ...] = ()
+    loan_payments: tuple[LoanPayment, ...] = ()
+    loan_balance_snapshots: tuple[LoanBalanceSnapshot, ...] = ()
+    investments: tuple[Investment, ...] = ()
+    investment_transactions: tuple[InvestmentTransaction, ...] = ()
+    investment_balance_snapshots: tuple[InvestmentBalanceSnapshot, ...] = ()
 
 
 def simulate_v0(
@@ -198,6 +210,12 @@ def simulate(
     """Dispatch a validated configuration to its versioned simulation engine."""
 
     from finances_simulator.config_v1 import ScenarioConfigV1
+    from finances_simulator.config_v2 import ScenarioConfigV2
+
+    if isinstance(config, ScenarioConfigV2):
+        from finances_simulator.simulation.v2 import simulate_v2
+
+        return simulate_v2(config, seed=seed, months=months)
 
     if isinstance(config, ScenarioConfigV1):
         from finances_simulator.simulation.v1 import simulate_v1

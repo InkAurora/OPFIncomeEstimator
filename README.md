@@ -50,11 +50,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for repository-wide language and data-con
 
 ## Development status
 
-Simulator engine `0.2.0` and contract `1.1` implement the multiple-account and credit-card slice. It
-generates routed salary and expenses, paired own-account transfers, card purchases, installment
-invoices, full automatic payments, and credit-limit snapshots while keeping private truth separate
-from estimator-safe observations. Frozen contract `1.0` and its deterministic salaried scenario
-remain supported. The estimator, later simulator phases, and provider adapters remain unimplemented.
+Simulator engine `0.3.0` and contract `1.2` implement the loan-and-investment slice. It generates
+routed deposit activity, paired own transfers, cards and invoices, constant-principal loan schedules,
+fixed-income investment flows and returns, product balance snapshots, and private monthly net worth.
+Frozen contracts `1.1` and `1.0` remain supported with byte-stable reference outputs. The estimator,
+population factory, life events, observation degradation, and provider adapters remain unimplemented.
 
 ## Simulator quick start
 
@@ -62,21 +62,22 @@ remain supported. The estimator, later simulator phases, and provider adapters r
 cd finances_simulator
 python -m pip install -c constraints-dev.txt -e ".[dev]"
 finances-simulator generate \
-  --config configs/scenarios/salaried_multi_account_card.yaml \
+  --config configs/scenarios/salaried_loans_investments.yaml \
   --seed 42 \
   --months 24 \
-  --output output/salaried-multi-account-card-seed-42
+  --output output/salaried-loans-investments-seed-42
 pytest
 ```
 
-Use `configs/scenarios/salaried_basic.yaml` for frozen schema `1.0`. See
-[`finances_simulator/README.md`](finances_simulator/README.md) for both profiles, output contracts,
+Use `configs/scenarios/salaried_multi_account_card.yaml` for frozen schema `1.1` or
+`configs/scenarios/salaried_basic.yaml` for frozen schema `1.0`. See
+[`finances_simulator/README.md`](finances_simulator/README.md) for every profile, output contract,
 and current limitations.
 
 ## Getting started
 
 1. Read the component documentation.
-2. Generate either deterministic salaried scenario.
+2. Generate a versioned deterministic salaried scenario.
 3. Implement estimator rules against the versioned observation contract.
 4. Extend simulator scenarios only after preserving reconciliation and leakage tests.
 5. Validate with de-identified, consented data before any production use.

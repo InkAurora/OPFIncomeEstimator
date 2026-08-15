@@ -1,10 +1,9 @@
 # Finances Simulator
 
 This component generates deterministic synthetic financial histories for estimator development,
-automated tests, and evaluation. Engine `0.2.0` adds multiple institutions and deposit accounts,
-routed cash flows, own-account transfers, credit cards, utilization limits, invoices, full automatic
-payments, and installment purchases. Frozen engine `0.1.0` behavior remains available for schema
-`1.0` configurations.
+automated tests, and evaluation. Engine `0.3.0` adds constant-principal loans, fixed-income
+investments, reconciled product balances, and monthly net worth to the multiple-account/card model.
+Frozen engines `0.2.0` and `0.1.0` remain available for schema `1.1` and `1.0` configurations.
 
 ## Requirements and installation
 
@@ -22,15 +21,16 @@ compatible dependency ranges so the library can participate in a larger applicat
 
 ## Generate a scenario
 
-Run the schema `1.1` scenario from this directory:
+Run the current schema `1.2` scenario from this directory:
+
+```console
+python -m finances_simulator generate --config configs/scenarios/salaried_loans_investments.yaml --seed 42 --months 24 --output runs/salaried-loans-investments-seed-42
+```
+
+Run frozen schema `1.1` or `1.0` scenarios with:
 
 ```console
 python -m finances_simulator generate --config configs/scenarios/salaried_multi_account_card.yaml --seed 42 --months 24 --output runs/salaried-multi-account-card-seed-42
-```
-
-Run the frozen schema `1.0` scenario with:
-
-```console
 python -m finances_simulator generate --config configs/scenarios/salaried_basic.yaml --seed 42 --months 24 --output runs/salaried-basic-seed-42
 ```
 
@@ -52,28 +52,45 @@ The loader dispatches on the required top-level `schema_version`:
 - [`salaried_multi_account_card.yaml`](configs/scenarios/salaried_multi_account_card.yaml) uses
   contract `1.1` and engine `0.2.0`: two institutions and accounts, explicit routing, one monthly
   own transfer, one card, utilization policy, statement invoices, and installment purchases.
+- [`salaried_loans_investments.yaml`](configs/scenarios/salaried_loans_investments.yaml) uses
+  contract `1.2` and engine `0.3.0`: the schema `1.1` world plus one personal constant-principal
+  loan, one fixed-income investment, scheduled contributions and redemption, returns, debt
+  snapshots, and private monthly balance sheets.
 
-Both schemas reject unknown fields and use one uppercase three-letter currency. Contract `1.1`
-requires at least two institutions and accounts, exactly five fixed expenses, and at least one own
-transfer, card, and card-purchase rule. References and rule IDs are validated before simulation.
+All schemas reject unknown fields and use one uppercase three-letter currency. Contract `1.2`
+retains schema `1.1` requirements, caps institutions, accounts, own transfers, and cards at 32 each,
+and adds 1 to 32 loans, 1 to 32 investments, and at least one contribution and redemption schedule.
+References, rule IDs, installment work, and scheduled-flow work are bounded and validated before
+simulation.
 
 Configured days beyond month end clamp to the final calendar day; weekends and holidays cause no
 shift. Variable deposit expenses use an isolated deterministic SHA-256 counter stream. Card purchase
 attempts follow their configured month schedule. Purchases exceeding the configured used-limit
 ceiling are omitted under `DECLINE` policy.
 
+Loans use constant-principal amortization. Principal remainders go to earliest installments, and
+monthly interest is derived from annual basis points with exact integer half-up rounding. First
+payment falls in the calendar month after origination; in-window payments use full automatic debit.
+Loan disbursement is never income.
+
+Investment contributions debit deposit accounts, redemptions credit them, and month-end returns
+change investment value without a deposit posting. Same-day contributions run before redemptions;
+an over-redemption is omitted. Returns use integer half-up rounding after dated monthly flows.
+Contributions, redemptions, and returns never become true income.
+
 All money uses integer minor units. For example, `650000` BRL represents BRL 6,500.00. Account
-balances may become negative because expenses, transfers, and full card payments have no
-available-funds check.
+balances may become negative because expenses, transfers, card or loan payments, and investment
+contributions have no available-funds check.
 
 Exact fields and semantics:
 
+- [contract schema 1.2](docs/contracts-v1-2.md)
 - [contract schema 1.1](docs/contracts-v1-1.md)
 - [frozen contract schema 1.0](docs/contracts-v1.md)
 
 ## Output layout and trust boundary
 
-Schema `1.1` emits:
+Schema `1.2` emits:
 
 ```text
 <output>/
@@ -86,15 +103,24 @@ Schema `1.1` emits:
 |   |-- credit_limits.jsonl
 |   |-- credit_card_transactions.jsonl
 |   |-- credit_card_invoices.jsonl
-|   `-- credit_card_invoice_items.jsonl
+|   |-- credit_card_invoice_items.jsonl
+|   |-- loans.jsonl
+|   |-- loan_payments.jsonl
+|   |-- loan_balances.jsonl
+|   |-- investments.jsonl
+|   |-- investment_transactions.jsonl
+|   `-- investment_balances.jsonl
 `-- private/
     |-- customer_ground_truth.jsonl
     |-- customer_month_ground_truth.jsonl
     |-- transaction_ground_truth.jsonl
-    `-- credit_card_transaction_ground_truth.jsonl
+    |-- credit_card_transaction_ground_truth.jsonl
+    |-- loan_payment_ground_truth.jsonl
+    |-- investment_transaction_ground_truth.jsonl
+    `-- balance_sheet_ground_truth.jsonl
 ```
 
-Schema `1.0` retains its original three observed and three private JSONL datasets.
+Schemas `1.1` and `1.0` retain their original version-specific dataset trees.
 
 Files under `observed/` form the normalized, Open Finance-inspired estimator input. They contain
 account, balance, and transaction observations but omit hidden economic classifications and true
@@ -108,7 +134,9 @@ record with a newline. Dataset ordering is deterministic.
 A committed [schema-1.0 seed-42 reference run](examples/generated/salaried_basic_seed_42/run_manifest.json)
 anchors legacy byte-for-byte compatibility. The bundled
 [schema-1.1 seed-42 reference run](examples/generated/salaried_multi_account_card_seed_42/run_manifest.json)
-exercises statement-boundary and uneven-installment behavior.
+exercises statement-boundary and uneven-installment behavior. The current
+[schema-1.2 seed-42 reference run](examples/generated/salaried_loans_investments_seed_42/run_manifest.json)
+adds 24-month loan, investment, and net-worth reconciliation.
 
 ## Responsibilities
 
@@ -123,12 +151,12 @@ exercises statement-boundary and uneven-installment behavior.
 
 ## Current limitations
 
-The implemented profiles model one salaried customer and one currency. Schema `1.1` supports active
-checking/savings accounts and active credit cards opened at simulation start, fixed limits, zero
-opening card debt, deterministic declines, and full automatic invoice payment. It does not model
-interest, fees, revolving balances, partial or failed payments, delinquency, refunds, reversals,
-loans, investments, variable income, job changes, observation degradation, taxes, overdraft limits,
-holidays, or inflation.
+The implemented profiles model one salaried customer and one currency. Schema `1.2` supports active
+checking/savings accounts, fixed-policy cards, personal constant-principal loans, and fixed-income
+investments with deterministic non-negative returns. Loan and card payments are always full and may
+make deposit balances negative. The simulator does not model revolving cards, loan default or
+prepayment, investment units or market prices, fees, taxes, negative returns, variable income, job
+changes, observation degradation, overdraft limits, holidays, or inflation.
 
 ## Boundary
 

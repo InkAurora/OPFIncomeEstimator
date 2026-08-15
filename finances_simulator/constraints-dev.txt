@@ -1,4 +1,4 @@
-# Reproducible Python 3.13 development environment verified for simulator 0.1.0.
+# Reproducible Python 3.13 development environment verified for simulator 0.3.0.
 annotated-types==0.8.0
 colorama==0.4.6
 iniconfig==2.3.0
