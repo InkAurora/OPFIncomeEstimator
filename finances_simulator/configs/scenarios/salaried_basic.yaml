@@ -1,0 +1,68 @@
+schema_version: "1.0"
+
+scenario:
+  name: salaried_basic
+  start_date: 2024-01-01
+  default_months: 24
+
+customer:
+  currency: BRL
+  opening_balance_minor: 250000
+  institution_id: fictional-bank-001
+  institution_name: Fictional Bank
+  account_label: Primary checking account
+
+salary:
+  amount_minor: 650000
+  day_of_month: 5
+  payer: Example Employer Ltd.
+  description: MONTHLY SALARY EXAMPLE EMPLOYER
+
+fixed_expenses:
+  - rule_id: housing
+    category: housing
+    amount_minor: 180000
+    day_of_month: 10
+    payee: Example Property Management
+    description: MONTHLY RENT
+  - rule_id: electricity
+    category: utilities
+    amount_minor: 18000
+    day_of_month: 12
+    payee: Example Energy Utility
+    description: ELECTRICITY BILL
+  - rule_id: internet
+    category: utilities
+    amount_minor: 12000
+    day_of_month: 15
+    payee: Example Internet Provider
+    description: HOME INTERNET
+  - rule_id: mobile_phone
+    category: communications
+    amount_minor: 7000
+    day_of_month: 18
+    payee: Example Mobile Operator
+    description: MOBILE PHONE PLAN
+  - rule_id: health_insurance
+    category: health
+    amount_minor: 45000
+    day_of_month: 20
+    payee: Example Health Insurance
+    description: HEALTH INSURANCE
+
+variable_expenses:
+  count_min: 12
+  count_max: 24
+  amount_min_minor: 1500
+  amount_max_minor: 25000
+  day_min: 1
+  day_max: 28
+  merchants:
+    - entity: Example Supermarket
+      description: CARD PURCHASE SUPERMARKET
+    - entity: Example Pharmacy
+      description: PIX PAYMENT PHARMACY
+    - entity: Example Restaurant
+      description: CARD PURCHASE RESTAURANT
+    - entity: Example Transit Service
+      description: TRANSIT PAYMENT

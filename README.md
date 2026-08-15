@@ -50,14 +50,29 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for repository-wide language and data-con
 
 ## Development status
 
-The repository currently defines project boundaries, component responsibilities, and the simulator implementation plan. The exact internal schemas, Open Finance integration method, and estimation approach remain to be implemented and validated.
+The first simulator slice is implemented. It generates a deterministic 24-month salaried-customer history with versioned, physically separated private ground truth and estimator-safe observations. The estimator, broader simulator scenarios, and Open Finance provider adapters remain to be implemented and validated.
+
+## Simulator quick start
+
+```bash
+cd finances_simulator
+python -m pip install -c constraints-dev.txt -e ".[dev]"
+finances-simulator generate \
+  --config configs/scenarios/salaried_basic.yaml \
+  --seed 42 \
+  --months 24 \
+  --output output/salaried-basic-seed-42
+pytest
+```
+
+See [`finances_simulator/README.md`](finances_simulator/README.md) for behavior, output contracts, and current limitations.
 
 ## Getting started
 
 1. Read the component documentation.
-2. Define a shared, versioned input contract for normalized transactions and account data.
-3. Implement simulator scenarios against that contract.
-4. Implement and test estimator rules or models using those scenarios.
+2. Generate or inspect the deterministic salaried scenario.
+3. Implement estimator rules against the versioned observation contract.
+4. Extend simulator scenarios only after preserving reconciliation and leakage tests.
 5. Validate with de-identified, consented data before any production use.
 
 ## Security and data handling

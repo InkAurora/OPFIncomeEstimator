@@ -1,0 +1,56 @@
+{
+  "config_sha256": "f44c4877e989986666f346c279d1e05f598915cb94186cd7678a49a691d07360",
+  "contract_schema_version": "1.0",
+  "datasets": {
+    "observed": {
+      "accounts": {
+        "path": "observed/accounts.jsonl",
+        "record_count": 1,
+        "schema_version": "1.0",
+        "sha256": "418dfc7fea462ccc941b5d246a3be4ba308262a2a5dc682174ba88f11913def5"
+      },
+      "balances": {
+        "path": "observed/balances.jsonl",
+        "record_count": 24,
+        "schema_version": "1.0",
+        "sha256": "ffba2fac53a7bb910625048a983f7a711f867429bce87f99c81bdaea56d1185b"
+      },
+      "transactions": {
+        "path": "observed/transactions.jsonl",
+        "record_count": 554,
+        "schema_version": "1.0",
+        "sha256": "e53cef604bae40868359b00391d2d7c702d50bf5857ff00f3c0bbb9c65951fca"
+      }
+    },
+    "private": {
+      "customer_ground_truth": {
+        "path": "private/customer_ground_truth.jsonl",
+        "record_count": 1,
+        "schema_version": "1.0",
+        "sha256": "8d48bc6dd8702d92b2c7489f668ae586956c597616e99f16f2ef26de5be99fb8"
+      },
+      "customer_month_ground_truth": {
+        "path": "private/customer_month_ground_truth.jsonl",
+        "record_count": 24,
+        "schema_version": "1.0",
+        "sha256": "a51b15dd8f53a7d8005fe16d376dbf4f8ef2782fd2d0f3f97548495cbe34890e"
+      },
+      "transaction_ground_truth": {
+        "path": "private/transaction_ground_truth.jsonl",
+        "record_count": 554,
+        "schema_version": "1.0",
+        "sha256": "86c466c8776910770ef76069eeb965234a7f994daccf42911a55b44769301b19"
+      }
+    }
+  },
+  "months": 24,
+  "rng_algorithm": "sha256-counter-v1",
+  "run_id": "run_9e93a533dbe45c3eb8475801a1ad7783",
+  "scenario_name": "salaried_basic",
+  "seed": 42,
+  "simulation_window": {
+    "end_date": "2025-12-31",
+    "start_date": "2024-01-01"
+  },
+  "simulator_version": "0.1.0"
+}

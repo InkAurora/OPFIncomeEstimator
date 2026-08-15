@@ -6,6 +6,15 @@ Build a deterministic, causal, and auditable simulator of individual financial l
 
 The implementation should initially target 24-month simulations and allow longer timelines later.
 
+### Current implementation status
+
+The first vertical slice is implemented as simulator version `0.1.0` with contract schema `1.0`.
+Phase 0 choices are Pydantic and PyYAML for validated configuration, integer minor units for money,
+versioned SHA-256 counter randomness, deterministic JSONL datasets, Setuptools packaging, Pytest, and
+Ruff. The bundled `salaried_basic` scenario covers the Phase 1 scope; later domain phases remain
+unimplemented. See [`finances_simulator/docs/contracts-v1.md`](../finances_simulator/docs/contracts-v1.md)
+for frozen behavior and fields.
+
 ## 2. Architectural decisions
 
 ### 2.1 Three data levels

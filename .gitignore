@@ -9,6 +9,7 @@
 data/
 datasets/
 exports/
+output/
 *.parquet
 
 # Common editor and operating-system files
@@ -27,6 +28,8 @@ __pycache__/
 venv/
 node_modules/
 coverage/
+.coverage
 dist/
 build/
+*.egg-info/
 *.log
