@@ -7,15 +7,29 @@ import hashlib
 import re
 import unicodedata
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import date
 from typing import TypeVar
 from uuid import NAMESPACE_URL, UUID, uuid5
 
-SIMULATOR_VERSION = "0.1.0"
-CONTRACT_SCHEMA_VERSION = "1.0"
+SIMULATOR_VERSION = "0.2.0"
+CONTRACT_SCHEMA_VERSION = "1.1"
 RNG_ALGORITHM_VERSION = "sha256-counter-v1"
 
 _Choice = TypeVar("_Choice")
+
+
+@dataclass(frozen=True, slots=True)
+class VersionProfile:
+    """Versions governing one deterministic simulation path."""
+
+    simulator_version: str
+    contract_schema_version: str
+    rng_algorithm: str = RNG_ALGORITHM_VERSION
+
+
+V0_PROFILE = VersionProfile(simulator_version="0.1.0", contract_schema_version="1.0")
+V1_PROFILE = VersionProfile(simulator_version="0.2.0", contract_schema_version="1.1")
 
 _SIMULATION_NAMESPACE = uuid5(
     NAMESPACE_URL,
@@ -27,6 +41,12 @@ _KIND_PREFIXES = {
     "income_source": "inc",
     "event": "evt",
     "entry": "ent",
+    "card": "crd",
+    "card_transaction": "ctx",
+    "invoice": "inv",
+    "invoice_item": "itm",
+    "credit_limit": "lim",
+    "transfer_group": "trf",
 }
 
 
@@ -65,23 +85,38 @@ def _kind_prefix(kind: str) -> str:
     return compact[:3].ljust(3, "x")
 
 
-def simulation_namespace(config_sha256: str, seed: int) -> UUID:
+def simulation_namespace(
+    config_sha256: str,
+    seed: int,
+    *,
+    simulator_version: str = SIMULATOR_VERSION,
+) -> UUID:
     """Return stable UUID namespace for one configuration and seed."""
 
     _require_int("seed", seed)
     config_hash = _normalized_config_hash(config_sha256)
-    name = f"simulator={SIMULATOR_VERSION};config={config_hash};seed={seed}"
+    name = f"simulator={simulator_version};config={config_hash};seed={seed}"
     return uuid5(_SIMULATION_NAMESPACE, name)
 
 
-def make_run_id(config_sha256: str, seed: int, months: int) -> str:
+def make_run_id(
+    config_sha256: str,
+    seed: int,
+    months: int,
+    *,
+    simulator_version: str = SIMULATOR_VERSION,
+) -> str:
     """Return deterministic run identifier for complete simulation inputs."""
 
     _require_int("months", months)
     if months < 0:
         raise ValueError("months must be non-negative")
 
-    namespace = simulation_namespace(config_sha256, seed)
+    namespace = simulation_namespace(
+        config_sha256,
+        seed,
+        simulator_version=simulator_version,
+    )
     identifier = uuid5(namespace, f"run;months={months}")
     return f"run_{identifier.hex}"
 
@@ -196,13 +231,30 @@ def make_rng(seed: int) -> DeterministicRandom:
     return DeterministicRandom(seed)
 
 
+def make_rng_stream(seed: int, label: str) -> DeterministicRandom:
+    """Create a labeled deterministic stream isolated from other simulator domains."""
+
+    _require_int("seed", seed)
+    if not isinstance(label, str) or not label:
+        raise ValueError("label must be a non-empty string")
+    derived_seed = int.from_bytes(
+        hashlib.sha256(f"{RNG_ALGORITHM_VERSION}:{seed}:{label}".encode()).digest(),
+        "big",
+    )
+    return DeterministicRandom(derived_seed)
+
+
 __all__ = [
     "CONTRACT_SCHEMA_VERSION",
     "DeterministicRandom",
     "RNG_ALGORITHM_VERSION",
     "SIMULATOR_VERSION",
+    "V0_PROFILE",
+    "V1_PROFILE",
+    "VersionProfile",
     "deterministic_id",
     "make_rng",
+    "make_rng_stream",
     "make_run_id",
     "month_end",
     "month_start",

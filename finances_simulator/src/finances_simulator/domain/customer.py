@@ -19,3 +19,10 @@ class CustomerTwin(BaseModel):
     employment_status: Literal["SALARIED"] = "SALARIED"
     income_source_id: str
     primary_account: Account
+    additional_accounts: tuple[Account, ...] = ()
+
+    @property
+    def accounts(self) -> tuple[Account, ...]:
+        """Return every owned account with the primary account first."""
+
+        return (self.primary_account, *self.additional_accounts)

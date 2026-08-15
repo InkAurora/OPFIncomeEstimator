@@ -6,7 +6,7 @@ import hashlib
 import json
 from datetime import date
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
 
 import yaml
 from pydantic import (
@@ -110,8 +110,8 @@ class VariableExpenseRule(ConfigModel):
         return self
 
 
-class ScenarioConfig(ConfigModel):
-    """Complete validated configuration for one simulator scenario."""
+class ScenarioConfigV0(ConfigModel):
+    """Frozen schema 1.0 configuration for the legacy salaried scenario."""
 
     schema_version: Literal["1.0"]
     scenario: ScenarioSettings
@@ -121,11 +121,20 @@ class ScenarioConfig(ConfigModel):
     variable_expenses: VariableExpenseRule
 
     @model_validator(mode="after")
-    def fixed_expense_rule_ids_must_be_unique(self) -> ScenarioConfig:
+    def fixed_expense_rule_ids_must_be_unique(self) -> ScenarioConfigV0:
         rule_ids = [rule.rule_id for rule in self.fixed_expenses]
         if len(rule_ids) != len(set(rule_ids)):
             raise ValueError("fixed_expenses rule_id values must be unique")
         return self
+
+
+if TYPE_CHECKING:
+    from finances_simulator.config_v1 import ScenarioConfigV1
+
+    type ScenarioConfig = ScenarioConfigV0 | ScenarioConfigV1
+else:
+    # Preserve the schema-1.0 public class API, including ``model_validate``.
+    ScenarioConfig = ScenarioConfigV0
 
 
 def _validation_error_message(path: Path, error: ValidationError) -> str:
@@ -163,8 +172,26 @@ def load_scenario_config(path: Path) -> ScenarioConfig:
     if data is None:
         raise ConfigurationError(f"Scenario configuration '{path}' is empty")
 
+    if not isinstance(data, dict):
+        raise ConfigurationError(
+            f"Invalid scenario configuration '{path}': top level must be a mapping"
+        )
+
+    schema_version = data.get("schema_version")
+    if schema_version == "1.0":
+        config_model = ScenarioConfigV0
+    elif schema_version == "1.1":
+        from finances_simulator.config_v1 import ScenarioConfigV1
+
+        config_model = ScenarioConfigV1
+    else:
+        raise ConfigurationError(
+            f"Invalid scenario configuration '{path}': unsupported schema_version "
+            f"{schema_version!r}; expected '1.0' or '1.1'"
+        )
+
     try:
-        return ScenarioConfig.model_validate(data)
+        return config_model.model_validate(data)
     except ValidationError as error:
         raise ConfigurationError(_validation_error_message(path, error)) from error
 

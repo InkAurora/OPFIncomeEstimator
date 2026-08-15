@@ -1,0 +1,92 @@
+{
+  "config_sha256": "91fe884afae14d4f0e0dcb3ae9d8807e59748d81dd5ce76f3c0bc915381685b6",
+  "contract_schema_version": "1.1",
+  "datasets": {
+    "observed": {
+      "accounts": {
+        "path": "observed/accounts.jsonl",
+        "record_count": 2,
+        "schema_version": "1.1",
+        "sha256": "1c68c6f8973037f786d13bf6113fe56bdb61ae5274827867243c51a04f6d8149"
+      },
+      "balances": {
+        "path": "observed/balances.jsonl",
+        "record_count": 48,
+        "schema_version": "1.1",
+        "sha256": "8f7508fe0820fee140733dc3b8a39de3dd6434c247f15853d718cfb1be57ab64"
+      },
+      "credit_card_invoice_items": {
+        "path": "observed/credit_card_invoice_items.jsonl",
+        "record_count": 33,
+        "schema_version": "1.1",
+        "sha256": "e45888fb023ea396cd59a6f351da19e9eea850cfc6da080bd1afd8b3c33e9a59"
+      },
+      "credit_card_invoices": {
+        "path": "observed/credit_card_invoices.jsonl",
+        "record_count": 24,
+        "schema_version": "1.1",
+        "sha256": "5fc393743bcfe49c5e664c5f3804ad1023702b6f921642468a47964b8c5c1883"
+      },
+      "credit_card_transactions": {
+        "path": "observed/credit_card_transactions.jsonl",
+        "record_count": 26,
+        "schema_version": "1.1",
+        "sha256": "840f94f06ecc932e1612d0734effef2e66fe0fa88364755bd29b29ef5d05aa6d"
+      },
+      "credit_cards": {
+        "path": "observed/credit_cards.jsonl",
+        "record_count": 1,
+        "schema_version": "1.1",
+        "sha256": "f226323396f444bebd222a5273ef05580369a98f32e93045e0c576a3099add76"
+      },
+      "credit_limits": {
+        "path": "observed/credit_limits.jsonl",
+        "record_count": 24,
+        "schema_version": "1.1",
+        "sha256": "5d3f9785f66cce22c04254e82e1111aa40006f3e2cc3e7db6e6ef46a4f71a29a"
+      },
+      "transactions": {
+        "path": "observed/transactions.jsonl",
+        "record_count": 619,
+        "schema_version": "1.1",
+        "sha256": "6f2627e07630ba0767da5a91677f98dd6ca97773f17629c33ca20cccb5579ba2"
+      }
+    },
+    "private": {
+      "credit_card_transaction_ground_truth": {
+        "path": "private/credit_card_transaction_ground_truth.jsonl",
+        "record_count": 26,
+        "schema_version": "1.1",
+        "sha256": "0ef7d083571a45ae35086d4a071ecbec4b800b668a1c0a21b2b4b3e1feb44c65"
+      },
+      "customer_ground_truth": {
+        "path": "private/customer_ground_truth.jsonl",
+        "record_count": 1,
+        "schema_version": "1.1",
+        "sha256": "0108e591bb0b407e6ee12e72350ca756da4757618873482ea7504cf415597991"
+      },
+      "customer_month_ground_truth": {
+        "path": "private/customer_month_ground_truth.jsonl",
+        "record_count": 24,
+        "schema_version": "1.1",
+        "sha256": "493b3cc303a395db9e7239bec923c04337b66ef4337c4aac1e704058c59ad07b"
+      },
+      "transaction_ground_truth": {
+        "path": "private/transaction_ground_truth.jsonl",
+        "record_count": 619,
+        "schema_version": "1.1",
+        "sha256": "2fab2bffde1892b43f345bd5b3d41870bf3f3b00a56b800e577a98f1c675981a"
+      }
+    }
+  },
+  "months": 24,
+  "rng_algorithm": "sha256-counter-v1",
+  "run_id": "run_ebaac2f476ea54a1b7cb260739bc49f9",
+  "scenario_name": "salaried_multi_account_card",
+  "seed": 42,
+  "simulation_window": {
+    "end_date": "2025-12-31",
+    "start_date": "2024-01-01"
+  },
+  "simulator_version": "0.2.0"
+}

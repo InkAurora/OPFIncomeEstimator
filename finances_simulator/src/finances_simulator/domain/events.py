@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class EconomicType(StrEnum):
-    """Private economic classifications reserved by contract schema 1.0."""
+    """Private economic classifications shared by versioned simulator contracts."""
 
     INCOME = "INCOME"
     OWN_TRANSFER = "OWN_TRANSFER"
@@ -20,6 +20,7 @@ class EconomicType(StrEnum):
     REVERSAL = "REVERSAL"
     GIFT = "GIFT"
     ASSET_SALE = "ASSET_SALE"
+    CARD_PAYMENT = "CARD_PAYMENT"
     OTHER = "OTHER"
 
 

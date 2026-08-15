@@ -8,12 +8,13 @@ The implementation should initially target 24-month simulations and allow longer
 
 ### Current implementation status
 
-The first vertical slice is implemented as simulator version `0.1.0` with contract schema `1.0`.
-Phase 0 choices are Pydantic and PyYAML for validated configuration, integer minor units for money,
-versioned SHA-256 counter randomness, deterministic JSONL datasets, Setuptools packaging, Pytest, and
-Ruff. The bundled `salaried_basic` scenario covers the Phase 1 scope; later domain phases remain
-unimplemented. See [`finances_simulator/docs/contracts-v1.md`](../finances_simulator/docs/contracts-v1.md)
-for frozen behavior and fields.
+Phase 2's implementation slice is available as engine `0.2.0` with contract schema `1.1`. The
+bundled `salaried_multi_account_card` scenario covers multiple institutions and accounts, routed
+cash flows, paired own transfers, card utilization, statement cycles, full automatic payments, and
+installments. Engine `0.1.0` and contract `1.0` remain frozen for `salaried_basic`; its committed
+golden output remains byte-for-byte stable. See
+[`contracts-v1-1.md`](../finances_simulator/docs/contracts-v1-1.md) and
+[`contracts-v1.md`](../finances_simulator/docs/contracts-v1.md).
 
 ## 2. Architectural decisions
 
@@ -182,6 +183,7 @@ REFUND
 REVERSAL
 GIFT
 ASSET_SALE
+CARD_PAYMENT
 OTHER
 ```
 
@@ -214,6 +216,7 @@ run_manifest
 customer_ground_truth
 customer_month_ground_truth
 transaction_ground_truth
+credit_card_transaction_ground_truth
 ```
 
 Observed project-owned output:
@@ -225,11 +228,13 @@ transactions
 credit_cards
 credit_card_transactions
 credit_limits
+credit_card_invoices
+credit_card_invoice_items
 loans
 investments
 ```
 
-Exact fields will be specified as versioned project schemas during Phases 0 and 1.
+Exact implemented fields live in the versioned `1.0` and `1.1` contract documents.
 
 ## 5. Delivery phases
 
@@ -282,7 +287,11 @@ Acceptance criteria:
 - the scenario is reproducible from its seed;
 - the estimator receives no latent fields.
 
-### Phase 2 — V1: multiple accounts and cards
+### Phase 2 — V1: multiple accounts and cards — implemented
+
+Engine `0.2.0` and schema `1.1` implement this bounded slice. Current card policy is fixed-limit,
+deterministic decline, and full automatic payment; revolving credit, interest, fees, and failed or
+partial payments remain future work.
 
 Implement:
 
@@ -406,7 +415,7 @@ observed_accounts are a subset of consented_accounts
 
 ## 7. First implementation slice
 
-The first complete delivery should contain only:
+The completed first delivery contained only:
 
 - one salaried customer;
 - one checking account;
@@ -420,7 +429,9 @@ The first complete delivery should contain only:
 - command-line generation;
 - reconciliation, leakage, and reproducibility tests.
 
-Cards, loans, investments, population generation, life events, and observation degradation remain outside this slice. The purpose of the first slice is to prove the three-level architecture before expanding the domain.
+Cards were outside that first slice and were added by Phase 2. Loans, investments, population
+generation, life events, and observation degradation remain outside implemented scope. The first
+slice proved the three-level architecture before domain expansion.
 
 ## 8. Definition of done
 

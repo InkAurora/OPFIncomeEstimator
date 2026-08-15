@@ -1,0 +1,2 @@
+finances_simulator/examples/generated/**/*.json text eol=lf
+finances_simulator/examples/generated/**/*.jsonl text eol=lf

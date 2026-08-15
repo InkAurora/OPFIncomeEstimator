@@ -11,11 +11,8 @@ from typing import Any
 from pydantic import BaseModel
 
 from finances_simulator.generation import GeneratedScenario
-from finances_simulator.simulation.primitives import (
-    CONTRACT_SCHEMA_VERSION,
-    RNG_ALGORITHM_VERSION,
-    SIMULATOR_VERSION,
-)
+from finances_simulator.ground_truth.projector_v1 import GroundTruthBundleV1
+from finances_simulator.observations.projector_v1 import ObservationBundleV1
 
 
 class OutputDirectoryNotEmptyError(FileExistsError):
@@ -35,14 +32,19 @@ def _encode_record(record: BaseModel) -> str:
     )
 
 
-def _write_jsonl(path: Path, records: Iterable[BaseModel]) -> dict[str, Any]:
+def _write_jsonl(
+    path: Path,
+    records: Iterable[BaseModel],
+    *,
+    schema_version: str,
+) -> dict[str, Any]:
     materialized = tuple(records)
     payload = "".join(f"{_encode_record(record)}\n" for record in materialized).encode("utf-8")
     path.write_bytes(payload)
     return {
         "path": path.as_posix(),
         "record_count": len(materialized),
-        "schema_version": CONTRACT_SCHEMA_VERSION,
+        "schema_version": schema_version,
         "sha256": hashlib.sha256(payload).hexdigest(),
     }
 
@@ -55,24 +57,77 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
 
     truth = generated.ground_truth
     observations = generated.observations
+    profile = generated.simulation.profile
     private_datasets = {
         "customer_ground_truth": _write_jsonl(
-            private_directory / "customer_ground_truth.jsonl", truth.customers
+            private_directory / "customer_ground_truth.jsonl",
+            truth.customers,
+            schema_version=profile.contract_schema_version,
         ),
         "customer_month_ground_truth": _write_jsonl(
-            private_directory / "customer_month_ground_truth.jsonl", truth.customer_months
+            private_directory / "customer_month_ground_truth.jsonl",
+            truth.customer_months,
+            schema_version=profile.contract_schema_version,
         ),
         "transaction_ground_truth": _write_jsonl(
-            private_directory / "transaction_ground_truth.jsonl", truth.transactions
+            private_directory / "transaction_ground_truth.jsonl",
+            truth.transactions,
+            schema_version=profile.contract_schema_version,
         ),
     }
+    if isinstance(truth, GroundTruthBundleV1):
+        private_datasets["credit_card_transaction_ground_truth"] = _write_jsonl(
+            private_directory / "credit_card_transaction_ground_truth.jsonl",
+            truth.credit_card_transactions,
+            schema_version=profile.contract_schema_version,
+        )
     observed_datasets = {
-        "accounts": _write_jsonl(observed_directory / "accounts.jsonl", observations.accounts),
-        "balances": _write_jsonl(observed_directory / "balances.jsonl", observations.balances),
+        "accounts": _write_jsonl(
+            observed_directory / "accounts.jsonl",
+            observations.accounts,
+            schema_version=profile.contract_schema_version,
+        ),
+        "balances": _write_jsonl(
+            observed_directory / "balances.jsonl",
+            observations.balances,
+            schema_version=profile.contract_schema_version,
+        ),
         "transactions": _write_jsonl(
-            observed_directory / "transactions.jsonl", observations.transactions
+            observed_directory / "transactions.jsonl",
+            observations.transactions,
+            schema_version=profile.contract_schema_version,
         ),
     }
+    if isinstance(observations, ObservationBundleV1):
+        observed_datasets.update(
+            {
+                "credit_cards": _write_jsonl(
+                    observed_directory / "credit_cards.jsonl",
+                    observations.credit_cards,
+                    schema_version=profile.contract_schema_version,
+                ),
+                "credit_limits": _write_jsonl(
+                    observed_directory / "credit_limits.jsonl",
+                    observations.credit_limits,
+                    schema_version=profile.contract_schema_version,
+                ),
+                "credit_card_transactions": _write_jsonl(
+                    observed_directory / "credit_card_transactions.jsonl",
+                    observations.credit_card_transactions,
+                    schema_version=profile.contract_schema_version,
+                ),
+                "credit_card_invoices": _write_jsonl(
+                    observed_directory / "credit_card_invoices.jsonl",
+                    observations.credit_card_invoices,
+                    schema_version=profile.contract_schema_version,
+                ),
+                "credit_card_invoice_items": _write_jsonl(
+                    observed_directory / "credit_card_invoice_items.jsonl",
+                    observations.credit_card_invoice_items,
+                    schema_version=profile.contract_schema_version,
+                ),
+            }
+        )
 
     for datasets in (private_datasets, observed_datasets):
         for metadata in datasets.values():
@@ -81,13 +136,13 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
     simulation = generated.simulation
     manifest = {
         "config_sha256": simulation.config_sha256,
-        "contract_schema_version": CONTRACT_SCHEMA_VERSION,
+        "contract_schema_version": profile.contract_schema_version,
         "datasets": {
             "observed": observed_datasets,
             "private": private_datasets,
         },
         "months": simulation.months,
-        "rng_algorithm": RNG_ALGORITHM_VERSION,
+        "rng_algorithm": profile.rng_algorithm,
         "run_id": simulation.run_id,
         "scenario_name": simulation.customer_twin.scenario_name,
         "seed": simulation.seed,
@@ -95,7 +150,7 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
             "end_date": simulation.end_date.isoformat(),
             "start_date": simulation.start_date.isoformat(),
         },
-        "simulator_version": SIMULATOR_VERSION,
+        "simulator_version": profile.simulator_version,
     }
     manifest_path = working_directory / "run_manifest.json"
     manifest_path.write_text(

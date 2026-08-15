@@ -1,8 +1,10 @@
 # Finances Simulator
 
 This component generates deterministic synthetic financial histories for estimator development,
-automated tests, and evaluation. V0 implements one salaried customer, one checking account, one
-monthly salary, five monthly fixed expenses, and uniformly sampled variable expenses.
+automated tests, and evaluation. Engine `0.2.0` adds multiple institutions and deposit accounts,
+routed cash flows, own-account transfers, credit cards, utilization limits, invoices, full automatic
+payments, and installment purchases. Frozen engine `0.1.0` behavior remains available for schema
+`1.0` configurations.
 
 ## Requirements and installation
 
@@ -20,7 +22,13 @@ compatible dependency ranges so the library can participate in a larger applicat
 
 ## Generate a scenario
 
-Run the bundled scenario from this directory:
+Run the schema `1.1` scenario from this directory:
+
+```console
+python -m finances_simulator generate --config configs/scenarios/salaried_multi_account_card.yaml --seed 42 --months 24 --output runs/salaried-multi-account-card-seed-42
+```
+
+Run the frozen schema `1.0` scenario with:
 
 ```console
 python -m finances_simulator generate --config configs/scenarios/salaried_basic.yaml --seed 42 --months 24 --output runs/salaried-basic-seed-42
@@ -37,33 +45,35 @@ a write failure does not expose a partial output tree.
 
 ## Configuration behavior
 
-The bundled [`salaried_basic.yaml`](configs/scenarios/salaried_basic.yaml) is the V0 reference.
-Configuration schema version `1.0` uses:
+The loader dispatches on the required top-level `schema_version`:
 
-- a first-of-month start date and a positive default duration;
-- one three-letter uppercase currency code and a non-negative opening balance;
-- one positive monthly salary scheduled on days 1 through 31;
-- exactly five positive fixed-expense rules with unique IDs;
-- inclusive ranges for monthly variable-expense count, amount, and day;
-- at least one variable-expense merchant; and
-- no unknown fields at any configuration level.
+- [`salaried_basic.yaml`](configs/scenarios/salaried_basic.yaml) uses frozen contract `1.0` and
+  engine `0.1.0`: one checking account, salary, five fixed expenses, and random variable expenses.
+- [`salaried_multi_account_card.yaml`](configs/scenarios/salaried_multi_account_card.yaml) uses
+  contract `1.1` and engine `0.2.0`: two institutions and accounts, explicit routing, one monthly
+  own transfer, one card, utilization policy, statement invoices, and installment purchases.
 
-Salary and fixed-expense dates beyond a month's last day are clamped to that last calendar day.
-Dates are not shifted for weekends or holidays. Variable days are limited to 1 through 28.
+Both schemas reject unknown fields and use one uppercase three-letter currency. Contract `1.1`
+requires at least two institutions and accounts, exactly five fixed expenses, and at least one own
+transfer, card, and card-purchase rule. References and rule IDs are validated before simulation.
 
-Each variable count, merchant, day, and integer amount is sampled uniformly with the versioned
-`sha256-counter-v1` generator seeded by `--seed`. Range bounds are inclusive. Given the same
-validated configuration, seed, month count, and simulator version, records, IDs, ordering, and
-serialized JSONL are reproducible across supported Python runtimes.
+Configured days beyond month end clamp to the final calendar day; weekends and holidays cause no
+shift. Variable deposit expenses use an isolated deterministic SHA-256 counter stream. Card purchase
+attempts follow their configured month schedule. Purchases exceeding the configured used-limit
+ceiling are omitted under `DECLINE` policy.
 
-All monetary values use integer minor units; floating-point money is never emitted. For example,
-`650000` with currency `BRL` represents BRL 6,500.00. Event amounts are positive and the configured
-opening balance is non-negative. Running and closing balances may be negative: V0 permits overdraft
-instead of rejecting an expense.
+All money uses integer minor units. For example, `650000` BRL represents BRL 6,500.00. Account
+balances may become negative because expenses, transfers, and full card payments have no
+available-funds check.
 
-See [contract schema 1.0](docs/contracts-v1.md) for every configuration and output field.
+Exact fields and semantics:
+
+- [contract schema 1.1](docs/contracts-v1-1.md)
+- [frozen contract schema 1.0](docs/contracts-v1.md)
 
 ## Output layout and trust boundary
+
+Schema `1.1` emits:
 
 ```text
 <output>/
@@ -71,12 +81,20 @@ See [contract schema 1.0](docs/contracts-v1.md) for every configuration and outp
 |-- observed/
 |   |-- accounts.jsonl
 |   |-- balances.jsonl
-|   `-- transactions.jsonl
+|   |-- transactions.jsonl
+|   |-- credit_cards.jsonl
+|   |-- credit_limits.jsonl
+|   |-- credit_card_transactions.jsonl
+|   |-- credit_card_invoices.jsonl
+|   `-- credit_card_invoice_items.jsonl
 `-- private/
     |-- customer_ground_truth.jsonl
     |-- customer_month_ground_truth.jsonl
-    `-- transaction_ground_truth.jsonl
+    |-- transaction_ground_truth.jsonl
+    `-- credit_card_transaction_ground_truth.jsonl
 ```
+
+Schema `1.0` retains its original three observed and three private JSONL datasets.
 
 Files under `observed/` form the normalized, Open Finance-inspired estimator input. They contain
 account, balance, and transaction observations but omit hidden economic classifications and true
@@ -87,8 +105,10 @@ digests.
 JSONL files are UTF-8, contain one compact JSON object per line, use stable key ordering, and end each
 record with a newline. Dataset ordering is deterministic.
 
-A committed [seed-42 reference run](examples/generated/salaried_basic_seed_42/run_manifest.json)
-shows the complete 24-month output and anchors the golden reproducibility test.
+A committed [schema-1.0 seed-42 reference run](examples/generated/salaried_basic_seed_42/run_manifest.json)
+anchors legacy byte-for-byte compatibility. The bundled
+[schema-1.1 seed-42 reference run](examples/generated/salaried_multi_account_card_seed_42/run_manifest.json)
+exercises statement-boundary and uneven-installment behavior.
 
 ## Responsibilities
 
@@ -101,14 +121,14 @@ shows the complete 24-month output and anchors the golden reproducibility test.
 - Reconcile every ledger posting with its running balance.
 - Avoid copying or reconstructing identifiable client records.
 
-## V0 limitations
+## Current limitations
 
-V0 proves the hidden-state, ledger, private-truth, and observed-data separation for a basic salaried
-case. It does not yet model variable or commission income, multiple income sources, freelance or
-seasonal income, job changes, income interruptions, multiple accounts, own-account transfers,
-refunds, reversals, loans, cash deposits, cards, investments, missing periods, duplicates, or
-institution-specific observation degradation. It also does not model taxes, payroll deductions,
-interest, overdraft limits, holidays, or inflation.
+The implemented profiles model one salaried customer and one currency. Schema `1.1` supports active
+checking/savings accounts and active credit cards opened at simulation start, fixed limits, zero
+opening card debt, deterministic declines, and full automatic invoice payment. It does not model
+interest, fees, revolving balances, partial or failed payments, delinquency, refunds, reversals,
+loans, investments, variable income, job changes, observation degradation, taxes, overdraft limits,
+holidays, or inflation.
 
 ## Boundary
 

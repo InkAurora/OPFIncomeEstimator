@@ -5,10 +5,19 @@ from datetime import date
 
 from finances_simulator.config import ScenarioConfig, config_sha256
 from finances_simulator.domain.accounts import Account, LedgerEntry
+from finances_simulator.domain.cards import (
+    CardInstallment,
+    CardInvoice,
+    CardPurchase,
+    CreditCard,
+    CreditLimitSnapshot,
+)
 from finances_simulator.domain.customer import CustomerTwin
 from finances_simulator.domain.events import EconomicType, FinancialEvent
 from finances_simulator.ledger import post_events
 from finances_simulator.simulation.primitives import (
+    V0_PROFILE,
+    VersionProfile,
     deterministic_id,
     make_rng,
     make_run_id,
@@ -33,9 +42,15 @@ class SimulationRun:
     customer_twin: CustomerTwin
     events: tuple[FinancialEvent, ...]
     ledger_entries: tuple[LedgerEntry, ...]
+    profile: VersionProfile = V0_PROFILE
+    cards: tuple[CreditCard, ...] = ()
+    card_purchases: tuple[CardPurchase, ...] = ()
+    card_installments: tuple[CardInstallment, ...] = ()
+    card_invoices: tuple[CardInvoice, ...] = ()
+    credit_limit_snapshots: tuple[CreditLimitSnapshot, ...] = ()
 
 
-def simulate(
+def simulate_v0(
     config: ScenarioConfig,
     *,
     seed: int,
@@ -48,8 +63,17 @@ def simulate(
         raise ValueError("months must be between 1 and 1200")
 
     fingerprint = config_sha256(config)
-    namespace = simulation_namespace(fingerprint, seed)
-    run_id = make_run_id(fingerprint, seed, simulation_months)
+    namespace = simulation_namespace(
+        fingerprint,
+        seed,
+        simulator_version=V0_PROFILE.simulator_version,
+    )
+    run_id = make_run_id(
+        fingerprint,
+        seed,
+        simulation_months,
+        simulator_version=V0_PROFILE.simulator_version,
+    )
     customer_id = deterministic_id(namespace, "customer", "primary")
     account_id = deterministic_id(namespace, "account", "checking-primary")
     income_source_id = deterministic_id(namespace, "income_source", "salary-primary")
@@ -163,3 +187,20 @@ def simulate(
         events=ordered_events,
         ledger_entries=ledger_entries,
     )
+
+
+def simulate(
+    config: ScenarioConfig,
+    *,
+    seed: int,
+    months: int | None = None,
+) -> SimulationRun:
+    """Dispatch a validated configuration to its versioned simulation engine."""
+
+    from finances_simulator.config_v1 import ScenarioConfigV1
+
+    if isinstance(config, ScenarioConfigV1):
+        from finances_simulator.simulation.v1 import simulate_v1
+
+        return simulate_v1(config, seed=seed, months=months)
+    return simulate_v0(config, seed=seed, months=months)

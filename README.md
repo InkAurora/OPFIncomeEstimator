@@ -50,7 +50,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for repository-wide language and data-con
 
 ## Development status
 
-The first simulator slice is implemented. It generates a deterministic 24-month salaried-customer history with versioned, physically separated private ground truth and estimator-safe observations. The estimator, broader simulator scenarios, and Open Finance provider adapters remain to be implemented and validated.
+Simulator engine `0.2.0` and contract `1.1` implement the multiple-account and credit-card slice. It
+generates routed salary and expenses, paired own-account transfers, card purchases, installment
+invoices, full automatic payments, and credit-limit snapshots while keeping private truth separate
+from estimator-safe observations. Frozen contract `1.0` and its deterministic salaried scenario
+remain supported. The estimator, later simulator phases, and provider adapters remain unimplemented.
 
 ## Simulator quick start
 
@@ -58,19 +62,21 @@ The first simulator slice is implemented. It generates a deterministic 24-month 
 cd finances_simulator
 python -m pip install -c constraints-dev.txt -e ".[dev]"
 finances-simulator generate \
-  --config configs/scenarios/salaried_basic.yaml \
+  --config configs/scenarios/salaried_multi_account_card.yaml \
   --seed 42 \
   --months 24 \
-  --output output/salaried-basic-seed-42
+  --output output/salaried-multi-account-card-seed-42
 pytest
 ```
 
-See [`finances_simulator/README.md`](finances_simulator/README.md) for behavior, output contracts, and current limitations.
+Use `configs/scenarios/salaried_basic.yaml` for frozen schema `1.0`. See
+[`finances_simulator/README.md`](finances_simulator/README.md) for both profiles, output contracts,
+and current limitations.
 
 ## Getting started
 
 1. Read the component documentation.
-2. Generate or inspect the deterministic salaried scenario.
+2. Generate either deterministic salaried scenario.
 3. Implement estimator rules against the versioned observation contract.
 4. Extend simulator scenarios only after preserving reconciliation and leakage tests.
 5. Validate with de-identified, consented data before any production use.

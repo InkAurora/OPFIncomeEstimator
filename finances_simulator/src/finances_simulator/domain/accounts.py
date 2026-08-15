@@ -24,7 +24,7 @@ class Account(BaseModel):
     institution_id: str
     institution_name: str
     account_label: str
-    account_type: Literal["CHECKING"] = "CHECKING"
+    account_type: Literal["CHECKING", "SAVINGS"] = "CHECKING"
     currency: str
     opened_on: date
     opening_balance_minor: int = Field(ge=0)
