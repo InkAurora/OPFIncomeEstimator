@@ -1,0 +1,32 @@
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Client and generated financial data
+data/
+datasets/
+exports/
+*.parquet
+
+# Common editor and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Common language/tool caches and build outputs
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+node_modules/
+coverage/
+dist/
+build/
+*.log
