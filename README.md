@@ -50,12 +50,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for repository-wide language and data-con
 
 ## Development status
 
-Simulator engine `0.5.0` and contract `1.4` implement effective-dated life events, calendar
-seasonality, and labeled financial anomalies. Raises, promotions, job loss, job changes, household
-transitions, purchases, windfalls, medical costs, and vacations now alter hidden state or cash flow
-causally. Frozen contracts `1.3`, `1.2`, `1.1`, and `1.0` remain supported with byte-stable reference
-outputs. The estimator, observation degradation, batch generation, and provider adapters remain
-unimplemented.
+Simulator engine `0.6.0` and contract `1.5` implement incomplete observations with institution and
+account consent coverage, provider descriptions, and deterministic missing, late, duplicate, and
+reversal records. Observation policy cannot change hidden financial state or private truth. Frozen
+contracts `1.4`, `1.3`, `1.2`, `1.1`, and `1.0` remain supported with byte-stable reference outputs.
+The estimator, batch generation, and provider adapters remain unimplemented.
 
 ## Simulator quick start
 
@@ -63,14 +62,15 @@ unimplemented.
 cd finances_simulator
 python -m pip install -c constraints-dev.txt -e ".[dev]"
 finances-simulator generate \
-  --config configs/scenarios/life_events.yaml \
+  --config configs/scenarios/incomplete_observation.yaml \
   --seed 42 \
-  --months 24 \
-  --output output/income-diverse-seed-42
+  --months 12 \
+  --output output/incomplete-observation-seed-42
 pytest
 ```
 
-Use `configs/scenarios/income_diverse.yaml` for frozen schema `1.3`,
+Use `configs/scenarios/life_events.yaml` for frozen schema `1.4`,
+`configs/scenarios/income_diverse.yaml` for frozen schema `1.3`,
 `configs/scenarios/salaried_loans_investments.yaml` for frozen schema `1.2`,
 `configs/scenarios/salaried_multi_account_card.yaml` for frozen schema `1.1`, or
 `configs/scenarios/salaried_basic.yaml` for frozen schema `1.0`. See

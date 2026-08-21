@@ -66,6 +66,8 @@ class SimulationRun:
     income_sources: tuple[IncomeSource, ...] = ()
     life_event_transitions: tuple[LifeEventTransition, ...] = ()
     anomalies: tuple[FinancialAnomaly, ...] = ()
+    world_config_sha256: str | None = None
+    world_simulator_version: str | None = None
 
 
 def simulate_v0(
@@ -219,6 +221,12 @@ def simulate(
     from finances_simulator.config_v2 import ScenarioConfigV2
     from finances_simulator.config_v3 import ScenarioConfigV3
     from finances_simulator.config_v4 import ScenarioConfigV4
+    from finances_simulator.config_v5 import ScenarioConfigV5
+
+    if isinstance(config, ScenarioConfigV5):
+        from finances_simulator.simulation.v5 import simulate_v5
+
+        return simulate_v5(config, seed=seed, months=months)
 
     if isinstance(config, ScenarioConfigV4):
         from finances_simulator.simulation.v4 import simulate_v4

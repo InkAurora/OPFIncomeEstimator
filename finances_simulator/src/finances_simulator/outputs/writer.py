@@ -16,10 +16,12 @@ from finances_simulator.ground_truth.projector_v1 import GroundTruthBundleV1
 from finances_simulator.ground_truth.projector_v2 import GroundTruthBundleV2
 from finances_simulator.ground_truth.projector_v3 import GroundTruthBundleV3
 from finances_simulator.ground_truth.projector_v4 import GroundTruthBundleV4
+from finances_simulator.ground_truth.projector_v5 import GroundTruthBundleV5
 from finances_simulator.observations.projector_v1 import ObservationBundleV1
 from finances_simulator.observations.projector_v2 import ObservationBundleV2
 from finances_simulator.observations.projector_v3 import ObservationBundleV3
 from finances_simulator.observations.projector_v4 import ObservationBundleV4
+from finances_simulator.observations.projector_v5 import ObservationBundleV5
 
 
 class OutputDirectoryNotEmptyError(FileExistsError):
@@ -98,14 +100,21 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
     }
     if isinstance(
         truth,
-        GroundTruthBundleV1 | GroundTruthBundleV2 | GroundTruthBundleV3 | GroundTruthBundleV4,
+        GroundTruthBundleV1
+        | GroundTruthBundleV2
+        | GroundTruthBundleV3
+        | GroundTruthBundleV4
+        | GroundTruthBundleV5,
     ):
         private_datasets["credit_card_transaction_ground_truth"] = _write_jsonl(
             private_directory / "credit_card_transaction_ground_truth.jsonl",
             truth.credit_card_transactions,
             schema_version=profile.contract_schema_version,
         )
-    if isinstance(truth, GroundTruthBundleV2 | GroundTruthBundleV3 | GroundTruthBundleV4):
+    if isinstance(
+        truth,
+        GroundTruthBundleV2 | GroundTruthBundleV3 | GroundTruthBundleV4 | GroundTruthBundleV5,
+    ):
         private_datasets.update(
             {
                 "loan_payment_ground_truth": _write_jsonl(
@@ -125,13 +134,13 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
                 ),
             }
         )
-    if isinstance(truth, GroundTruthBundleV3 | GroundTruthBundleV4):
+    if isinstance(truth, GroundTruthBundleV3 | GroundTruthBundleV4 | GroundTruthBundleV5):
         private_datasets["income_source_ground_truth"] = _write_jsonl(
             private_directory / "income_source_ground_truth.jsonl",
             truth.income_sources,
             schema_version=profile.contract_schema_version,
         )
-    if isinstance(truth, GroundTruthBundleV4):
+    if isinstance(truth, GroundTruthBundleV4 | GroundTruthBundleV5):
         private_datasets.update(
             {
                 "life_event_ground_truth": _write_jsonl(
@@ -165,7 +174,11 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
     }
     if isinstance(
         observations,
-        ObservationBundleV1 | ObservationBundleV2 | ObservationBundleV3 | ObservationBundleV4,
+        ObservationBundleV1
+        | ObservationBundleV2
+        | ObservationBundleV3
+        | ObservationBundleV4
+        | ObservationBundleV5,
     ):
         observed_datasets.update(
             {
@@ -198,7 +211,7 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
         )
     if isinstance(
         observations,
-        ObservationBundleV2 | ObservationBundleV3 | ObservationBundleV4,
+        ObservationBundleV2 | ObservationBundleV3 | ObservationBundleV4 | ObservationBundleV5,
     ):
         observed_datasets.update(
             {
@@ -235,6 +248,13 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
             }
         )
 
+    if isinstance(observations, ObservationBundleV5):
+        observed_datasets["observation_coverage"] = _write_jsonl(
+            observed_directory / "observation_coverage.jsonl",
+            observations.observation_coverage,
+            schema_version=profile.contract_schema_version,
+        )
+
     for datasets in (private_datasets, observed_datasets):
         for metadata in datasets.values():
             metadata["path"] = Path(metadata["path"]).relative_to(working_directory).as_posix()
@@ -258,6 +278,19 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
         },
         "simulator_version": profile.simulator_version,
     }
+    if isinstance(observations, ObservationBundleV5):
+        eligible = sum(item.eligible_record_count for item in observations.observation_coverage)
+        observed = sum(
+            item.observed_original_record_count for item in observations.observation_coverage
+        )
+        manifest["observation_quality"] = {
+            "eligible_record_count": eligible,
+            "observed_original_record_count": observed,
+            "effective_coverage_basis_points": (
+                (observed * 10_000 + eligible // 2) // eligible if eligible else 0
+            ),
+        }
+        manifest["world_config_sha256"] = simulation.world_config_sha256
     manifest_path = working_directory / "run_manifest.json"
     manifest_path.write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",

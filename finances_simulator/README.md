@@ -1,9 +1,10 @@
 # Finances Simulator
 
 This component generates deterministic synthetic financial histories for estimator development,
-automated tests, and evaluation. Engine `0.5.0` adds effective-dated life transitions, one-off life
-cash flows, scenario seasonality, and privately labeled anomalies to the full product model. Frozen
-engines `0.4.0`, `0.3.0`, `0.2.0`, and `0.1.0` remain available for older configurations.
+automated tests, and evaluation. Engine `0.6.0` adds consent coverage, provider descriptions, and
+missing, late, duplicate, and reversal observation artifacts without changing hidden economics or
+private truth. Frozen engines `0.5.0`, `0.4.0`, `0.3.0`, `0.2.0`, and `0.1.0` remain available for
+older configurations.
 
 ## Requirements and installation
 
@@ -21,15 +22,16 @@ compatible dependency ranges so the library can participate in a larger applicat
 
 ## Generate a scenario
 
-Run the current schema `1.4` scenario from this directory:
+Run the current schema `1.5` scenario from this directory:
+
+```console
+python -m finances_simulator generate --config configs/scenarios/incomplete_observation.yaml --seed 42 --months 12 --output runs/incomplete-observation-seed-42
+```
+
+Run frozen schema `1.4`, `1.3`, `1.2`, `1.1`, or `1.0` scenarios with:
 
 ```console
 python -m finances_simulator generate --config configs/scenarios/life_events.yaml --seed 42 --months 24 --output runs/life-events-seed-42
-```
-
-Run frozen schema `1.3`, `1.2`, `1.1`, or `1.0` scenarios with:
-
-```console
 python -m finances_simulator generate --config configs/scenarios/income_diverse.yaml --seed 42 --months 24 --output runs/income-diverse-seed-42
 python -m finances_simulator generate --config configs/scenarios/salaried_loans_investments.yaml --seed 42 --months 24 --output runs/salaried-loans-investments-seed-42
 python -m finances_simulator generate --config configs/scenarios/salaried_multi_account_card.yaml --seed 42 --months 24 --output runs/salaried-multi-account-card-seed-42
@@ -49,6 +51,9 @@ a write failure does not expose a partial output tree.
 
 The loader dispatches on the required top-level `schema_version`:
 
+- [`incomplete_observation.yaml`](configs/scenarios/incomplete_observation.yaml) uses contract `1.5`
+  and engine `0.6.0`: standard 100%, 70%, and 40% consent, account overrides, provider
+  descriptions, and deterministic missing, late, duplicate, and reversal records.
 - [`life_events.yaml`](configs/scenarios/life_events.yaml) uses contract `1.4` and engine `0.5.0`:
   income and household transitions, exceptional expenses and inflows, seasonal multipliers, and
   four correctly typed anomaly classes.
@@ -70,6 +75,17 @@ retains schema `1.1` requirements, caps institutions, accounts, own transfers, a
 and adds 1 to 32 loans, 1 to 32 investments, and at least one contribution and redemption schedule.
 References, rule IDs, installment work, and scheduled-flow work are bounded and validated before
 simulation.
+
+Contract `1.5` separates the frozen V4 world fingerprint from V5 observation policy. Changing only
+consent or degradation settings preserves every hidden event, ledger posting, balance, product
+state, and private truth row. Default and institution coverage applies to all dated product
+streams; account coverage overrides its institution for deposit balances and transactions.
+
+Deposit transactions receive independently configured `0..10000` basis-point rates for missing,
+late, duplicate, and reversal records. `observed_at` measures delayed arrival. Duplicate and
+reversal records have unique IDs and reference their emitted original without exposing private
+labels. Provider prefixes format deposit, card, and investment descriptions. Per-account coverage
+rows and an aggregate manifest summary measure effective coverage using original records only.
 
 Contract `1.3` replaces the single salary rule with `CustomerFactory`. It samples member index `0`
 for a CLI run from weighted income, conditional source-bundle, behavior, and wealth distributions.
@@ -117,6 +133,7 @@ contributions have no available-funds check.
 
 Exact fields and semantics:
 
+- [contract schema 1.5](docs/contracts-v1-5.md)
 - [contract schema 1.4](docs/contracts-v1-4.md)
 - [contract schema 1.3](docs/contracts-v1-3.md)
 - [contract schema 1.2](docs/contracts-v1-2.md)
@@ -124,6 +141,10 @@ Exact fields and semantics:
 - [frozen contract schema 1.0](docs/contracts-v1.md)
 
 ## Output layout and trust boundary
+
+Schema `1.5` retains the schema `1.4` tree and adds
+`observed/observation_coverage.jsonl`. Transaction rows add arrival date and nullable duplicate and
+reversal lineage links. Private datasets retain complete undegraded truth.
 
 Schema `1.4` emits the schema `1.3` tree plus private life-event and anomaly truth:
 
@@ -158,7 +179,7 @@ Schema `1.4` emits the schema `1.3` tree plus private life-event and anomaly tru
     `-- balance_sheet_ground_truth.jsonl
 ```
 
-Schemas `1.3`, `1.2`, `1.1`, and `1.0` retain their original version-specific dataset trees.
+Schemas `1.4`, `1.3`, `1.2`, `1.1`, and `1.0` retain their original version-specific dataset trees.
 
 Files under `observed/` form the normalized, Open Finance-inspired estimator input. They contain
 account, balance, and transaction observations but omit hidden economic classifications and true
@@ -177,8 +198,11 @@ exercises statement-boundary and uneven-installment behavior. The frozen
 adds 24-month loan, investment, and net-worth reconciliation.
 The frozen [schema-1.3 seed-42 reference run](examples/generated/income_diverse_seed_42/run_manifest.json)
 samples a mixed-income, balanced-behavior, high-wealth customer with two variable sources. The
-current [schema-1.4 seed-42 reference run](examples/generated/life_events_seed_42/run_manifest.json)
+frozen [schema-1.4 seed-42 reference run](examples/generated/life_events_seed_42/run_manifest.json)
 exercises all life-event and anomaly types across a 24-month salaried history.
+The current
+[schema-1.5 seed-42 reference run](examples/generated/incomplete_observation_seed_42/run_manifest.json)
+exercises all three coverage levels and every deposit-transaction degradation type.
 
 ## Responsibilities
 
@@ -193,14 +217,14 @@ exercises all life-event and anomaly types across a 24-month salaried history.
 
 ## Current limitations
 
-Schema `1.4` generates one sampled customer and one currency per run. It supports effective-dated
+Schema `1.5` generates one sampled customer and one currency per run. It supports effective-dated
 changes to existing materialized income sources and household state alongside active
 checking/savings accounts, fixed-policy cards, personal constant-principal loans, and fixed-income
 investments. Property and vehicle ownership are counts, not valued balance-sheet assets. Loan and
 card payments are always full and may make deposit balances negative. The simulator does not yet
 write batch populations or model revolving cards, loan default or prepayment, investment units or
-market prices, fees, taxes, negative returns, observation degradation, overdraft limits, holidays,
-or inflation.
+market prices, fees, taxes, negative returns, observation degradation outside deposit transactions,
+consent lifecycle timestamps, overdraft limits, holidays, or inflation.
 
 ## Boundary
 

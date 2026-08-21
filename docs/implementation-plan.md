@@ -8,11 +8,13 @@ The implementation should initially target 24-month simulations and allow longer
 
 ### Current implementation status
 
-Phase 3's implementation slice is available as engine `0.3.0` with contract schema `1.2`. The
-bundled `salaried_loans_investments` scenario extends multiple accounts and cards with a
-constant-principal loan, fixed-income investment flows and returns, monthly product balances, and
-private net worth. Engines `0.2.0`/`0.1.0` and contracts `1.1`/`1.0` remain frozen with byte-stable
-reference outputs. See
+Phase 6's implementation slice is available as engine `0.6.0` with contract schema `1.5`. The
+bundled `incomplete_observation` scenario adds consent coverage and deterministic observation
+artifacts while preserving frozen V4 economics and private truth. Engines `0.5.0` through `0.1.0`
+and contracts `1.4` through `1.0` remain available with byte-stable reference outputs. See
+[`contracts-v1-5.md`](../finances_simulator/docs/contracts-v1-5.md),
+[`contracts-v1-4.md`](../finances_simulator/docs/contracts-v1-4.md),
+[`contracts-v1-3.md`](../finances_simulator/docs/contracts-v1-3.md),
 [`contracts-v1-2.md`](../finances_simulator/docs/contracts-v1-2.md),
 [`contracts-v1-1.md`](../finances_simulator/docs/contracts-v1-1.md) and
 [`contracts-v1.md`](../finances_simulator/docs/contracts-v1.md).
@@ -383,7 +385,13 @@ Acceptance criteria:
 - anomalies retain their correct economic type;
 - deterministic behavior remains intact.
 
-### Phase 6 — V5: incomplete observation
+### Phase 6 — V5: incomplete observation — implemented
+
+Engine `0.6.0` and schema `1.5` implement this bounded slice. Frozen V4 economics run from a
+separate world fingerprint, so changing consent or degradation policy cannot change hidden events,
+ledger postings, balances, or private truth. Standard 100%, 70%, and 40% coverage applies by
+institution with account overrides. Deterministic missing, late, duplicate, and reversal injection
+acts on deposit-transaction observations; consent also filters every dated product stream.
 
 Implement:
 
@@ -457,7 +465,8 @@ The completed first delivery contained only:
 - reconciliation, leakage, and reproducibility tests.
 
 Cards were outside that first slice and were added by Phase 2. Loans, investments, and net worth
-were added by Phase 3, income diversity by Phase 4, and effective-dated life events by Phase 5.
+were added by Phase 3, income diversity by Phase 4, effective-dated life events by Phase 5, and
+incomplete observations by Phase 6.
 Batch population generation and observation degradation remain outside implemented scope. The
 first slice proved the three-level architecture before domain expansion.
 

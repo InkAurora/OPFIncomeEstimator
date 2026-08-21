@@ -1,0 +1,146 @@
+schema_version: "1.5"
+
+scenario:
+  name: incomplete_observation
+  start_date: 2024-01-01
+  default_months: 12
+
+customer:
+  currency: BRL
+  primary_account_ref: primary_checking
+
+customer_factory:
+  income_profiles:
+    - income_profile: SALARIED
+      weight_basis_points: 10000
+      source_bundles:
+        - source_bundle_ref: salary_only
+          weight_basis_points: 10000
+          sources:
+            - source_ref: salary
+              income_kind: SALARY
+              payer: Example Employer Ltd.
+              description: MONTHLY PAYROLL CREDIT
+              destination_account_ref: primary_checking
+              amount_distribution:
+                minimum_minor: 600000
+                maximum_minor: 600000
+                step_minor: 1
+              day_of_month: 5
+              frequency: MONTHLY
+              start_month_index: 0
+              occurrences: 12
+              payment_probability_basis_points: 10000
+              volatility_basis_points: 0
+              seasonality_basis_points: [10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000]
+  behavior_profiles:
+    - behavior_profile: BALANCED
+      weight_basis_points: 10000
+      spending_multiplier_basis_points: 10000
+      saving_multiplier_basis_points: 10000
+  wealth_profiles:
+    - wealth_band: MIDDLE
+      weight_basis_points: 10000
+      deposit_balance_multiplier_basis_points: 10000
+      investment_balance_multiplier_basis_points: 10000
+
+institutions:
+  - institution_ref: bank_full
+    institution_id: fictional-bank-100
+    institution_name: Full Coverage Bank
+  - institution_ref: bank_partial
+    institution_id: fictional-bank-070
+    institution_name: Partial Coverage Bank
+
+accounts:
+  - account_ref: primary_checking
+    institution_ref: bank_full
+    account_label: Primary checking account
+    account_type: CHECKING
+    opening_balance_minor: 300000
+  - account_ref: partial_savings
+    institution_ref: bank_partial
+    account_label: Partial savings account
+    account_type: SAVINGS
+    opening_balance_minor: 100000
+  - account_ref: limited_reserve
+    institution_ref: bank_partial
+    account_label: Limited reserve account
+    account_type: SAVINGS
+    opening_balance_minor: 50000
+
+fixed_expenses:
+  - rule_id: housing
+    category: housing
+    amount_minor: 180000
+    day_of_month: 10
+    payee: Example Property Management
+    description: MONTHLY RENT
+    source_account_ref: primary_checking
+
+variable_expenses:
+  count_min: 4
+  count_max: 4
+  amount_min_minor: 2000
+  amount_max_minor: 12000
+  day_min: 12
+  day_max: 24
+  source_account_ref: primary_checking
+  merchants:
+    - entity: Example Supermarket
+      description: PIX PAYMENT SUPERMARKET
+    - entity: Example Pharmacy
+      description: PIX PAYMENT PHARMACY
+
+own_transfers:
+  - rule_id: partial_savings_transfer
+    source_account_ref: primary_checking
+    destination_account_ref: partial_savings
+    amount_minor: 30000
+    day_of_month: 7
+    outgoing_description: TRANSFER TO PARTIAL SAVINGS
+    incoming_description: TRANSFER FROM PRIMARY
+  - rule_id: limited_reserve_transfer
+    source_account_ref: primary_checking
+    destination_account_ref: limited_reserve
+    amount_minor: 20000
+    day_of_month: 8
+    outgoing_description: TRANSFER TO LIMITED RESERVE
+    incoming_description: TRANSFER FROM PRIMARY
+
+credit_cards: []
+card_purchase_rules: []
+loans: []
+investments: []
+investment_contribution_rules: []
+investment_redemption_rules: []
+
+initial_life_state:
+  job_title: Analyst
+
+seasonality: {}
+life_events: []
+anomalies: []
+
+observation_degradation:
+  consent:
+    default_coverage_percent: 100
+    institutions:
+      - institution_ref: bank_partial
+        coverage_percent: 70
+    accounts:
+      - account_ref: limited_reserve
+        coverage_percent: 40
+  institution_descriptions:
+    - institution_ref: bank_full
+      description_prefix: FCB
+      reversal_prefix: REVERSAL
+    - institution_ref: bank_partial
+      description_prefix: PCB
+      reversal_prefix: ESTORNO
+  missing_record_basis_points: 1000
+  late_record_basis_points: 2000
+  duplicate_record_basis_points: 1000
+  reversal_record_basis_points: 500
+  maximum_late_days: 7
+  maximum_reversal_delay_days: 30
