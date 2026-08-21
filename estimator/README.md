@@ -2,6 +2,15 @@
 
 This component estimates a client's income from normalized financial data obtained with consent through Open Finance Brasil.
 
+Simulator Phase 7 now exposes estimator boundary contract `1.0`. An integrated estimator accepts an
+immutable observation-only request and returns ordered monthly amounts, confidence bounds, and
+contributing transaction IDs. Use `finances-simulator generate-batch --estimator
+package.module:attribute` to run it over a deterministic population. Contract details live in
+[`finances_simulator/docs/contracts-batch-v1.md`](../finances_simulator/docs/contracts-batch-v1.md).
+
+The simulator's `baseline-1.0.0` implementation exists only to exercise this boundary and reporting
+pipeline. It is not the estimator proposed by this component.
+
 ## Responsibilities
 
 - Validate the estimator input contract.

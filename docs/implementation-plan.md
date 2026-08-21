@@ -8,10 +8,11 @@ The implementation should initially target 24-month simulations and allow longer
 
 ### Current implementation status
 
-Phase 6's implementation slice is available as engine `0.6.0` with contract schema `1.5`. The
-bundled `incomplete_observation` scenario adds consent coverage and deterministic observation
-artifacts while preserving frozen V4 economics and private truth. Engines `0.5.0` through `0.1.0`
-and contracts `1.4` through `1.0` remain available with byte-stable reference outputs. See
+Phase 7 is available as orchestrator `0.7.0`, batch schema `1.0`, and estimator boundary `1.0`.
+It generates deterministic parallel populations from frozen engine `0.6.0`/contract `1.5`, writes
+partitioned Parquet, and emits automatic evaluation reports without changing member economics.
+Engines `0.5.0` through `0.1.0` and contracts `1.4` through `1.0` remain available with byte-stable
+reference outputs. See [`contracts-batch-v1.md`](../finances_simulator/docs/contracts-batch-v1.md),
 [`contracts-v1-5.md`](../finances_simulator/docs/contracts-v1-5.md),
 [`contracts-v1-4.md`](../finances_simulator/docs/contracts-v1-4.md),
 [`contracts-v1-3.md`](../finances_simulator/docs/contracts-v1-3.md),
@@ -343,7 +344,8 @@ Acceptance criteria:
 ### Phase 4 — V3: income diversity and population factory
 
 Engine `0.4.0` and schema `1.3` implement this bounded slice. The CLI samples one addressable
-factory member and writes one complete history; Phase 7 retains batch population output. Income
+factory member and writes one complete history; Phase 7 composes those histories into populations.
+Income
 profiles select conditional source bundles, while behavior and opening wealth use independent
 weighted dimensions. Receipt attempts support calendar frequency, probability, symmetric
 volatility, and monthly seasonality with one-step integer half-up realization.
@@ -408,7 +410,13 @@ Acceptance criteria:
 - effective coverage is measurable;
 - duplicates and reversals remain traceable without leaking truth labels.
 
-### Phase 7 — Scale and estimator integration
+### Phase 7 — Scale and estimator integration — implemented
+
+Orchestrator `0.7.0` keeps scenario contracts frozen and adds versioned batch and estimator
+envelopes. Consecutive member seeds make populations addressable; process scheduling cannot affect
+identity or output order. Parquet datasets use deterministic customer buckets, while the estimator
+receives an explicit observation-only allow list. A replaceable estimator interface and transparent
+baseline produce monthly evidence and confidence intervals for automatic private-truth evaluation.
 
 Implement:
 
@@ -427,6 +435,14 @@ Evaluation should include:
 - error around life events;
 - false classification of transfers, loans, and redemptions as income;
 - confidence-interval coverage.
+
+Acceptance criteria:
+
+- worker count does not change population identity or byte output;
+- Parquet rows, schemas, partitions, counts, and hashes are manifest-verifiable;
+- no private field can cross the estimator boundary;
+- external estimator outputs must reference known observations and every simulation month;
+- reports contain every required error, classification, event-window, and interval metric.
 
 ## 6. Test strategy
 
@@ -467,8 +483,8 @@ The completed first delivery contained only:
 Cards were outside that first slice and were added by Phase 2. Loans, investments, and net worth
 were added by Phase 3, income diversity by Phase 4, effective-dated life events by Phase 5, and
 incomplete observations by Phase 6.
-Batch population generation and observation degradation remain outside implemented scope. The
-first slice proved the three-level architecture before domain expansion.
+Batch population generation and observation degradation were added in Phases 7 and 6 respectively.
+The first slice proved the three-level architecture before domain expansion.
 
 ## 8. Definition of done
 

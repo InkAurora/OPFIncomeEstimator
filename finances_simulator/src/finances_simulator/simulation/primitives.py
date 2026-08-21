@@ -12,7 +12,7 @@ from datetime import date
 from typing import TypeVar
 from uuid import NAMESPACE_URL, UUID, uuid5
 
-SIMULATOR_VERSION = "0.6.0"
+SIMULATOR_VERSION = "0.7.0"
 CONTRACT_SCHEMA_VERSION = "1.5"
 RNG_ALGORITHM_VERSION = "sha256-counter-v1"
 

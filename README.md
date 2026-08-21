@@ -50,11 +50,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for repository-wide language and data-con
 
 ## Development status
 
-Simulator engine `0.6.0` and contract `1.5` implement incomplete observations with institution and
-account consent coverage, provider descriptions, and deterministic missing, late, duplicate, and
-reversal records. Observation policy cannot change hidden financial state or private truth. Frozen
-contracts `1.4`, `1.3`, `1.2`, `1.1`, and `1.0` remain supported with byte-stable reference outputs.
-The estimator, batch generation, and provider adapters remain unimplemented.
+Simulator orchestrator `0.7.0` implements deterministic parallel populations, partitioned Parquet,
+schema validation at component boundaries, estimator contract `1.0`, and automatic evaluation.
+Its members use frozen engine `0.6.0` and observation contract `1.5`, including consent coverage and
+observation artifacts. Contracts `1.4` through `1.0` remain supported with byte-stable reference
+outputs. A transparent baseline exercises integration; production estimator logic and provider
+adapters remain unimplemented.
 
 ## Simulator quick start
 
@@ -66,6 +67,12 @@ finances-simulator generate \
   --seed 42 \
   --months 12 \
   --output output/incomplete-observation-seed-42
+finances-simulator generate-batch \
+  --config configs/scenarios/incomplete_observation.yaml \
+  --seed 100 \
+  --population-size 100 \
+  --workers 4 \
+  --output output/population-100
 pytest
 ```
 

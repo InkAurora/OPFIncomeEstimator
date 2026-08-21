@@ -1,0 +1,84 @@
+{
+  "batch_id": "bat_77b87dbf6622eea71aec1ee4e6918094",
+  "by_consent_coverage": [
+    {
+      "count": 6,
+      "mean_absolute_error_minor": 200024.166667,
+      "median_absolute_error_minor": 120029.0,
+      "schema_version": "1.0",
+      "value": "83.33%"
+    }
+  ],
+  "by_income_range": [
+    {
+      "count": 6,
+      "mean_absolute_error_minor": 200024.166667,
+      "median_absolute_error_minor": 120029.0,
+      "schema_version": "1.0",
+      "value": "500000-999999"
+    }
+  ],
+  "by_income_type": [
+    {
+      "count": 6,
+      "mean_absolute_error_minor": 200024.166667,
+      "median_absolute_error_minor": 120029.0,
+      "schema_version": "1.0",
+      "value": "SALARIED"
+    }
+  ],
+  "confidence_interval_coverage": {
+    "coverage_rate": 0.83333333,
+    "covered_count": 5,
+    "interval_count": 6,
+    "schema_version": "1.0"
+  },
+  "estimator_version": "baseline-1.0.0",
+  "evaluated_customer_months": 6,
+  "false_income_classification": {
+    "by_economic_type": [
+      {
+        "count": 0,
+        "economic_type": "INVESTMENT_REDEMPTION",
+        "schema_version": "1.0"
+      },
+      {
+        "count": 0,
+        "economic_type": "LOAN_DISBURSEMENT",
+        "schema_version": "1.0"
+      },
+      {
+        "count": 0,
+        "economic_type": "OWN_TRANSFER",
+        "schema_version": "1.0"
+      }
+    ],
+    "false_classification_count": 0,
+    "false_classification_rate": 0.0,
+    "schema_version": "1.0",
+    "selected_transaction_count": 5
+  },
+  "life_event_error": {
+    "around_events": {
+      "count": 0,
+      "mean_absolute_error_minor": null,
+      "median_absolute_error_minor": null,
+      "schema_version": "1.0"
+    },
+    "outside_events": {
+      "count": 6,
+      "mean_absolute_error_minor": 200024.166667,
+      "median_absolute_error_minor": 120029.0,
+      "schema_version": "1.0"
+    },
+    "schema_version": "1.0"
+  },
+  "overall": {
+    "count": 6,
+    "mean_absolute_error_minor": 200024.166667,
+    "median_absolute_error_minor": 120029.0,
+    "schema_version": "1.0"
+  },
+  "population_size": 2,
+  "schema_version": "1.0"
+}

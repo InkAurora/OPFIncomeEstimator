@@ -1,10 +1,10 @@
 # Finances Simulator
 
 This component generates deterministic synthetic financial histories for estimator development,
-automated tests, and evaluation. Engine `0.6.0` adds consent coverage, provider descriptions, and
-missing, late, duplicate, and reversal observation artifacts without changing hidden economics or
-private truth. Frozen engines `0.5.0`, `0.4.0`, `0.3.0`, `0.2.0`, and `0.1.0` remain available for
-older configurations.
+automated tests, and evaluation. Phase-7 orchestrator `0.7.0` adds deterministic parallel
+populations, partitioned Parquet datasets, a versioned estimator boundary, and automatic evaluation
+reports. It runs frozen engine `0.6.0`/contract `1.5` members without changing their economics or
+record schemas. Older engines `0.5.0` through `0.1.0` remain available.
 
 ## Requirements and installation
 
@@ -46,6 +46,23 @@ The output path must be a new path or an existing empty directory. Generation re
 a non-empty directory. Invalid configuration or generation errors are written to standard error and
 return exit code 2. Runs are staged beside the destination and published by one directory rename, so
 a write failure does not expose a partial output tree.
+
+## Generate and evaluate a population
+
+```console
+python -m finances_simulator generate-batch --config configs/scenarios/incomplete_observation.yaml --seed 100 --population-size 1000 --months 12 --workers 8 --partitions 64 --output runs/population-1000
+```
+
+Member `n` uses seed `--seed + n`. `--workers` changes throughput only: population identity,
+records, Parquet bytes, manifests, estimates, and reports remain unchanged. `--partitions` selects
+the stable SHA-256 customer bucket count. Batch generation validates every Pydantic record again at
+the simulation boundary, then validates estimator identity, months, currency, and evidence links.
+
+The default `baseline` estimator is a transparent integration harness. It excludes visible
+duplicate/reversal lineage, observed own-transfer pairs, loan disbursement links, and investment
+redemption links. It is not a production income model. Integrate another estimator with
+`--estimator package.module:attribute`; the attribute may be a no-argument class, an object exposing
+`estimate(request)`, or a callable. Results must satisfy estimator contract `1.0`.
 
 ## Configuration behavior
 
@@ -89,8 +106,8 @@ rows and an aggregate manifest summary measure effective coverage using original
 
 Contract `1.3` replaces the single salary rule with `CustomerFactory`. It samples member index `0`
 for a CLI run from weighted income, conditional source-bundle, behavior, and wealth distributions.
-The reusable in-memory factory supports addressable samples of up to 100,000 members; Phase 7 still
-owns multi-customer history output. Income schedules support five month frequencies, per-attempt
+The reusable in-memory factory supports addressable samples of up to 100,000 members; Phase 7
+provides multi-customer history output. Income schedules support five month frequencies, per-attempt
 payment probability, symmetric volatility, and 12 calendar-month seasonality factors. All choices
 use isolated deterministic streams.
 
@@ -133,6 +150,7 @@ contributions have no available-funds check.
 
 Exact fields and semantics:
 
+- [batch and estimator contract 1.0](docs/contracts-batch-v1.md)
 - [contract schema 1.5](docs/contracts-v1-5.md)
 - [contract schema 1.4](docs/contracts-v1-4.md)
 - [contract schema 1.3](docs/contracts-v1-3.md)
@@ -141,6 +159,23 @@ Exact fields and semantics:
 - [frozen contract schema 1.0](docs/contracts-v1.md)
 
 ## Output layout and trust boundary
+
+Batch output is separate from single-run JSONL and uses this layout:
+
+```text
+<output>/
+|-- population_manifest.json
+|-- observed/<dataset>/customer_bucket=<nn>/part-00000.parquet
+|-- private/<dataset>/customer_bucket=<nn>/part-00000.parquet
+`-- evaluation/
+    |-- estimates/customer_bucket=<nn>/part-00000.parquet
+    `-- report.json
+```
+
+Each populated Parquet row adds `batch_id`, `run_id`, `seed`, and `customer_bucket` provenance.
+Nested open objects are canonical JSON columns; primitive repeated fields remain Parquet lists.
+Manifest file hashes and embedded Arrow metadata make component-boundary verification explicit.
+See [batch contract 1.0](docs/contracts-batch-v1.md) for metric definitions and trust rules.
 
 Schema `1.5` retains the schema `1.4` tree and adds
 `observed/observation_coverage.jsonl`. Transaction rows add arrival date and nullable duplicate and
@@ -203,6 +238,9 @@ exercises all life-event and anomaly types across a 24-month salaried history.
 The current
 [schema-1.5 seed-42 reference run](examples/generated/incomplete_observation_seed_42/run_manifest.json)
 exercises all three coverage levels and every deposit-transaction degradation type.
+The Phase-7
+[two-member population reference](examples/generated/phase7_population_seed_100_count_2/population_manifest.json)
+anchors deterministic Parquet, estimator-boundary, and evaluation output.
 
 ## Responsibilities
 
@@ -217,12 +255,13 @@ exercises all three coverage levels and every deposit-transaction degradation ty
 
 ## Current limitations
 
-Schema `1.5` generates one sampled customer and one currency per run. It supports effective-dated
+Each source run still generates one sampled customer and one currency; Phase 7 composes these runs
+into populations. Contract `1.5` supports effective-dated
 changes to existing materialized income sources and household state alongside active
 checking/savings accounts, fixed-policy cards, personal constant-principal loans, and fixed-income
 investments. Property and vehicle ownership are counts, not valued balance-sheet assets. Loan and
-card payments are always full and may make deposit balances negative. The simulator does not yet
-write batch populations or model revolving cards, loan default or prepayment, investment units or
+card payments are always full and may make deposit balances negative. The simulator does not model
+revolving cards, loan default or prepayment, investment units or
 market prices, fees, taxes, negative returns, observation degradation outside deposit transactions,
 consent lifecycle timestamps, overdraft limits, holidays, or inflation.
 
