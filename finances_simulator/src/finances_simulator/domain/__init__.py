@@ -9,7 +9,7 @@ from finances_simulator.domain.cards import (
     CreditLimitSnapshot,
     InvoiceStatus,
 )
-from finances_simulator.domain.customer import CustomerTwin, CustomerTwinV3
+from finances_simulator.domain.customer import CustomerTwin, CustomerTwinV3, CustomerTwinV4
 from finances_simulator.domain.events import EconomicType, FinancialEvent
 from finances_simulator.domain.income import (
     BehaviorProfile,
@@ -26,6 +26,16 @@ from finances_simulator.domain.investments import (
     InvestmentBalanceSnapshot,
     InvestmentTransaction,
     InvestmentTransactionType,
+)
+from finances_simulator.domain.life_events import (
+    AnomalyType,
+    CustomerLifeState,
+    EmploymentStatus,
+    FinancialAnomaly,
+    IncomeSourceState,
+    LifeEventTransition,
+    LifeEventType,
+    MaritalStatus,
 )
 from finances_simulator.domain.loans import (
     Loan,
@@ -45,6 +55,7 @@ __all__ = [
     "CustomerFactoryMember",
     "CustomerTwin",
     "CustomerTwinV3",
+    "CustomerTwinV4",
     "Direction",
     "EconomicType",
     "FinancialEvent",
@@ -66,4 +77,12 @@ __all__ = [
     "SampledIncomeSource",
     "BehaviorProfile",
     "WealthBand",
+    "AnomalyType",
+    "CustomerLifeState",
+    "EmploymentStatus",
+    "FinancialAnomaly",
+    "IncomeSourceState",
+    "LifeEventTransition",
+    "LifeEventType",
+    "MaritalStatus",
 ]

@@ -12,8 +12,8 @@ from datetime import date
 from typing import TypeVar
 from uuid import NAMESPACE_URL, UUID, uuid5
 
-SIMULATOR_VERSION = "0.4.0"
-CONTRACT_SCHEMA_VERSION = "1.3"
+SIMULATOR_VERSION = "0.5.0"
+CONTRACT_SCHEMA_VERSION = "1.4"
 RNG_ALGORITHM_VERSION = "sha256-counter-v1"
 
 _Choice = TypeVar("_Choice")
@@ -32,6 +32,7 @@ V0_PROFILE = VersionProfile(simulator_version="0.1.0", contract_schema_version="
 V1_PROFILE = VersionProfile(simulator_version="0.2.0", contract_schema_version="1.1")
 V2_PROFILE = VersionProfile(simulator_version="0.3.0", contract_schema_version="1.2")
 V3_PROFILE = VersionProfile(simulator_version="0.4.0", contract_schema_version="1.3")
+V4_PROFILE = VersionProfile(simulator_version="0.5.0", contract_schema_version="1.4")
 
 _SIMULATION_NAMESPACE = uuid5(
     NAMESPACE_URL,
@@ -56,6 +57,8 @@ _KIND_PREFIXES = {
     "investment_transaction": "itx",
     "investment_balance": "ivb",
     "balance_sheet": "nwt",
+    "life_event": "lfe",
+    "anomaly": "ano",
 }
 
 
@@ -262,6 +265,7 @@ __all__ = [
     "V1_PROFILE",
     "V2_PROFILE",
     "V3_PROFILE",
+    "V4_PROFILE",
     "VersionProfile",
     "deterministic_id",
     "make_rng",

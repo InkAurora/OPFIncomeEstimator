@@ -21,6 +21,7 @@ from finances_simulator.ledger.effects import (
 from finances_simulator.simulation.engine import SimulationRun
 from finances_simulator.simulation.primitives import (
     V3_PROFILE,
+    VersionProfile,
     deterministic_id,
     make_rng_stream,
     month_start,
@@ -327,24 +328,26 @@ def simulate_v3(
     *,
     seed: int,
     months: int | None = None,
+    _profile: VersionProfile = V3_PROFILE,
+    _config_fingerprint: str | None = None,
 ) -> SimulationRun:
     """Sample one customer and create a schema-1.3 reconciled financial world."""
 
-    fingerprint = config_sha256(config)
+    fingerprint = config_sha256(config) if _config_fingerprint is None else _config_fingerprint
     member = CustomerFactory(config.customer_factory, seed=seed).sample_one()
     effective_config = _scaled_config(config, member)
     base = simulate_v2(
         effective_config,
         seed=seed,
         months=months,
-        _profile=V3_PROFILE,
+        _profile=_profile,
         _include_salary=False,
         _config_fingerprint=fingerprint,
     )
     namespace = simulation_namespace(
         fingerprint,
         seed,
-        simulator_version=V3_PROFILE.simulator_version,
+        simulator_version=_profile.simulator_version,
     )
     account_by_id = {account.account_id: account for account in base.customer_twin.accounts}
     accounts_by_ref = {

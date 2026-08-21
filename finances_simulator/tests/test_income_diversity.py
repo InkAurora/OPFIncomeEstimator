@@ -1476,6 +1476,11 @@ def _output_digest(root: Path) -> str:
             "run_9fb37c9f832d5afa87dbd50130691b09",
             "de1bc5010f36c74117fb05a28bfe4f60c0c349a0c0c7e1c45f948ebb3f4d2887",
         ),
+        (
+            "life_events",
+            "run_9f1659f3111052c592d5dc48930ab188",
+            "1e2a0995bb02a2e0fe8ea6f83be0d92c5aa78e4e3a9b1bc708ffa5045e3f62a7",
+        ),
     ),
 )
 def test_all_versioned_reference_trees_remain_byte_identical(

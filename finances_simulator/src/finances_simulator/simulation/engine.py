@@ -12,7 +12,7 @@ from finances_simulator.domain.cards import (
     CreditCard,
     CreditLimitSnapshot,
 )
-from finances_simulator.domain.customer import CustomerTwin, CustomerTwinV3
+from finances_simulator.domain.customer import CustomerTwin, CustomerTwinV3, CustomerTwinV4
 from finances_simulator.domain.events import EconomicType, FinancialEvent
 from finances_simulator.domain.income import CustomerFactoryMember, IncomeSource
 from finances_simulator.domain.investments import (
@@ -20,6 +20,7 @@ from finances_simulator.domain.investments import (
     InvestmentBalanceSnapshot,
     InvestmentTransaction,
 )
+from finances_simulator.domain.life_events import FinancialAnomaly, LifeEventTransition
 from finances_simulator.domain.loans import Loan, LoanBalanceSnapshot, LoanPayment
 from finances_simulator.ledger import post_events
 from finances_simulator.simulation.primitives import (
@@ -46,7 +47,7 @@ class SimulationRun:
     start_date: date
     end_date: date
     config_sha256: str
-    customer_twin: CustomerTwin | CustomerTwinV3
+    customer_twin: CustomerTwin | CustomerTwinV3 | CustomerTwinV4
     events: tuple[FinancialEvent, ...]
     ledger_entries: tuple[LedgerEntry, ...]
     profile: VersionProfile = V0_PROFILE
@@ -63,6 +64,8 @@ class SimulationRun:
     investment_balance_snapshots: tuple[InvestmentBalanceSnapshot, ...] = ()
     factory_member: CustomerFactoryMember | None = None
     income_sources: tuple[IncomeSource, ...] = ()
+    life_event_transitions: tuple[LifeEventTransition, ...] = ()
+    anomalies: tuple[FinancialAnomaly, ...] = ()
 
 
 def simulate_v0(
@@ -215,6 +218,12 @@ def simulate(
     from finances_simulator.config_v1 import ScenarioConfigV1
     from finances_simulator.config_v2 import ScenarioConfigV2
     from finances_simulator.config_v3 import ScenarioConfigV3
+    from finances_simulator.config_v4 import ScenarioConfigV4
+
+    if isinstance(config, ScenarioConfigV4):
+        from finances_simulator.simulation.v4 import simulate_v4
+
+        return simulate_v4(config, seed=seed, months=months)
 
     if isinstance(config, ScenarioConfigV3):
         from finances_simulator.simulation.v3 import simulate_v3

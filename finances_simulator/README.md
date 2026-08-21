@@ -1,9 +1,9 @@
 # Finances Simulator
 
 This component generates deterministic synthetic financial histories for estimator development,
-automated tests, and evaluation. Engine `0.4.0` adds seven income profiles, multiple volatile and
-seasonal sources, and independent behavior and wealth sampling to the full product model. Frozen
-engines `0.3.0`, `0.2.0`, and `0.1.0` remain available for older configurations.
+automated tests, and evaluation. Engine `0.5.0` adds effective-dated life transitions, one-off life
+cash flows, scenario seasonality, and privately labeled anomalies to the full product model. Frozen
+engines `0.4.0`, `0.3.0`, `0.2.0`, and `0.1.0` remain available for older configurations.
 
 ## Requirements and installation
 
@@ -21,15 +21,16 @@ compatible dependency ranges so the library can participate in a larger applicat
 
 ## Generate a scenario
 
-Run the current schema `1.3` scenario from this directory:
+Run the current schema `1.4` scenario from this directory:
+
+```console
+python -m finances_simulator generate --config configs/scenarios/life_events.yaml --seed 42 --months 24 --output runs/life-events-seed-42
+```
+
+Run frozen schema `1.3`, `1.2`, `1.1`, or `1.0` scenarios with:
 
 ```console
 python -m finances_simulator generate --config configs/scenarios/income_diverse.yaml --seed 42 --months 24 --output runs/income-diverse-seed-42
-```
-
-Run frozen schema `1.2`, `1.1`, or `1.0` scenarios with:
-
-```console
 python -m finances_simulator generate --config configs/scenarios/salaried_loans_investments.yaml --seed 42 --months 24 --output runs/salaried-loans-investments-seed-42
 python -m finances_simulator generate --config configs/scenarios/salaried_multi_account_card.yaml --seed 42 --months 24 --output runs/salaried-multi-account-card-seed-42
 python -m finances_simulator generate --config configs/scenarios/salaried_basic.yaml --seed 42 --months 24 --output runs/salaried-basic-seed-42
@@ -48,7 +49,10 @@ a write failure does not expose a partial output tree.
 
 The loader dispatches on the required top-level `schema_version`:
 
-- [`income_diverse.yaml`](configs/scenarios/income_diverse.yaml) uses contract `1.3` and engine
+- [`life_events.yaml`](configs/scenarios/life_events.yaml) uses contract `1.4` and engine `0.5.0`:
+  income and household transitions, exceptional expenses and inflows, seasonal multipliers, and
+  four correctly typed anomaly classes.
+- [`income_diverse.yaml`](configs/scenarios/income_diverse.yaml) uses frozen contract `1.3` and engine
   `0.4.0`: seven weighted income profiles, conditional multi-source bundles, independent behavior
   and wealth axes, and the complete account/card/loan/investment world.
 - [`salaried_basic.yaml`](configs/scenarios/salaried_basic.yaml) uses frozen contract `1.0` and
@@ -73,6 +77,18 @@ The reusable in-memory factory supports addressable samples of up to 100,000 mem
 owns multi-customer history output. Income schedules support five month frequencies, per-attempt
 payment probability, symmetric volatility, and 12 calendar-month seasonality factors. All choices
 use isolated deterministic streams.
+
+Contract `1.4` adds `initial_life_state`, two 12-month scenario seasonality vectors,
+`life_events`, and `anomalies`. Income transitions retain one materialized source ID while changing
+its effective active flag, base amount, payer, or description. A transition takes effect before
+financial activity on its effective date. Private truth records customer and source state
+immediately before and after every transition, including comparable annualized base-income totals.
+
+Recurring source income combines source seasonality, scenario seasonality, and volatility in one
+integer half-up realization. Scenario expense multipliers apply to recurring deposit expenses and
+configured card-purchase occurrences. Explicit life-event and anomaly amounts are not seasonally
+scaled. Large PIX anomalies are balanced own-account transfers; refunds and asset sales are
+non-income credits; anomalous investment redemptions reconcile investment and deposit balances.
 
 Behavior multipliers scale spending and saving flows; wealth multipliers scale opening deposit and
 investment balances. Income realization combines seasonality and volatility in one integer half-up
@@ -101,6 +117,7 @@ contributions have no available-funds check.
 
 Exact fields and semantics:
 
+- [contract schema 1.4](docs/contracts-v1-4.md)
 - [contract schema 1.3](docs/contracts-v1-3.md)
 - [contract schema 1.2](docs/contracts-v1-2.md)
 - [contract schema 1.1](docs/contracts-v1-1.md)
@@ -108,7 +125,7 @@ Exact fields and semantics:
 
 ## Output layout and trust boundary
 
-Schema `1.3` emits the schema `1.2` observed tree plus private income-source truth:
+Schema `1.4` emits the schema `1.3` tree plus private life-event and anomaly truth:
 
 ```text
 <output>/
@@ -132,6 +149,8 @@ Schema `1.3` emits the schema `1.2` observed tree plus private income-source tru
     |-- customer_ground_truth.jsonl
     |-- customer_month_ground_truth.jsonl
     |-- income_source_ground_truth.jsonl
+    |-- life_event_ground_truth.jsonl
+    |-- anomaly_ground_truth.jsonl
     |-- transaction_ground_truth.jsonl
     |-- credit_card_transaction_ground_truth.jsonl
     |-- loan_payment_ground_truth.jsonl
@@ -139,7 +158,7 @@ Schema `1.3` emits the schema `1.2` observed tree plus private income-source tru
     `-- balance_sheet_ground_truth.jsonl
 ```
 
-Schemas `1.2`, `1.1`, and `1.0` retain their original version-specific dataset trees.
+Schemas `1.3`, `1.2`, `1.1`, and `1.0` retain their original version-specific dataset trees.
 
 Files under `observed/` form the normalized, Open Finance-inspired estimator input. They contain
 account, balance, and transaction observations but omit hidden economic classifications and true
@@ -156,8 +175,10 @@ anchors legacy byte-for-byte compatibility. The bundled
 exercises statement-boundary and uneven-installment behavior. The frozen
 [schema-1.2 seed-42 reference run](examples/generated/salaried_loans_investments_seed_42/run_manifest.json)
 adds 24-month loan, investment, and net-worth reconciliation.
-The current [schema-1.3 seed-42 reference run](examples/generated/income_diverse_seed_42/run_manifest.json)
-samples a mixed-income, balanced-behavior, high-wealth customer with two variable sources.
+The frozen [schema-1.3 seed-42 reference run](examples/generated/income_diverse_seed_42/run_manifest.json)
+samples a mixed-income, balanced-behavior, high-wealth customer with two variable sources. The
+current [schema-1.4 seed-42 reference run](examples/generated/life_events_seed_42/run_manifest.json)
+exercises all life-event and anomaly types across a 24-month salaried history.
 
 ## Responsibilities
 
@@ -172,13 +193,14 @@ samples a mixed-income, balanced-behavior, high-wealth customer with two variabl
 
 ## Current limitations
 
-Schema `1.3` generates one sampled customer and one currency per run. It supports seven stationary
-income profiles and variable calendar-month receipts alongside active checking/savings accounts,
-fixed-policy cards, personal constant-principal loans, and fixed-income investments. Loan and card
-payments are always full and may make deposit balances negative. The simulator does not yet write
-batch populations or model revolving cards, loan default or prepayment, investment units or market
-prices, fees, taxes, negative returns, job changes, observation degradation, overdraft limits,
-holidays, or inflation.
+Schema `1.4` generates one sampled customer and one currency per run. It supports effective-dated
+changes to existing materialized income sources and household state alongside active
+checking/savings accounts, fixed-policy cards, personal constant-principal loans, and fixed-income
+investments. Property and vehicle ownership are counts, not valued balance-sheet assets. Loan and
+card payments are always full and may make deposit balances negative. The simulator does not yet
+write batch populations or model revolving cards, loan default or prepayment, investment units or
+market prices, fees, taxes, negative returns, observation degradation, overdraft limits, holidays,
+or inflation.
 
 ## Boundary
 

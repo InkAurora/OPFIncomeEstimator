@@ -1,0 +1,243 @@
+schema_version: "1.4"
+
+scenario:
+  name: life_events
+  start_date: 2024-01-01
+  default_months: 24
+
+customer:
+  currency: BRL
+  primary_account_ref: checking
+
+customer_factory:
+  income_profiles:
+    - income_profile: SALARIED
+      weight_basis_points: 10000
+      source_bundles:
+        - source_bundle_ref: salaried_lifecycle
+          weight_basis_points: 10000
+          sources:
+            - source_ref: salary
+              income_kind: SALARY
+              payer: Example First Employer Ltd.
+              description: MONTHLY PAYROLL CREDIT
+              destination_account_ref: checking
+              amount_distribution:
+                minimum_minor: 500000
+                maximum_minor: 500000
+                step_minor: 1
+              day_of_month: 5
+              frequency: MONTHLY
+              start_month_index: 0
+              occurrences: 24
+              payment_probability_basis_points: 10000
+              volatility_basis_points: 0
+              seasonality_basis_points: [10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 11000]
+  behavior_profiles:
+    - behavior_profile: BALANCED
+      weight_basis_points: 10000
+      spending_multiplier_basis_points: 10000
+      saving_multiplier_basis_points: 10000
+  wealth_profiles:
+    - wealth_band: MIDDLE
+      weight_basis_points: 10000
+      deposit_balance_multiplier_basis_points: 10000
+      investment_balance_multiplier_basis_points: 10000
+
+institutions:
+  - institution_ref: bank
+    institution_id: fictional-bank-001
+    institution_name: Fictional Bank
+
+accounts:
+  - account_ref: checking
+    institution_ref: bank
+    account_label: Primary checking account
+    account_type: CHECKING
+    opening_balance_minor: 800000
+  - account_ref: savings
+    institution_ref: bank
+    account_label: Reserve savings account
+    account_type: SAVINGS
+    opening_balance_minor: 200000
+
+fixed_expenses:
+  - rule_id: housing
+    category: housing
+    amount_minor: 160000
+    day_of_month: 10
+    payee: Example Property Management
+    description: MONTHLY RENT
+    source_account_ref: checking
+
+variable_expenses:
+  count_min: 2
+  count_max: 2
+  amount_min_minor: 5000
+  amount_max_minor: 15000
+  day_min: 12
+  day_max: 24
+  source_account_ref: checking
+  merchants:
+    - entity: Example Supermarket
+      description: PIX PAYMENT SUPERMARKET
+    - entity: Example Pharmacy
+      description: PIX PAYMENT PHARMACY
+
+own_transfers:
+  - rule_id: monthly_reserve
+    source_account_ref: checking
+    destination_account_ref: savings
+    amount_minor: 40000
+    day_of_month: 7
+    outgoing_description: TRANSFER TO OWN RESERVE
+    incoming_description: TRANSFER FROM OWN PRIMARY
+
+credit_cards: []
+card_purchase_rules: []
+loans: []
+
+investments:
+  - investment_ref: reserve_investment
+    institution_ref: bank
+    investment_label: Fixed-income reserve
+    investment_type: FIXED_INCOME
+    opening_balance_minor: 400000
+    monthly_return_basis_points: 50
+    return_description: MONTHLY FIXED-INCOME RETURN
+
+investment_contribution_rules:
+  - rule_id: monthly_contribution
+    investment_ref: reserve_investment
+    account_ref: savings
+    amount_minor: 20000
+    day_of_month: 8
+    start_month_index: 0
+    interval_months: 1
+    occurrences: 24
+    description: MONTHLY INVESTMENT CONTRIBUTION
+
+investment_redemption_rules: []
+
+initial_life_state:
+  marital_status: SINGLE
+  dependent_count: 0
+  property_count: 0
+  vehicle_count: 0
+  job_title: Analyst
+
+seasonality:
+  income_multipliers_basis_points: [10000, 10000, 10000, 10000, 10000, 10000, 9000, 10000, 10000, 10000, 10000, 12000]
+  expense_multipliers_basis_points: [10000, 10000, 10000, 10000, 10000, 10000, 13000, 10000, 10000, 10000, 10000, 15000]
+
+life_events:
+  - life_event_ref: marriage
+    event_type: MARRIAGE
+    effective_date: 2024-02-14
+  - life_event_ref: first_dependent
+    event_type: DEPENDENT_ADDED
+    effective_date: 2024-03-01
+    count: 1
+  - life_event_ref: annual_raise
+    event_type: RAISE
+    effective_date: 2024-04-01
+    income_source_ref: salary
+    new_base_amount_minor: 550000
+  - life_event_ref: promotion
+    event_type: PROMOTION
+    effective_date: 2024-06-01
+    income_source_ref: salary
+    new_job_title: Senior Analyst
+    amount_multiplier_basis_points: 11000
+  - life_event_ref: vehicle_purchase
+    event_type: VEHICLE_PURCHASE
+    effective_date: 2024-07-15
+    source_account_ref: checking
+    amount_minor: 250000
+    counterparty: Example Vehicle Dealer
+    description: VEHICLE PURCHASE
+  - life_event_ref: job_loss
+    event_type: JOB_LOSS
+    effective_date: 2024-08-01
+    income_source_ref: salary
+  - life_event_ref: medical_expense
+    event_type: MEDICAL_EXPENSE
+    effective_date: 2024-09-12
+    source_account_ref: checking
+    amount_minor: 80000
+    payee: Example Hospital
+    description: HOSPITAL EXPENSE
+  - life_event_ref: job_change
+    event_type: JOB_CHANGE
+    effective_date: 2024-10-01
+    income_source_ref: salary
+    new_payer: Example Second Employer Ltd.
+    new_description: NEW EMPLOYER PAYROLL CREDIT
+    new_base_amount_minor: 700000
+    new_job_title: Product Manager
+  - life_event_ref: annual_bonus
+    event_type: BONUS
+    effective_date: 2024-11-20
+    income_source_ref: salary
+    amount_minor: 350000
+    description: ANNUAL PERFORMANCE BONUS
+  - life_event_ref: inheritance
+    event_type: INHERITANCE
+    effective_date: 2024-12-18
+    destination_account_ref: checking
+    amount_minor: 600000
+    source_entity: Example Estate
+    description: ESTATE DISTRIBUTION
+  - life_event_ref: property_purchase
+    event_type: PROPERTY_PURCHASE
+    effective_date: 2025-03-10
+    source_account_ref: checking
+    amount_minor: 500000
+    counterparty: Example Property Seller
+    description: PROPERTY DOWN PAYMENT
+  - life_event_ref: vacation
+    event_type: VACATION
+    effective_date: 2025-07-10
+    source_account_ref: checking
+    amount_minor: 120000
+    payee: Example Travel Agency
+    description: VACATION PACKAGE
+  - life_event_ref: divorce
+    event_type: DIVORCE
+    effective_date: 2025-08-15
+  - life_event_ref: dependent_transition
+    event_type: DEPENDENT_REMOVED
+    effective_date: 2025-09-01
+    count: 1
+
+anomalies:
+  - anomaly_ref: large_pix
+    anomaly_type: LARGE_PIX_TRANSFER
+    occurred_at: 2024-03-20
+    amount_minor: 300000
+    source_account_ref: checking
+    destination_account_ref: savings
+    outgoing_description: PIX TRANSFER TO OWN RESERVE
+    incoming_description: PIX TRANSFER FROM OWN CHECKING
+  - anomaly_ref: merchant_refund
+    anomaly_type: REFUND
+    occurred_at: 2024-05-22
+    amount_minor: 45000
+    destination_account_ref: checking
+    source_entity: Example Electronics Merchant
+    description: PURCHASE REFUND
+  - anomaly_ref: vehicle_sale
+    anomaly_type: ASSET_SALE
+    occurred_at: 2025-05-18
+    amount_minor: 180000
+    destination_account_ref: checking
+    buyer: Example Vehicle Buyer
+    asset_type: VEHICLE
+    description: VEHICLE SALE PROCEEDS
+  - anomaly_ref: reserve_redemption
+    anomaly_type: INVESTMENT_REDEMPTION
+    occurred_at: 2025-06-20
+    amount_minor: 150000
+    investment_ref: reserve_investment
+    destination_account_ref: checking
+    description: RESERVE INVESTMENT REDEMPTION

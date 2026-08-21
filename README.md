@@ -50,11 +50,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for repository-wide language and data-con
 
 ## Development status
 
-Simulator engine `0.4.0` and contract `1.3` implement income diversity and the customer factory. It
-samples seven income profiles, conditional multi-source schedules, and independent behavior and
-wealth dimensions while retaining reconciled accounts, cards, loans, investments, and net worth.
-Frozen contracts `1.2`, `1.1`, and `1.0` remain supported with byte-stable reference outputs. The
-estimator, life events, observation degradation, batch generation, and provider adapters remain
+Simulator engine `0.5.0` and contract `1.4` implement effective-dated life events, calendar
+seasonality, and labeled financial anomalies. Raises, promotions, job loss, job changes, household
+transitions, purchases, windfalls, medical costs, and vacations now alter hidden state or cash flow
+causally. Frozen contracts `1.3`, `1.2`, `1.1`, and `1.0` remain supported with byte-stable reference
+outputs. The estimator, observation degradation, batch generation, and provider adapters remain
 unimplemented.
 
 ## Simulator quick start
@@ -63,14 +63,15 @@ unimplemented.
 cd finances_simulator
 python -m pip install -c constraints-dev.txt -e ".[dev]"
 finances-simulator generate \
-  --config configs/scenarios/income_diverse.yaml \
+  --config configs/scenarios/life_events.yaml \
   --seed 42 \
   --months 24 \
   --output output/income-diverse-seed-42
 pytest
 ```
 
-Use `configs/scenarios/salaried_loans_investments.yaml` for frozen schema `1.2`,
+Use `configs/scenarios/income_diverse.yaml` for frozen schema `1.3`,
+`configs/scenarios/salaried_loans_investments.yaml` for frozen schema `1.2`,
 `configs/scenarios/salaried_multi_account_card.yaml` for frozen schema `1.1`, or
 `configs/scenarios/salaried_basic.yaml` for frozen schema `1.0`. See
 [`finances_simulator/README.md`](finances_simulator/README.md) for every profile, output contract,

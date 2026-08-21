@@ -12,6 +12,7 @@ from finances_simulator.domain.income import (
     IncomeSource,
     WealthBand,
 )
+from finances_simulator.domain.life_events import CustomerLifeState
 
 
 class CustomerTwin(BaseModel):
@@ -98,4 +99,11 @@ class CustomerTwinV3(BaseModel):
         return self
 
 
-__all__ = ["CustomerTwin", "CustomerTwinV3"]
+class CustomerTwinV4(CustomerTwinV3):
+    """Hidden customer state with a complete Phase-5 life-state interval."""
+
+    initial_life_state: CustomerLifeState
+    final_life_state: CustomerLifeState
+
+
+__all__ = ["CustomerTwin", "CustomerTwinV3", "CustomerTwinV4"]

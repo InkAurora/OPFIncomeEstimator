@@ -16,6 +16,7 @@ class PostingPriority(IntEnum):
     """Causal ordering for account effects sharing a posting date."""
 
     INCOME = 10
+    EXTERNAL_CREDIT = 12
     LOAN_DISBURSEMENT = 15
     OWN_TRANSFER = 20
     INVESTMENT_CONTRIBUTION = 22

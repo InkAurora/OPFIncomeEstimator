@@ -15,9 +15,11 @@ from finances_simulator.generation import GeneratedScenario
 from finances_simulator.ground_truth.projector_v1 import GroundTruthBundleV1
 from finances_simulator.ground_truth.projector_v2 import GroundTruthBundleV2
 from finances_simulator.ground_truth.projector_v3 import GroundTruthBundleV3
+from finances_simulator.ground_truth.projector_v4 import GroundTruthBundleV4
 from finances_simulator.observations.projector_v1 import ObservationBundleV1
 from finances_simulator.observations.projector_v2 import ObservationBundleV2
 from finances_simulator.observations.projector_v3 import ObservationBundleV3
+from finances_simulator.observations.projector_v4 import ObservationBundleV4
 
 
 class OutputDirectoryNotEmptyError(FileExistsError):
@@ -96,14 +98,14 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
     }
     if isinstance(
         truth,
-        GroundTruthBundleV1 | GroundTruthBundleV2 | GroundTruthBundleV3,
+        GroundTruthBundleV1 | GroundTruthBundleV2 | GroundTruthBundleV3 | GroundTruthBundleV4,
     ):
         private_datasets["credit_card_transaction_ground_truth"] = _write_jsonl(
             private_directory / "credit_card_transaction_ground_truth.jsonl",
             truth.credit_card_transactions,
             schema_version=profile.contract_schema_version,
         )
-    if isinstance(truth, GroundTruthBundleV2 | GroundTruthBundleV3):
+    if isinstance(truth, GroundTruthBundleV2 | GroundTruthBundleV3 | GroundTruthBundleV4):
         private_datasets.update(
             {
                 "loan_payment_ground_truth": _write_jsonl(
@@ -123,11 +125,26 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
                 ),
             }
         )
-    if isinstance(truth, GroundTruthBundleV3):
+    if isinstance(truth, GroundTruthBundleV3 | GroundTruthBundleV4):
         private_datasets["income_source_ground_truth"] = _write_jsonl(
             private_directory / "income_source_ground_truth.jsonl",
             truth.income_sources,
             schema_version=profile.contract_schema_version,
+        )
+    if isinstance(truth, GroundTruthBundleV4):
+        private_datasets.update(
+            {
+                "life_event_ground_truth": _write_jsonl(
+                    private_directory / "life_event_ground_truth.jsonl",
+                    truth.life_events,
+                    schema_version=profile.contract_schema_version,
+                ),
+                "anomaly_ground_truth": _write_jsonl(
+                    private_directory / "anomaly_ground_truth.jsonl",
+                    truth.anomalies,
+                    schema_version=profile.contract_schema_version,
+                ),
+            }
         )
     observed_datasets = {
         "accounts": _write_jsonl(
@@ -148,7 +165,7 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
     }
     if isinstance(
         observations,
-        ObservationBundleV1 | ObservationBundleV2 | ObservationBundleV3,
+        ObservationBundleV1 | ObservationBundleV2 | ObservationBundleV3 | ObservationBundleV4,
     ):
         observed_datasets.update(
             {
@@ -179,7 +196,10 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
                 ),
             }
         )
-    if isinstance(observations, ObservationBundleV2 | ObservationBundleV3):
+    if isinstance(
+        observations,
+        ObservationBundleV2 | ObservationBundleV3 | ObservationBundleV4,
+    ):
         observed_datasets.update(
             {
                 "loans": _write_jsonl(

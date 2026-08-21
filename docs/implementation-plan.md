@@ -362,6 +362,12 @@ Acceptance criteria:
 
 ### Phase 5 — V4: life events, seasonality, and anomalies
 
+Engine `0.5.0` and schema `1.4` implement this bounded slice. Life events are configured with
+effective dates and produce continuous before/after customer and income-source state. One-off cash
+events and anomalies remain ordinary reconciled financial events; their causal labels are emitted
+only in private truth. Calendar multipliers layer over source income seasonality and recurring
+deposit/card expenses.
+
 Implement:
 
 - raises, promotions, job loss, and job changes;
@@ -450,9 +456,10 @@ The completed first delivery contained only:
 - command-line generation;
 - reconciliation, leakage, and reproducibility tests.
 
-Cards were outside that first slice and were added by Phase 2. Loans, investments, and net worth were
-added by Phase 3. Population generation, life events, and observation degradation remain outside
-implemented scope. The first slice proved the three-level architecture before domain expansion.
+Cards were outside that first slice and were added by Phase 2. Loans, investments, and net worth
+were added by Phase 3, income diversity by Phase 4, and effective-dated life events by Phase 5.
+Batch population generation and observation degradation remain outside implemented scope. The
+first slice proved the three-level architecture before domain expansion.
 
 ## 8. Definition of done
 
