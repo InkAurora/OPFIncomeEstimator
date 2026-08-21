@@ -17,6 +17,7 @@ from finances_simulator.simulation.investments import simulate_investments
 from finances_simulator.simulation.loans import simulate_loans
 from finances_simulator.simulation.primitives import (
     V2_PROFILE,
+    VersionProfile,
     deterministic_id,
     month_start,
     scheduled_date,
@@ -66,14 +67,24 @@ def simulate_v2(
     *,
     seed: int,
     months: int | None = None,
+    _profile: VersionProfile = V2_PROFILE,
+    _include_salary: bool = True,
+    _config_fingerprint: str | None = None,
 ) -> SimulationRun:
     """Create schema-1.2 hidden state and one reconciled deposit ledger."""
 
-    base = simulate_v1(config, seed=seed, months=months, _profile=V2_PROFILE)
+    base = simulate_v1(
+        config,
+        seed=seed,
+        months=months,
+        _profile=_profile,
+        _include_salary=_include_salary,
+        _config_fingerprint=_config_fingerprint,
+    )
     namespace = simulation_namespace(
         base.config_sha256,
         seed,
-        simulator_version=V2_PROFILE.simulator_version,
+        simulator_version=_profile.simulator_version,
     )
     account_by_id = {account.account_id: account for account in base.customer_twin.accounts}
     accounts_by_ref: dict[str, Account] = {

@@ -1,9 +1,9 @@
 # Finances Simulator
 
 This component generates deterministic synthetic financial histories for estimator development,
-automated tests, and evaluation. Engine `0.3.0` adds constant-principal loans, fixed-income
-investments, reconciled product balances, and monthly net worth to the multiple-account/card model.
-Frozen engines `0.2.0` and `0.1.0` remain available for schema `1.1` and `1.0` configurations.
+automated tests, and evaluation. Engine `0.4.0` adds seven income profiles, multiple volatile and
+seasonal sources, and independent behavior and wealth sampling to the full product model. Frozen
+engines `0.3.0`, `0.2.0`, and `0.1.0` remain available for older configurations.
 
 ## Requirements and installation
 
@@ -21,15 +21,16 @@ compatible dependency ranges so the library can participate in a larger applicat
 
 ## Generate a scenario
 
-Run the current schema `1.2` scenario from this directory:
+Run the current schema `1.3` scenario from this directory:
+
+```console
+python -m finances_simulator generate --config configs/scenarios/income_diverse.yaml --seed 42 --months 24 --output runs/income-diverse-seed-42
+```
+
+Run frozen schema `1.2`, `1.1`, or `1.0` scenarios with:
 
 ```console
 python -m finances_simulator generate --config configs/scenarios/salaried_loans_investments.yaml --seed 42 --months 24 --output runs/salaried-loans-investments-seed-42
-```
-
-Run frozen schema `1.1` or `1.0` scenarios with:
-
-```console
 python -m finances_simulator generate --config configs/scenarios/salaried_multi_account_card.yaml --seed 42 --months 24 --output runs/salaried-multi-account-card-seed-42
 python -m finances_simulator generate --config configs/scenarios/salaried_basic.yaml --seed 42 --months 24 --output runs/salaried-basic-seed-42
 ```
@@ -47,6 +48,9 @@ a write failure does not expose a partial output tree.
 
 The loader dispatches on the required top-level `schema_version`:
 
+- [`income_diverse.yaml`](configs/scenarios/income_diverse.yaml) uses contract `1.3` and engine
+  `0.4.0`: seven weighted income profiles, conditional multi-source bundles, independent behavior
+  and wealth axes, and the complete account/card/loan/investment world.
 - [`salaried_basic.yaml`](configs/scenarios/salaried_basic.yaml) uses frozen contract `1.0` and
   engine `0.1.0`: one checking account, salary, five fixed expenses, and random variable expenses.
 - [`salaried_multi_account_card.yaml`](configs/scenarios/salaried_multi_account_card.yaml) uses
@@ -62,6 +66,19 @@ retains schema `1.1` requirements, caps institutions, accounts, own transfers, a
 and adds 1 to 32 loans, 1 to 32 investments, and at least one contribution and redemption schedule.
 References, rule IDs, installment work, and scheduled-flow work are bounded and validated before
 simulation.
+
+Contract `1.3` replaces the single salary rule with `CustomerFactory`. It samples member index `0`
+for a CLI run from weighted income, conditional source-bundle, behavior, and wealth distributions.
+The reusable in-memory factory supports addressable samples of up to 100,000 members; Phase 7 still
+owns multi-customer history output. Income schedules support five month frequencies, per-attempt
+payment probability, symmetric volatility, and 12 calendar-month seasonality factors. All choices
+use isolated deterministic streams.
+
+Behavior multipliers scale spending and saving flows; wealth multipliers scale opening deposit and
+investment balances. Income realization combines seasonality and volatility in one integer half-up
+rounding step. Failed or zero-rounded attempts create no event. Loan disbursements, own transfers,
+investment redemptions, and investment returns remain non-income credits or movements, so observed
+credit totals are not a perfect true-income formula.
 
 Configured days beyond month end clamp to the final calendar day; weekends and holidays cause no
 shift. Variable deposit expenses use an isolated deterministic SHA-256 counter stream. Card purchase
@@ -84,13 +101,14 @@ contributions have no available-funds check.
 
 Exact fields and semantics:
 
+- [contract schema 1.3](docs/contracts-v1-3.md)
 - [contract schema 1.2](docs/contracts-v1-2.md)
 - [contract schema 1.1](docs/contracts-v1-1.md)
 - [frozen contract schema 1.0](docs/contracts-v1.md)
 
 ## Output layout and trust boundary
 
-Schema `1.2` emits:
+Schema `1.3` emits the schema `1.2` observed tree plus private income-source truth:
 
 ```text
 <output>/
@@ -113,6 +131,7 @@ Schema `1.2` emits:
 `-- private/
     |-- customer_ground_truth.jsonl
     |-- customer_month_ground_truth.jsonl
+    |-- income_source_ground_truth.jsonl
     |-- transaction_ground_truth.jsonl
     |-- credit_card_transaction_ground_truth.jsonl
     |-- loan_payment_ground_truth.jsonl
@@ -120,7 +139,7 @@ Schema `1.2` emits:
     `-- balance_sheet_ground_truth.jsonl
 ```
 
-Schemas `1.1` and `1.0` retain their original version-specific dataset trees.
+Schemas `1.2`, `1.1`, and `1.0` retain their original version-specific dataset trees.
 
 Files under `observed/` form the normalized, Open Finance-inspired estimator input. They contain
 account, balance, and transaction observations but omit hidden economic classifications and true
@@ -134,9 +153,11 @@ record with a newline. Dataset ordering is deterministic.
 A committed [schema-1.0 seed-42 reference run](examples/generated/salaried_basic_seed_42/run_manifest.json)
 anchors legacy byte-for-byte compatibility. The bundled
 [schema-1.1 seed-42 reference run](examples/generated/salaried_multi_account_card_seed_42/run_manifest.json)
-exercises statement-boundary and uneven-installment behavior. The current
+exercises statement-boundary and uneven-installment behavior. The frozen
 [schema-1.2 seed-42 reference run](examples/generated/salaried_loans_investments_seed_42/run_manifest.json)
 adds 24-month loan, investment, and net-worth reconciliation.
+The current [schema-1.3 seed-42 reference run](examples/generated/income_diverse_seed_42/run_manifest.json)
+samples a mixed-income, balanced-behavior, high-wealth customer with two variable sources.
 
 ## Responsibilities
 
@@ -151,12 +172,13 @@ adds 24-month loan, investment, and net-worth reconciliation.
 
 ## Current limitations
 
-The implemented profiles model one salaried customer and one currency. Schema `1.2` supports active
-checking/savings accounts, fixed-policy cards, personal constant-principal loans, and fixed-income
-investments with deterministic non-negative returns. Loan and card payments are always full and may
-make deposit balances negative. The simulator does not model revolving cards, loan default or
-prepayment, investment units or market prices, fees, taxes, negative returns, variable income, job
-changes, observation degradation, overdraft limits, holidays, or inflation.
+Schema `1.3` generates one sampled customer and one currency per run. It supports seven stationary
+income profiles and variable calendar-month receipts alongside active checking/savings accounts,
+fixed-policy cards, personal constant-principal loans, and fixed-income investments. Loan and card
+payments are always full and may make deposit balances negative. The simulator does not yet write
+batch populations or model revolving cards, loan default or prepayment, investment units or market
+prices, fees, taxes, negative returns, job changes, observation degradation, overdraft limits,
+holidays, or inflation.
 
 ## Boundary
 

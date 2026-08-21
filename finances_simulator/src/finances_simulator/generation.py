@@ -12,6 +12,10 @@ from finances_simulator.ground_truth.projector_v2 import (
     GroundTruthBundleV2,
     project_ground_truth_v2,
 )
+from finances_simulator.ground_truth.projector_v3 import (
+    GroundTruthBundleV3,
+    project_ground_truth_v3,
+)
 from finances_simulator.observations import ObservationBundle, project_observations
 from finances_simulator.observations.projector_v1 import (
     ObservationBundleV1,
@@ -21,10 +25,15 @@ from finances_simulator.observations.projector_v2 import (
     ObservationBundleV2,
     project_observations_v2,
 )
+from finances_simulator.observations.projector_v3 import (
+    ObservationBundleV3,
+    project_observations_v3,
+)
 from finances_simulator.simulation.engine import SimulationRun, simulate
 from finances_simulator.simulation.primitives import (
     V1_PROFILE,
     V2_PROFILE,
+    V3_PROFILE,
     simulation_namespace,
 )
 from finances_simulator.validation.v2 import validate_balance_sheet_truth
@@ -33,8 +42,12 @@ from finances_simulator.validation.v2 import validate_balance_sheet_truth
 @dataclass(frozen=True, slots=True)
 class GeneratedScenario:
     simulation: SimulationRun
-    ground_truth: GroundTruthBundle | GroundTruthBundleV1 | GroundTruthBundleV2
-    observations: ObservationBundle | ObservationBundleV1 | ObservationBundleV2
+    ground_truth: (
+        GroundTruthBundle | GroundTruthBundleV1 | GroundTruthBundleV2 | GroundTruthBundleV3
+    )
+    observations: (
+        ObservationBundle | ObservationBundleV1 | ObservationBundleV2 | ObservationBundleV3
+    )
 
 
 def generate_scenario(
@@ -51,7 +64,14 @@ def generate_scenario(
         simulation.seed,
         simulator_version=simulation.profile.simulator_version,
     )
-    if simulation.profile == V2_PROFILE:
+    if simulation.profile == V3_PROFILE:
+        ground_truth = project_ground_truth_v3(simulation, namespace=namespace)
+        validate_balance_sheet_truth(
+            ground_truth.balance_sheets,
+            ground_truth.customer_months,
+        )
+        observations = project_observations_v3(simulation, namespace=namespace)
+    elif simulation.profile == V2_PROFILE:
         ground_truth = project_ground_truth_v2(simulation, namespace=namespace)
         validate_balance_sheet_truth(
             ground_truth.balance_sheets,

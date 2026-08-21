@@ -12,8 +12,9 @@ from finances_simulator.domain.cards import (
     CreditCard,
     CreditLimitSnapshot,
 )
-from finances_simulator.domain.customer import CustomerTwin
+from finances_simulator.domain.customer import CustomerTwin, CustomerTwinV3
 from finances_simulator.domain.events import EconomicType, FinancialEvent
+from finances_simulator.domain.income import CustomerFactoryMember, IncomeSource
 from finances_simulator.domain.investments import (
     Investment,
     InvestmentBalanceSnapshot,
@@ -45,7 +46,7 @@ class SimulationRun:
     start_date: date
     end_date: date
     config_sha256: str
-    customer_twin: CustomerTwin
+    customer_twin: CustomerTwin | CustomerTwinV3
     events: tuple[FinancialEvent, ...]
     ledger_entries: tuple[LedgerEntry, ...]
     profile: VersionProfile = V0_PROFILE
@@ -60,6 +61,8 @@ class SimulationRun:
     investments: tuple[Investment, ...] = ()
     investment_transactions: tuple[InvestmentTransaction, ...] = ()
     investment_balance_snapshots: tuple[InvestmentBalanceSnapshot, ...] = ()
+    factory_member: CustomerFactoryMember | None = None
+    income_sources: tuple[IncomeSource, ...] = ()
 
 
 def simulate_v0(
@@ -211,6 +214,12 @@ def simulate(
 
     from finances_simulator.config_v1 import ScenarioConfigV1
     from finances_simulator.config_v2 import ScenarioConfigV2
+    from finances_simulator.config_v3 import ScenarioConfigV3
+
+    if isinstance(config, ScenarioConfigV3):
+        from finances_simulator.simulation.v3 import simulate_v3
+
+        return simulate_v3(config, seed=seed, months=months)
 
     if isinstance(config, ScenarioConfigV2):
         from finances_simulator.simulation.v2 import simulate_v2

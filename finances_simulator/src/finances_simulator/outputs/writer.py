@@ -4,6 +4,7 @@ import hashlib
 import json
 import shutil
 import tempfile
+import time
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
@@ -13,8 +14,10 @@ from pydantic import BaseModel
 from finances_simulator.generation import GeneratedScenario
 from finances_simulator.ground_truth.projector_v1 import GroundTruthBundleV1
 from finances_simulator.ground_truth.projector_v2 import GroundTruthBundleV2
+from finances_simulator.ground_truth.projector_v3 import GroundTruthBundleV3
 from finances_simulator.observations.projector_v1 import ObservationBundleV1
 from finances_simulator.observations.projector_v2 import ObservationBundleV2
+from finances_simulator.observations.projector_v3 import ObservationBundleV3
 
 
 class OutputDirectoryNotEmptyError(FileExistsError):
@@ -23,6 +26,20 @@ class OutputDirectoryNotEmptyError(FileExistsError):
 
 class OutputWriteError(OSError):
     """Raised when a run cannot be staged or committed safely."""
+
+
+def _publish_staged_directory(staging_directory: Path, output_directory: Path) -> None:
+    """Publish atomically, tolerating brief Windows filesystem locks."""
+
+    retry_delays = (0.01, 0.025, 0.05, 0.1)
+    for attempt in range(len(retry_delays) + 1):
+        try:
+            staging_directory.replace(output_directory)
+            return
+        except PermissionError:
+            if attempt == len(retry_delays):
+                raise
+            time.sleep(retry_delays[attempt])
 
 
 def _encode_record(record: BaseModel) -> str:
@@ -77,13 +94,16 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
             schema_version=profile.contract_schema_version,
         ),
     }
-    if isinstance(truth, GroundTruthBundleV1 | GroundTruthBundleV2):
+    if isinstance(
+        truth,
+        GroundTruthBundleV1 | GroundTruthBundleV2 | GroundTruthBundleV3,
+    ):
         private_datasets["credit_card_transaction_ground_truth"] = _write_jsonl(
             private_directory / "credit_card_transaction_ground_truth.jsonl",
             truth.credit_card_transactions,
             schema_version=profile.contract_schema_version,
         )
-    if isinstance(truth, GroundTruthBundleV2):
+    if isinstance(truth, GroundTruthBundleV2 | GroundTruthBundleV3):
         private_datasets.update(
             {
                 "loan_payment_ground_truth": _write_jsonl(
@@ -103,6 +123,12 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
                 ),
             }
         )
+    if isinstance(truth, GroundTruthBundleV3):
+        private_datasets["income_source_ground_truth"] = _write_jsonl(
+            private_directory / "income_source_ground_truth.jsonl",
+            truth.income_sources,
+            schema_version=profile.contract_schema_version,
+        )
     observed_datasets = {
         "accounts": _write_jsonl(
             observed_directory / "accounts.jsonl",
@@ -120,7 +146,10 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
             schema_version=profile.contract_schema_version,
         ),
     }
-    if isinstance(observations, ObservationBundleV1 | ObservationBundleV2):
+    if isinstance(
+        observations,
+        ObservationBundleV1 | ObservationBundleV2 | ObservationBundleV3,
+    ):
         observed_datasets.update(
             {
                 "credit_cards": _write_jsonl(
@@ -150,7 +179,7 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
                 ),
             }
         )
-    if isinstance(observations, ObservationBundleV2):
+    if isinstance(observations, ObservationBundleV2 | ObservationBundleV3):
         observed_datasets.update(
             {
                 "loans": _write_jsonl(
@@ -248,7 +277,7 @@ def write_run(generated: GeneratedScenario, output_directory: Path) -> Path:
         if output_directory.exists():
             output_directory.rmdir()
             removed_empty_destination = True
-        staging_directory.replace(output_directory)
+        _publish_staged_directory(staging_directory, output_directory)
         staging_directory = None
     except OutputDirectoryNotEmptyError:
         if staging_directory is not None:

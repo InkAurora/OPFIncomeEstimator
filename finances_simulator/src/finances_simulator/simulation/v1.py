@@ -37,6 +37,8 @@ def simulate_v1(
     seed: int,
     months: int | None = None,
     _profile: VersionProfile = V1_PROFILE,
+    _include_salary: bool = True,
+    _config_fingerprint: str | None = None,
 ) -> SimulationRun:
     """Create schema-1.1 hidden state, events, and reconciled deposit ledgers."""
 
@@ -44,7 +46,7 @@ def simulate_v1(
     if not 1 <= simulation_months <= 1_200:
         raise ValueError("months must be between 1 and 1200")
 
-    fingerprint = config_sha256(config)
+    fingerprint = config_sha256(config) if _config_fingerprint is None else _config_fingerprint
     namespace = simulation_namespace(
         fingerprint,
         seed,
@@ -101,7 +103,9 @@ def simulate_v1(
         customer_id=customer_id,
         scenario_name=config.scenario.name,
         currency=config.customer.currency,
-        true_monthly_salary_minor=config.salary.amount_minor,
+        # The placeholder is never exposed: V3 replaces this legacy twin after
+        # reusing the account/card engine with salary generation disabled.
+        true_monthly_salary_minor=(config.salary.amount_minor if _include_salary else 1),
         income_source_id=income_source_id,
         primary_account=primary_account,
         additional_accounts=tuple(
@@ -118,33 +122,34 @@ def simulate_v1(
         current_month = month_start(config.scenario.start_date, month_index)
         month_key = current_month.strftime("%Y-%m")
 
-        salary_account = accounts_by_ref[config.salary.destination_account_ref]
-        salary_event = FinancialEvent(
-            event_id=deterministic_id(namespace, "event", f"salary:{month_key}"),
-            customer_id=customer_id,
-            occurred_at=scheduled_date(current_month, config.salary.day_of_month),
-            economic_type=EconomicType.INCOME,
-            amount_minor=config.salary.amount_minor,
-            currency=config.customer.currency,
-            source_entity=config.salary.payer,
-            destination_entity=salary_account.account_id,
-            income_source_id=income_source_id,
-            description=config.salary.description,
-            metadata={"income_kind": "SALARY", "schedule_month": month_key},
-        )
-        events.append(salary_event)
-        effects.append(
-            LedgerEffect(
-                event_id=salary_event.event_id,
-                account_id=salary_account.account_id,
-                posted_at=salary_event.occurred_at,
-                direction=Direction.CREDIT,
-                amount_minor=salary_event.amount_minor,
-                posting_priority=PostingPriority.INCOME,
-                entry_key="salary-credit",
-                description=salary_event.description,
+        if _include_salary:
+            salary_account = accounts_by_ref[config.salary.destination_account_ref]
+            salary_event = FinancialEvent(
+                event_id=deterministic_id(namespace, "event", f"salary:{month_key}"),
+                customer_id=customer_id,
+                occurred_at=scheduled_date(current_month, config.salary.day_of_month),
+                economic_type=EconomicType.INCOME,
+                amount_minor=config.salary.amount_minor,
+                currency=config.customer.currency,
+                source_entity=config.salary.payer,
+                destination_entity=salary_account.account_id,
+                income_source_id=income_source_id,
+                description=config.salary.description,
+                metadata={"income_kind": "SALARY", "schedule_month": month_key},
             )
-        )
+            events.append(salary_event)
+            effects.append(
+                LedgerEffect(
+                    event_id=salary_event.event_id,
+                    account_id=salary_account.account_id,
+                    posted_at=salary_event.occurred_at,
+                    direction=Direction.CREDIT,
+                    amount_minor=salary_event.amount_minor,
+                    posting_priority=PostingPriority.INCOME,
+                    entry_key="salary-credit",
+                    description=salary_event.description,
+                )
+            )
 
         for rule in config.fixed_expenses:
             source_account = accounts_by_ref[rule.source_account_ref]

@@ -9,8 +9,18 @@ from finances_simulator.domain.cards import (
     CreditLimitSnapshot,
     InvoiceStatus,
 )
-from finances_simulator.domain.customer import CustomerTwin
+from finances_simulator.domain.customer import CustomerTwin, CustomerTwinV3
 from finances_simulator.domain.events import EconomicType, FinancialEvent
+from finances_simulator.domain.income import (
+    BehaviorProfile,
+    CustomerFactoryMember,
+    IncomeFrequency,
+    IncomeKind,
+    IncomeProfile,
+    IncomeSource,
+    SampledIncomeSource,
+    WealthBand,
+)
 from finances_simulator.domain.investments import (
     Investment,
     InvestmentBalanceSnapshot,
@@ -32,11 +42,17 @@ __all__ = [
     "CardPurchase",
     "CreditCard",
     "CreditLimitSnapshot",
+    "CustomerFactoryMember",
     "CustomerTwin",
+    "CustomerTwinV3",
     "Direction",
     "EconomicType",
     "FinancialEvent",
     "InvoiceStatus",
+    "IncomeFrequency",
+    "IncomeKind",
+    "IncomeProfile",
+    "IncomeSource",
     "Investment",
     "InvestmentBalanceSnapshot",
     "InvestmentTransaction",
@@ -47,4 +63,7 @@ __all__ = [
     "LoanPayment",
     "LoanPaymentStatus",
     "LoanStatus",
+    "SampledIncomeSource",
+    "BehaviorProfile",
+    "WealthBand",
 ]

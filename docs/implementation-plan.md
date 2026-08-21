@@ -340,6 +340,12 @@ Acceptance criteria:
 
 ### Phase 4 — V3: income diversity and population factory
 
+Engine `0.4.0` and schema `1.3` implement this bounded slice. The CLI samples one addressable
+factory member and writes one complete history; Phase 7 retains batch population output. Income
+profiles select conditional source bundles, while behavior and opening wealth use independent
+weighted dimensions. Receipt attempts support calendar frequency, probability, symmetric
+volatility, and monthly seasonality with one-step integer half-up realization.
+
 Implement:
 
 - salaried, self-employed, business-owner, retired, investor, mixed, and unemployed income profiles;

@@ -12,6 +12,7 @@ from finances_simulator.validation.v2 import (
     validate_investment_simulation,
     validate_loan_simulation,
 )
+from finances_simulator.validation.v3 import validate_income_simulation
 
 __all__ = [
     "InvariantViolation",
@@ -19,6 +20,7 @@ __all__ = [
     "validate_card_simulation",
     "validate_balance_sheet_truth",
     "validate_investment_simulation",
+    "validate_income_simulation",
     "validate_loan_simulation",
     "validate_reconciliation",
     "validate_transfer_pairs",
