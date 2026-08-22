@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "income-estimator"
-version = "0.4.0"
+version = "0.5.0"
 description = "Explainable income estimation from normalized financial observations"
 readme = "README.md"
 requires-python = ">=3.12"

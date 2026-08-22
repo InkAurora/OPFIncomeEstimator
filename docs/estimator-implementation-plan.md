@@ -13,7 +13,7 @@ correct measured limitations of deterministic methods rather than replace an une
 
 ## 2. Current state
 
-The financial simulator and estimator support evaluated milestones through `0.4`:
+The financial simulator and estimator support evaluated milestones through `0.5`:
 
 - simulator orchestrator `0.7.0` generates deterministic populations;
 - observation contract `1.5` includes incomplete-consent and data-quality artifacts;
@@ -30,6 +30,8 @@ The financial simulator and estimator support evaluated milestones through `0.4`
   replaying the promoted `0.2` estimator at each reference-month cutoff;
 - estimator input `1.2` exposes observed cards, limits, card transactions, invoices, loan payments,
   loan balances, investments, and investment balances, so the capacity feature group is computed;
+- promoted capacity estimator `capacity-gbdt-stumps-0.5.0` predicts sustainable monthly income from
+  the customer-month table and beats every deterministic baseline on held-out data;
 - private contract `income-targets-1.0` projects all five income targets from the hidden run, so
   `sustainable_monthly_income` now exists as a trainable label.
 
@@ -463,12 +465,12 @@ window-level metadata, because no contract yet publishes a monthly coverage meas
 formulas; tests assert both, so a formula change fails until the version is bumped. The rejected
 `0.3` classifier remains optional and is recorded in `model_versions` when supplied.
 
-### Estimator `0.5` — Capacity estimator
+### Estimator `0.5` — Capacity estimator — implemented
 
 Both prerequisites are in place. Private contract `income-targets-1.0` supplies
 `sustainable_monthly_income` for scenarios on contract `1.3` and above, and estimator input `1.2`
 supplies the observed card, loan, and investment data behind the capacity feature group. Training
-can therefore use the full customer-month feature table against a real capacity label.
+uses the full customer-month feature table against a real capacity label.
 
 Train a customer-level tabular regressor using cash-flow, cards, loans, investments, balances,
 behavior, history, and coverage. Initial target:
@@ -487,6 +489,24 @@ Acceptance criteria:
 - evaluation is segmented by income type, range, volatility, history length, and consent coverage;
 - zero-income customers remain supported;
 - output never infers complete observation merely from high apparent activity.
+
+Implemented as a hurdle: a logistic gate decides whether sustainable income is zero, and an
+anchored regressor sizes it when it is not. Both parts are decision stumps over binned features
+with a per-stump missing direction, exported as one dependency-free JSON artifact.
+
+Two findings shaped the design and are worth preserving. A single regressor on the raw log target
+loses to a trivial baseline, because zero-income rows carry a log residual near `-13` where
+ordinary rows sit near `0.3`; squared error then spends the model on them and drags every other
+estimate down. And piecewise-constant stumps approximate a near-linear relationship badly, so the
+regressor boosts the log-ratio around `income_mean_3m_minor` instead of around a constant, making
+an empty model reproduce that anchor exactly. The gate threshold is chosen on validation by
+monetary error, not by classification score.
+
+Held-out results on 240 customers: MAE `25,055` against `55,455` for the best baseline, WAPE
+`0.0459` against `0.1015`, full coverage `33,629` against `81,919`, partial consent `14,031`
+against `21,429`, and exact prediction for zero-income customers. The only segment where a
+baseline wins is perfectly stable salaried income, where last month's reconstruction is already the
+answer. The report records `PROMOTED`.
 
 ### Estimator `0.6` — Ensemble
 

@@ -170,6 +170,54 @@ table = build_customer_month_features(
 )
 ```
 
+## Capacity estimator (0.5)
+
+Estimator `0.5` trains a customer-level regressor for `sustainable_monthly_income` on the `0.4`
+feature table, labelled by private contract `income-targets-1.0`. It is a hurdle model: a logistic
+gate decides whether sustainable income is zero, and an anchored regressor sizes it when it is not.
+
+```text
+customer-month features (0.4)      private income targets (simulator)
+            |                                   |
+            +---------------+-------------------+
+                            v
+                  isolated training join
+                            |
+              +-------------+-------------+
+              v                           v
+        zero gate (logistic)      anchored regressor
+              |                           |
+              +-------------+-------------+
+                            v
+              sustainable_monthly_income_minor
+```
+
+The regressor boosts `log1p(sustainable_monthly_income)` around `log1p(income_mean_3m_minor)`
+rather than around a constant. Piecewise-constant stumps approximate a near-linear relationship
+badly, so anchoring means an empty model reproduces the cash-flow anchor exactly and every tree
+moves the estimate away from it only for a measured reason. Missing features are routed by a
+direction recorded per stump, never imputed.
+
+On the fixed held-out population the candidate improves MAE from `55,455` to `25,055` minor units
+against the best baseline, improves both full-coverage and partial-consent segments, and predicts
+zero-income customers exactly, so the report records `PROMOTED`. See
+[`training/artifacts`](training/artifacts/README.md) for metrics, segments, and reproduction.
+
+The model predicts a value the shared output contract `1.0` cannot yet carry, so it is not wired
+into `estimate`. Ensemble routing is `0.6` and calibrated intervals are `0.7`:
+
+```python
+from pathlib import Path
+
+from income_estimator import GradientBoostedCapacityModel, build_customer_month_features
+
+model = GradientBoostedCapacityModel.from_path(
+    Path("training/artifacts/capacity-estimator-0.5.0.json")
+)
+row = build_customer_month_features(request).row("2026-06")
+model.predict_minor(row.to_mapping())
+```
+
 Install and test it with:
 
 ```bash

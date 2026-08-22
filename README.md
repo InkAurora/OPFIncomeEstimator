@@ -74,7 +74,12 @@ run, so `sustainable_monthly_income` exists as a trainable label; its constructi
 Estimator input `1.2` adds observed credit cards, limits, card transactions, invoices, loan
 payments, loan balances, investments, and investment balances, so feature set
 `customer-month-features-1.1.0` computes the capacity group instead of declaring it unavailable.
-Next work is estimator `0.5` capacity modeling. Provider adapters must still populate the optional
+Estimator `0.5` adds a promoted capacity estimator for `sustainable_monthly_income`: a hurdle model
+whose logistic gate decides whether capacity is zero and whose anchored regressor sizes it
+otherwise. On held-out data it improves mean absolute error from `55,455` to `25,055` minor units
+against the best deterministic baseline, improves both full-coverage and partial-consent segments,
+and predicts zero-income customers exactly. Next work is estimator `0.6` ensemble routing, then
+`0.7` calibrated intervals and confidence. Provider adapters must still populate the optional
 counterparty context before counterparty-aware gains can be measured. See
 [`docs/estimator-implementation-plan.md`](docs/estimator-implementation-plan.md).
 
