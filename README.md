@@ -81,8 +81,9 @@ against the best deterministic baseline, improves both full-coverage and partial
 and predicts zero-income customers exactly. Estimator output `1.1` separates realized from sustainable income and carries component estimates,
 disagreement, confidence, and excluded evidence without disturbing any `1.0` field. Estimator `0.6`
 routes both targets deterministically and reaches held-out MAE `21,227` against `23,236` for its
-best individual component. Quantiles stay absent with a stated reason until `0.7` calibrates them.
-Next work is estimator `0.7` calibrated intervals and confidence. Provider adapters must still populate the optional
+best individual component. Estimator `0.7` fills those quantiles with split-conformal intervals calibrated on out-of-fold
+residuals, reaching held-out coverage `0.8365` against a nominal `0.80` with confidence monotonic
+against relative error. Next work is estimator `0.8` explainability and stress evaluation. Provider adapters must still populate the optional
 counterparty context before counterparty-aware gains can be measured. See
 [`docs/estimator-implementation-plan.md`](docs/estimator-implementation-plan.md).
 

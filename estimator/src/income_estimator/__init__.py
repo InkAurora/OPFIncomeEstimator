@@ -20,6 +20,10 @@ from income_estimator.models import (
     CapacityEstimatorArtifact,
     GradientBoostedCapacityModel,
 )
+from income_estimator.models.quantiles import (
+    ConformalCalibrationArtifact,
+    ConformalIntervalModel,
+)
 from income_estimator.pipeline import (
     EnsembleIncomeEstimator,
     RecurringIncomeEstimator,
@@ -27,7 +31,7 @@ from income_estimator.pipeline import (
     SupervisedIncomeEstimator,
 )
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 __all__ = [
     "FEATURE_NAMES",
@@ -35,6 +39,8 @@ __all__ = [
     "FEATURE_SCHEMA_FINGERPRINT",
     "FEATURE_SET_VERSION",
     "CapacityEstimatorArtifact",
+    "ConformalCalibrationArtifact",
+    "ConformalIntervalModel",
     "CustomerMonthFeatureRowV1",
     "CustomerMonthFeatureTableV1",
     "EstimatorInputV1",

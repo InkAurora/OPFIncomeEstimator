@@ -154,7 +154,7 @@ row.missing_features
 
 ```bash
 income-estimator --features request.json
-income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.5.0.json request.json
+income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.5.0.json --calibration training/artifacts/quantile-calibration-0.7.0.json request.json
 ```
 
 The default estimator is promoted `0.2`. The rejected `0.3` classifier stays optional and is
@@ -275,6 +275,51 @@ accounts is never reported as well understood however tidy the visible half look
 The capacity artifact is optional. Without it the ensemble still answers, using the
 recurring-stream component, and says `CAPACITY_MODEL_UNAVAILABLE` in the routing reasons.
 
+## Calibrated intervals (0.7)
+
+Estimator `0.7` fills `sustainable_income_p10/p50/p90` with split-conformal intervals calibrated on
+out-of-fold residuals. Construction rules are fixed by
+[ADR 0003](../docs/adr/0003-interval-and-confidence-semantics.md).
+
+The `0.5` artifact cannot supply calibration residuals. Its residuals on `train` are in-sample, and
+`validation` was consumed twice already, once for the tree count and once for the gate threshold.
+`training/out_of_fold.py` therefore refits the hurdle per fold and predicts only the fold it held
+out, with folds assigned by customer because two months of one customer share almost everything.
+
+```bash
+python -m training.calibrate_quantiles --population-size-per-suite 80 --workers 4 --folds 5
+```
+
+Held-out coverage is `0.8365` against a nominal `0.80`, inside the documented `0.05` tolerance,
+with a coverage standard error of `0.0226` on 312 rows. Confidence is monotonic with relative
+error: WAPE `0.024` for the high band, `0.069` for medium, `0.221` for low.
+
+Two findings are recorded rather than smoothed over. Coverage is not uniform across confidence
+bands, at `1.00`, `0.817`, and `0.412` from high to low, so a single global offset cannot serve
+every band and low-confidence intervals under-cover; conditional conformal calibration is the
+natural next step. And `annual_income_p10/p50/p90` stay absent, because deriving them from monthly
+quantiles needs a dependence structure across months that nobody has measured.
+
+A predicted zero does not get a symmetric band. When the gate is confident the interval is `[0, 0]`,
+a claim the evaluation can falsify; when it is unsure the lower bound stays zero and the upper bound
+comes from the positive branch.
+
+```python
+from pathlib import Path
+
+from income_estimator import EnsembleIncomeEstimator
+
+estimator = EnsembleIncomeEstimator(
+    Path("training/artifacts/capacity-estimator-0.5.0.json"),
+    calibration_path=Path("training/artifacts/quantile-calibration-0.7.0.json"),
+)
+month = estimator.estimate_v1_1(request).monthly_estimates[-1]
+month.sustainable_income_p10_minor, month.sustainable_income_p90_minor
+```
+
+Without a calibration artifact the estimator still answers, leaving `p10` and `p90` absent with
+`quantile_unavailable_reason` set.
+
 Install and test it with:
 
 ```bash
@@ -308,7 +353,7 @@ one input-contract file and prints either view:
 income-estimator request.json
 income-estimator --audit request.json
 income-estimator --features request.json
-income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.5.0.json request.json
+income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.5.0.json --calibration training/artifacts/quantile-calibration-0.7.0.json request.json
 income-estimator --baseline-0.1 request.json
 income-estimator --model training/artifacts/transaction-classifier-0.3.0.json request.json
 ```

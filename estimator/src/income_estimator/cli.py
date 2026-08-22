@@ -45,6 +45,11 @@ def _parser() -> argparse.ArgumentParser:
         help="Capacity model artifact for --ensemble sustainable income",
     )
     parser.add_argument(
+        "--calibration",
+        type=Path,
+        help="Conformal calibration artifact for --ensemble sustainable income quantiles",
+    )
+    parser.add_argument(
         "--model",
         type=Path,
         help="Use experimental estimator 0.3 with this JSON model artifact",
@@ -57,7 +62,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         payload = json.loads(args.input.read_text(encoding="utf-8"))
         if args.ensemble:
-            estimator = EnsembleIncomeEstimator(args.capacity_model)
+            estimator = EnsembleIncomeEstimator(
+                args.capacity_model,
+                calibration_path=args.calibration,
+            )
         elif args.model is not None:
             estimator = SupervisedIncomeEstimator(args.model)
         elif args.baseline_0_1:

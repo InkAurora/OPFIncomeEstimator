@@ -22,6 +22,7 @@ from income_estimator.contracts.output_v1_1 import (
     ConfidenceComponentV11,
 )
 from income_estimator.models.capacity import GradientBoostedCapacityModel
+from income_estimator.models.quantiles import ConformalIntervalModel
 
 ENSEMBLE_VERSION = "deterministic-routing-0.6.0"
 
@@ -43,6 +44,8 @@ class MonthlyEnsembleResult:
 
     realized_income_minor: int
     sustainable_income_minor: int | None
+    sustainable_lower_minor: int | None
+    sustainable_upper_minor: int | None
     components: tuple[ComponentEstimateV11, ...]
     disagreement_basis_points: int | None
     confidence_score_basis_points: int
@@ -191,6 +194,7 @@ def combine_month(
     *,
     realized_components: Mapping[str, int],
     realized_selected: str,
+    intervals: ConformalIntervalModel | None = None,
 ) -> MonthlyEnsembleResult:
     """Route both targets for one reference month and score confidence once."""
 
@@ -218,17 +222,33 @@ def combine_month(
         for name, (value, model_version) in sorted(candidates.items())
     )
     sustainable = candidates[selected][0] if selected is not None else None
+    lower: int | None = None
+    upper: int | None = None
+    quantile_reason: str | None = None
+    if sustainable is None:
+        quantile_reason = None
+    elif intervals is None:
+        quantile_reason = QUANTILE_UNAVAILABLE_UNCALIBRATED
+    else:
+        lower, upper = intervals.interval_minor(
+            sustainable,
+            positive_basis_points=(
+                capacity.predict_positive_basis_points(features)
+                if capacity is not None
+                else None
+            ),
+        )
     return MonthlyEnsembleResult(
         realized_income_minor=realized_income_minor,
         sustainable_income_minor=sustainable,
+        sustainable_lower_minor=lower,
+        sustainable_upper_minor=upper,
         components=components,
         disagreement_basis_points=disagreement,
         confidence_score_basis_points=score,
         confidence_components=confidence_components,
         routing_reason_codes=reasons,
-        quantile_unavailable_reason=(
-            QUANTILE_UNAVAILABLE_UNCALIBRATED if sustainable is not None else None
-        ),
+        quantile_unavailable_reason=quantile_reason,
     )
 
 

@@ -1,0 +1,104 @@
+{
+  "artifact_sha256": "3ddf4d5bc02c73d63daf207a496991a9f3af634e72d39d8c4d63a7af45080709",
+  "calibration": {
+    "fold_row_counts": {
+      "0": 288,
+      "1": 396,
+      "2": 336,
+      "3": 348,
+      "4": 480
+    },
+    "lower_log_offset": -0.214496621824,
+    "positive_residual_count": 1718,
+    "row_count": 1848,
+    "upper_log_offset": 0.194211162759
+  },
+  "calibration_version": "conformal-intervals-0.7.0",
+  "capacity_model_version": "capacity-gbdt-stumps-0.5.0",
+  "dataset_version": "synthetic-customer-months-1.0.0",
+  "fold_count": 5,
+  "method": "split-conformal-log-residual",
+  "months": 12,
+  "out_of_fold_version": "customer-sha256-kfold-v1",
+  "population_size_per_suite": 60,
+  "promotion": {
+    "coverage_tolerance": 0.05,
+    "failures": [],
+    "status": "PROMOTED"
+  },
+  "schema_version": "1.0",
+  "test": {
+    "by_confidence_band": {
+      "high": {
+        "count": 146,
+        "empirical_coverage": 1.0,
+        "mean_absolute_error_minor": 14930.6849,
+        "mean_interval_width_minor": 249460.2945,
+        "median_interval_width_minor": 245958.0,
+        "wape": 0.02432229
+      },
+      "low": {
+        "count": 51,
+        "empirical_coverage": 0.411765,
+        "mean_absolute_error_minor": 64391.2745,
+        "mean_interval_width_minor": 129815.1373,
+        "median_interval_width_minor": 107638.0,
+        "wape": 0.22140959
+      },
+      "medium": {
+        "count": 115,
+        "empirical_coverage": 0.817391,
+        "mean_absolute_error_minor": 30292.2609,
+        "mean_interval_width_minor": 177514.6,
+        "median_interval_width_minor": 229543.0,
+        "wape": 0.06915543
+      }
+    },
+    "by_consent_coverage": {
+      "complete": {
+        "count": 204,
+        "empirical_coverage": 0.759804,
+        "mean_absolute_error_minor": 35904.0588,
+        "mean_interval_width_minor": 182873.348,
+        "median_interval_width_minor": 206789.0,
+        "wape": 0.08135501
+      },
+      "partial_or_undeclared": {
+        "count": 108,
+        "empirical_coverage": 0.981481,
+        "mean_absolute_error_minor": 15027.9352,
+        "mean_interval_width_minor": 242127.6944,
+        "median_interval_width_minor": 244601.0,
+        "wape": 0.02504656
+      }
+    },
+    "by_income_range": {
+      "positive": {
+        "count": 298,
+        "empirical_coverage": 0.828859,
+        "mean_absolute_error_minor": 30024.9832,
+        "mean_interval_width_minor": 212939.443,
+        "median_interval_width_minor": 241604.0,
+        "wape": 0.05778867
+      },
+      "zero": {
+        "count": 14,
+        "empirical_coverage": 1.0,
+        "mean_absolute_error_minor": 0.0,
+        "mean_interval_width_minor": 0.0,
+        "median_interval_width_minor": 0.0,
+        "wape": null
+      }
+    },
+    "coverage_standard_error": 0.022646,
+    "nominal_coverage": 0.8,
+    "overall": {
+      "count": 312,
+      "empirical_coverage": 0.836538,
+      "mean_absolute_error_minor": 28677.7083,
+      "mean_interval_width_minor": 203384.4679,
+      "median_interval_width_minor": 240245.5,
+      "wape": 0.05778867
+    }
+  }
+}

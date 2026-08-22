@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "calibration_version": "conformal-intervals-0.7.0",
+  "method": "split-conformal-log-residual",
+  "capacity_model_version": "capacity-gbdt-stumps-0.5.0",
+  "out_of_fold_version": "customer-sha256-kfold-v1",
+  "fold_count": 5,
+  "nominal_lower_quantile": 0.1,
+  "nominal_upper_quantile": 0.9,
+  "lower_log_offset": -0.214496621824,
+  "upper_log_offset": 0.194211162759,
+  "zero_gate_certain_basis_points": 1000,
+  "calibration_row_count": 1848,
+  "calibration_customer_count": 154
+}

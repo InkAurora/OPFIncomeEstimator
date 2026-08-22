@@ -13,7 +13,7 @@ correct measured limitations of deterministic methods rather than replace an une
 
 ## 2. Current state
 
-The financial simulator and estimator support evaluated milestones through `0.6`:
+The financial simulator and estimator support evaluated milestones through `0.7`:
 
 - simulator orchestrator `0.7.0` generates deterministic populations;
 - observation contract `1.5` includes incomplete-consent and data-quality artifacts;
@@ -35,6 +35,8 @@ The financial simulator and estimator support evaluated milestones through `0.6`
 - estimator output `1.1` separates realized from sustainable income and carries component
   estimates, disagreement, confidence, and excluded evidence;
 - estimator `0.6` routes both targets deterministically and beats its best individual component;
+- estimator `0.7` publishes split-conformal intervals calibrated on out-of-fold residuals, with
+  measured coverage and confidence monotonic against relative error;
 - private contract `income-targets-1.0` projects all five income targets from the hidden run, so
   `sustainable_monthly_income` now exists as a trainable label.
 
@@ -561,7 +563,7 @@ records it. Confidence combines coverage, history, stability, classification cer
 component agreement under documented weights, then caps the result at observed coverage, so high
 confidence cannot coexist with known low coverage.
 
-### Estimator `0.7` — Quantiles and confidence
+### Estimator `0.7` — Quantiles and confidence — implemented
 
 Produce sustainable and annual income quantiles:
 
@@ -591,6 +593,23 @@ Acceptance criteria:
 - confidence is empirically monotonic with observed accuracy;
 - high confidence cannot coexist with known low coverage without a documented override;
 - interval width responds to volatility and incomplete observation.
+
+Implemented as split-conformal intervals on the log residual, fitted on out-of-fold predictions from
+models that never saw the row. Construction rules, including the treatment of intervals around a
+predicted zero and the decision to withhold annual quantiles, are fixed by
+[ADR 0003](adr/0003-interval-and-confidence-semantics.md).
+
+Held-out coverage is `0.8365` against a nominal `0.80`, inside the documented `0.05` tolerance, with
+a coverage standard error of `0.0226` on 312 rows. Confidence is monotonic with relative error at
+WAPE `0.024`, `0.069`, and `0.221` across high, medium, and low bands. Monotonicity is measured on
+relative rather than absolute error: absolute error scales with income, and the first check was
+inverted by income scale alone.
+
+Coverage is not uniform across confidence bands, at `1.00`, `0.817`, and `0.412`. A single global
+offset cannot serve every band and low-confidence intervals under-cover; conditional conformal
+calibration with per-band offsets is the natural next step and is deliberately not attempted here.
+Annual quantiles remain absent because deriving them from monthly quantiles requires a measured
+dependence structure across months.
 
 ### Estimator `0.8` — Explainability and stress evaluation
 

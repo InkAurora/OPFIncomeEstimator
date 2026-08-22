@@ -1,5 +1,30 @@
 # Frozen training artifacts
 
+## Quantile calibration 0.7 — promoted
+
+- `quantile-calibration-0.7.0.json` holds the split-conformal log offsets and the versions they
+  were fitted against;
+- `quantile-calibration-0.7.0-report.json` records coverage, width, and confidence monotonicity on
+  the untouched test partition, segmented by confidence band, consent coverage, and income range.
+
+Offsets are fitted on out-of-fold residuals, never on the residuals of the promoted `0.5` artifact,
+whose `train` residuals are in-sample and whose `validation` set was already spent on the tree count
+and the gate threshold. See [ADR 0003](../../../docs/adr/0003-interval-and-confidence-semantics.md).
+
+Held-out coverage `0.8365` against nominal `0.80`, standard error `0.0226` on 312 rows. Confidence
+is monotonic with relative error: WAPE `0.024` high, `0.069` medium, `0.221` low. Coverage by band
+is `1.00`, `0.817`, `0.412`, so low-confidence intervals under-cover and a single global offset
+cannot serve every band; conditional conformal calibration is the next step.
+
+Refit whenever the capacity model changes. The artifact records the capacity model version so a
+mismatch is visible rather than silent.
+
+Reproduce from the `estimator` directory:
+
+```bash
+python -m training.calibrate_quantiles --population-size-per-suite 80 --workers 4 --folds 5
+```
+
 ## Capacity estimator 0.5 — promoted
 
 - `capacity-estimator-0.5.0.json` is the portable, dependency-free model artifact;

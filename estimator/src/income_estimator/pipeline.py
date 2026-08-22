@@ -27,6 +27,7 @@ from income_estimator.models import (
 )
 from income_estimator.models.capacity import GradientBoostedCapacityModel
 from income_estimator.models.ensemble import ENSEMBLE_VERSION, combine_month
+from income_estimator.models.quantiles import ConformalIntervalModel
 from income_estimator.models.transaction_classifier import MODEL_FEATURE_VERSION
 from income_estimator.transaction_intelligence import (
     FEATURE_VERSION,
@@ -173,6 +174,7 @@ class EnsembleIncomeEstimator(RecurringIncomeEstimator):
         self,
         capacity_model_path: Path | None = None,
         rule_config: RuleConfig | None = None,
+        calibration_path: Path | None = None,
     ) -> None:
         super().__init__(rule_config)
         self.rule_config = rule_config
@@ -181,9 +183,17 @@ class EnsembleIncomeEstimator(RecurringIncomeEstimator):
             if capacity_model_path is not None
             else None
         )
-        self.model_versions = (
-            (self.capacity.artifact.model_version,) if self.capacity is not None else ()
+        self.intervals = (
+            ConformalIntervalModel.from_path(calibration_path)
+            if calibration_path is not None
+            else None
         )
+        versions: list[str] = []
+        if self.capacity is not None:
+            versions.append(self.capacity.artifact.model_version)
+        if self.intervals is not None:
+            versions.append(self.intervals.artifact.calibration_version)
+        self.model_versions = tuple(versions)
 
     def estimate_v1_1(self, request: Any) -> IncomeEstimateV11:
         """Return realized and sustainable estimates with components and confidence."""
@@ -220,6 +230,7 @@ class EnsembleIncomeEstimator(RecurringIncomeEstimator):
                     "recurring_streams_0_2": estimate.estimated_income_minor,
                 },
                 realized_selected="recurring_streams_0_2",
+                intervals=self.intervals,
             )
             monthly.append(
                 MonthlyIncomeEstimateV11(
@@ -235,7 +246,9 @@ class EnsembleIncomeEstimator(RecurringIncomeEstimator):
                             - set(estimate.contributing_transaction_ids)
                         )
                     ),
+                    sustainable_income_p10_minor=result.sustainable_lower_minor,
                     sustainable_income_p50_minor=result.sustainable_income_minor,
+                    sustainable_income_p90_minor=result.sustainable_upper_minor,
                     quantile_unavailable_reason=result.quantile_unavailable_reason,
                     component_estimates=result.components,
                     component_disagreement_basis_points=result.disagreement_basis_points,
