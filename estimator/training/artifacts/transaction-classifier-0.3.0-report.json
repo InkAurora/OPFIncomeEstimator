@@ -1,0 +1,177 @@
+{
+  "artifact_sha256": "8e099e917befcfc6c975c0b3299eee2c3be109303b33b0ed67fdf94fdb0f51fa",
+  "customer_counts": {
+    "test": 54,
+    "train": 249,
+    "validation": 57
+  },
+  "dataset_version": "synthetic-transactions-1.0.0",
+  "feature_version": "transaction-model-features-1.0.0",
+  "metrics": {
+    "test": {
+      "baseline": {
+        "classifier_version": "rule-based-0.1.0",
+        "critical_false_positive_rates": {
+          "INVESTMENT_REDEMPTION": 0.0,
+          "LOAN_DISBURSEMENT": 0.0,
+          "OWN_TRANSFER": 0.0,
+          "REFUND": 0.0
+        },
+        "f1": 0.99552372,
+        "false_negative": 5,
+        "false_positive": 0,
+        "hard_exclusion_false_negative_reasons": {
+          "REVERSED_ORIGINAL": 5
+        },
+        "positive_count": 561,
+        "pr_auc": 0.99684618,
+        "precision": 1.0,
+        "recall": 0.99108734,
+        "record_count": 1369,
+        "roc_auc": 0.99554367,
+        "true_negative": 808,
+        "true_positive": 556
+      },
+      "candidate": {
+        "classifier_version": "transaction-gbdt-stumps-0.3.0",
+        "critical_false_positive_rates": {
+          "INVESTMENT_REDEMPTION": 0.0,
+          "LOAN_DISBURSEMENT": 0.0,
+          "OWN_TRANSFER": 0.0,
+          "REFUND": 0.0
+        },
+        "f1": 0.99552372,
+        "false_negative": 5,
+        "false_positive": 0,
+        "hard_exclusion_false_negative_reasons": {
+          "REVERSED_ORIGINAL": 5
+        },
+        "positive_count": 561,
+        "pr_auc": 0.99684618,
+        "precision": 1.0,
+        "recall": 0.99108734,
+        "record_count": 1369,
+        "roc_auc": 0.99554367,
+        "true_negative": 808,
+        "true_positive": 556
+      }
+    },
+    "train": {
+      "baseline": {
+        "classifier_version": "rule-based-0.1.0",
+        "critical_false_positive_rates": {
+          "INVESTMENT_REDEMPTION": 0.0,
+          "LOAN_DISBURSEMENT": 0.0,
+          "OWN_TRANSFER": 0.0,
+          "REFUND": 0.0
+        },
+        "f1": 0.99286403,
+        "false_negative": 37,
+        "false_positive": 0,
+        "hard_exclusion_false_negative_reasons": {
+          "REVERSED_ORIGINAL": 37
+        },
+        "positive_count": 2611,
+        "pr_auc": 0.99487022,
+        "precision": 1.0,
+        "recall": 0.98582918,
+        "record_count": 6333,
+        "roc_auc": 0.99291459,
+        "true_negative": 3722,
+        "true_positive": 2574
+      },
+      "candidate": {
+        "classifier_version": "transaction-gbdt-stumps-0.3.0",
+        "critical_false_positive_rates": {
+          "INVESTMENT_REDEMPTION": 0.0,
+          "LOAN_DISBURSEMENT": 0.0,
+          "OWN_TRANSFER": 0.0,
+          "REFUND": 0.0
+        },
+        "f1": 0.99286403,
+        "false_negative": 37,
+        "false_positive": 0,
+        "hard_exclusion_false_negative_reasons": {
+          "REVERSED_ORIGINAL": 37
+        },
+        "positive_count": 2611,
+        "pr_auc": 0.99487022,
+        "precision": 1.0,
+        "recall": 0.98582918,
+        "record_count": 6333,
+        "roc_auc": 0.99291459,
+        "true_negative": 3722,
+        "true_positive": 2574
+      }
+    },
+    "validation": {
+      "baseline": {
+        "classifier_version": "rule-based-0.1.0",
+        "critical_false_positive_rates": {
+          "INVESTMENT_REDEMPTION": 0.0,
+          "LOAN_DISBURSEMENT": 0.0,
+          "OWN_TRANSFER": 0.0,
+          "REFUND": 0.0
+        },
+        "f1": 0.9903762,
+        "false_negative": 11,
+        "false_positive": 0,
+        "hard_exclusion_false_negative_reasons": {
+          "REVERSED_ORIGINAL": 11
+        },
+        "positive_count": 577,
+        "pr_auc": 0.99177782,
+        "precision": 1.0,
+        "recall": 0.98093588,
+        "record_count": 1411,
+        "roc_auc": 0.99046794,
+        "true_negative": 834,
+        "true_positive": 566
+      },
+      "candidate": {
+        "classifier_version": "transaction-gbdt-stumps-0.3.0",
+        "critical_false_positive_rates": {
+          "INVESTMENT_REDEMPTION": 0.0,
+          "LOAN_DISBURSEMENT": 0.0,
+          "OWN_TRANSFER": 0.0,
+          "REFUND": 0.0
+        },
+        "f1": 0.9903762,
+        "false_negative": 11,
+        "false_positive": 0,
+        "hard_exclusion_false_negative_reasons": {
+          "REVERSED_ORIGINAL": 11
+        },
+        "positive_count": 577,
+        "pr_auc": 0.99177782,
+        "precision": 1.0,
+        "recall": 0.98093588,
+        "record_count": 1411,
+        "roc_auc": 0.99046794,
+        "true_negative": 834,
+        "true_positive": 566
+      }
+    }
+  },
+  "model_version": "transaction-gbdt-stumps-0.3.0",
+  "population_size_per_suite": 120,
+  "promotion": {
+    "failures": [
+      "test F1 must strictly improve over rule baseline"
+    ],
+    "status": "NOT_PROMOTED"
+  },
+  "record_counts": {
+    "test": 1369,
+    "train": 6333,
+    "validation": 1411
+  },
+  "schema_version": "1.0",
+  "simulator_version": "0.7.0",
+  "source_contract_versions": [
+    "1.3",
+    "1.4",
+    "1.5"
+  ],
+  "split_version": "customer-sha256-70-15-15-v1"
+}

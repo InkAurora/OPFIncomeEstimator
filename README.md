@@ -52,13 +52,18 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for repository-wide language and data-con
 ## Development status
 
 Simulator orchestrator `0.7.0` implements deterministic parallel populations, partitioned Parquet,
-schema validation at component boundaries, estimator contract `1.0`, and automatic evaluation.
+schema validation at component boundaries, estimator contracts `1.0` and `1.1`, and automatic
+evaluation.
 Its members use frozen engine `0.6.0` and observation contract `1.5`, including consent coverage and
 observation artifacts. Contracts `1.4` through `1.0` remain supported with byte-stable reference
-outputs. Estimator `0.2.0` now adds evidence-backed recurring-stream reconstruction to the frozen
+outputs. Estimator `0.2.0` adds evidence-backed recurring-stream reconstruction to the frozen
 `0.1.0` rule baseline. Held-out incomplete-observation MAE improves `97.36%` without complete-data
-regression or added false-income classifications. Provider adapters and trained models remain
-unimplemented. Next work is observed counterparty support through input contract `1.1`, as defined in
+regression or added false-income classifications. Input contract `1.1` now accepts optional observed
+counterparty, provider transaction type, transaction-balance, and balance records. An isolated,
+customer-split transaction-classifier pipeline produced experimental candidate `0.3.0`; it tied the
+rule baseline on held-out F1 (`0.99552372`) with zero critical false positives, so the promotion gate
+kept `0.2.0` as the default. Next work is estimator `0.4` customer-month features, while provider
+adapters must populate the new optional context before counterparty-aware gains can be measured. See
 [`docs/estimator-implementation-plan.md`](docs/estimator-implementation-plan.md).
 
 ## Simulator quick start

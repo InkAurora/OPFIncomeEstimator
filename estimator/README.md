@@ -2,9 +2,9 @@
 
 This component estimates a client's income from normalized financial data obtained with consent through Open Finance Brasil.
 
-Simulator Phase 7 now exposes estimator boundary contract `1.0`. An integrated estimator accepts an
-immutable observation-only request and returns ordered monthly amounts, confidence bounds, and
-contributing transaction IDs. Use `finances-simulator generate-batch --estimator
+Simulator Phase 7 exposes estimator boundary contracts `1.0` and `1.1`. An integrated estimator
+accepts an immutable observation-only request and returns ordered monthly amounts, confidence
+bounds, and contributing transaction IDs. Use `finances-simulator generate-batch --estimator
 package.module:attribute` to run it over a deterministic population. Contract details live in
 [`finances_simulator/docs/contracts-batch-v1.md`](../finances_simulator/docs/contracts-batch-v1.md).
 
@@ -51,9 +51,22 @@ income at face value and imputes only evidence-backed gaps from stable streams w
 coverage is incomplete. Full-coverage zero months remain zero. Every imputation records amount,
 stream IDs, supporting transaction IDs, and reason codes.
 
-Contract `1.0` lacks observed counterparty identifiers, so stream clustering currently uses exact
-normalized descriptions. Counterparty-aware income ecosystems remain blocked on input contract
-`1.1`. Runtime imports no simulator or private-truth module.
+Input contract `1.1` is a backward-compatible extension with optional observed counterparty name or
+document hash, provider transaction type, transaction balance-after, and balance snapshots. Stream
+clustering prefers the document hash, then counterparty name, then exact normalized description.
+The simulator adapter maps balances but leaves provider and counterparty fields absent because its
+current observation contract does not expose them. Runtime imports no simulator, training, or
+private-truth module.
+
+Estimator `0.3` is implemented as an experimental supervised transaction-classifier candidate. Its
+training zone extracts point-in-time observed features before joining private synthetic labels,
+splits by customer, trains deterministic gradient-boosted decision stumps, and exports a validated
+dependency-free JSON artifact. Deterministic exclusions remain non-overridable.
+
+The fixed held-out test result tied the `0.1` classifier baseline at F1 `0.99552372`, precision `1.0`,
+and recall `0.99108734`; both recorded zero critical false positives. Because promotion requires a
+strict F1 improvement, `0.3` is **not promoted** and `0.2` remains the default. See
+[`training/artifacts`](training/artifacts/README.md) for the reproducible artifact and report.
 
 Install and test it with:
 
@@ -66,11 +79,18 @@ pytest
 Use it directly from Python:
 
 ```python
-from income_estimator import RecurringIncomeEstimator, RuleBasedIncomeEstimator
+from pathlib import Path
+
+from income_estimator import (
+    RecurringIncomeEstimator,
+    RuleBasedIncomeEstimator,
+    SupervisedIncomeEstimator,
+)
 
 estimate = RecurringIncomeEstimator().estimate(request)
 audit = RecurringIncomeEstimator().explain(request)
 baseline = RuleBasedIncomeEstimator().estimate(request)
+candidate = SupervisedIncomeEstimator(Path("model.json")).estimate(request)
 ```
 
 `estimate` matches shared output contract `1.0`. `audit` additionally contains every transaction
@@ -81,7 +101,10 @@ one input-contract file and prints either view:
 income-estimator request.json
 income-estimator --audit request.json
 income-estimator --baseline-0.1 request.json
+income-estimator --model training/artifacts/transaction-classifier-0.3.0.json request.json
 ```
+
+`--model` is explicit because candidate `0.3` did not pass promotion.
 
 Run it through the simulator population harness with:
 

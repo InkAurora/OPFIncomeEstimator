@@ -1,4 +1,4 @@
-"""Command-line JSON adapter for estimator contract 1.0."""
+"""Command-line JSON adapter for estimator input contracts 1.0 and 1.1."""
 
 from __future__ import annotations
 
@@ -10,17 +10,26 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from income_estimator.pipeline import RecurringIncomeEstimator, RuleBasedIncomeEstimator
+from income_estimator.pipeline import (
+    RecurringIncomeEstimator,
+    RuleBasedIncomeEstimator,
+    SupervisedIncomeEstimator,
+)
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="income-estimator")
-    parser.add_argument("input", type=Path, help="EstimatorInputV1 JSON file")
+    parser.add_argument("input", type=Path, help="Estimator input 1.0 or 1.1 JSON file")
     parser.add_argument("--audit", action="store_true", help="Emit internal decisions and streams")
     parser.add_argument(
         "--baseline-0.1",
         action="store_true",
         help="Use coverage-scaled rule baseline instead of recurring-stream estimator",
+    )
+    parser.add_argument(
+        "--model",
+        type=Path,
+        help="Use experimental estimator 0.3 with this JSON model artifact",
     )
     return parser
 
@@ -29,11 +38,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         payload = json.loads(args.input.read_text(encoding="utf-8"))
-        estimator = (
-            RuleBasedIncomeEstimator()
-            if args.baseline_0_1
-            else RecurringIncomeEstimator()
-        )
+        if args.model is not None:
+            estimator = SupervisedIncomeEstimator(args.model)
+        elif args.baseline_0_1:
+            estimator = RuleBasedIncomeEstimator()
+        else:
+            estimator = RecurringIncomeEstimator()
         result = estimator.explain(payload) if args.audit else estimator.estimate(payload)
     except (OSError, json.JSONDecodeError, ValidationError, TypeError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)

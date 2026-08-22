@@ -1,6 +1,19 @@
 from __future__ import annotations
 
-from income_estimator.pipeline import RecurringIncomeEstimator, RuleBasedIncomeEstimator
+from pathlib import Path
+
+from income_estimator.pipeline import (
+    RecurringIncomeEstimator,
+    RuleBasedIncomeEstimator,
+    SupervisedIncomeEstimator,
+)
+
+MODEL_PATH = (
+    Path(__file__).parents[1]
+    / "training"
+    / "artifacts"
+    / "transaction-classifier-0.3.0.json"
+)
 
 
 def test_pipeline_is_deterministic_and_detects_monthly_stream(request_payload, transaction) -> None:
@@ -131,3 +144,30 @@ def test_recurring_estimator_imputes_single_missing_edge_month(
 
     assert estimate.monthly_estimates[0].estimated_income_minor == 500_000
     assert estimate.monthly_estimates[0].contributing_transaction_ids
+
+
+def test_supervised_candidate_loads_frozen_artifact_and_preserves_safety_rules(
+    request_payload,
+    transaction,
+) -> None:
+    payload = request_payload(
+        transactions=[
+            transaction("salary"),
+            transaction(
+                "transfer",
+                amount_minor=250_000,
+                description="OWN TRANSFER FROM SAVINGS",
+            ),
+        ]
+    )
+
+    audit = SupervisedIncomeEstimator(MODEL_PATH).explain(payload)
+    decisions = {item.transaction_id: item for item in audit.transaction_decisions}
+
+    assert audit.metadata.estimator_version == "supervised-transactions-0.3.0"
+    assert audit.metadata.model_versions == ("transaction-gbdt-stumps-0.3.0",)
+    assert decisions["salary"].classification == "INCOME"
+    assert decisions["transfer"].classification == "EXCLUDED"
+    assert decisions["transfer"].reason_codes == (
+        "EXCLUDED_DESCRIPTION_TRANSFER_FROM",
+    )

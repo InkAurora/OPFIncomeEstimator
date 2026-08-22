@@ -68,7 +68,7 @@ def detect_income_streams(
     grouped: dict[str, list[TransactionDecision]] = defaultdict(list)
     for decision in decisions:
         if decision.classification == "INCOME":
-            grouped[decision.normalized_description].append(decision)
+            grouped[decision.counterparty_cluster].append(decision)
 
     streams: list[IncomeStream] = []
     for cluster, items in sorted(grouped.items()):

@@ -16,6 +16,7 @@ _INSTITUTION_PREFIX = re.compile(r"^[A-Z0-9]{2,12}\s*\|\s*")
 class NormalizedTransaction:
     source: EstimatorTransactionV1
     normalized_description: str
+    counterparty_cluster: str
     posted_month: str
     available_at_cutoff: bool
     inside_window: bool
@@ -32,17 +33,36 @@ def normalize_description(description: str) -> str:
     return _INSTITUTION_PREFIX.sub("", normalized)
 
 
+def _counterparty_cluster(
+    transaction: EstimatorTransactionV1,
+    normalized_description: str,
+) -> str:
+    document_hash = getattr(transaction, "counterparty_document_hash", None)
+    if document_hash:
+        return f"document:{document_hash.lower()}"
+    counterparty_name = getattr(transaction, "counterparty_name", None)
+    if counterparty_name:
+        return f"name:{normalize_description(counterparty_name)}"
+    return f"description:{normalized_description}"
+
+
 def normalize_transactions(request: EstimatorInputV1) -> tuple[NormalizedTransaction, ...]:
     """Normalize in stable ID order and mark records unavailable at reference cutoff."""
 
     result: list[NormalizedTransaction] = []
     for transaction in request.transactions:
         available_at_cutoff = transaction.observed_at <= request.window_end
+        normalized_description = (
+            normalize_description(transaction.description)
+            if available_at_cutoff
+            else ""
+        )
         result.append(
             NormalizedTransaction(
                 source=transaction,
-                normalized_description=(
-                    normalize_description(transaction.description)
+                normalized_description=normalized_description,
+                counterparty_cluster=(
+                    _counterparty_cluster(transaction, normalized_description)
                     if available_at_cutoff
                     else ""
                 ),

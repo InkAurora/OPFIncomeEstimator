@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from income_estimator.contracts import (
@@ -13,10 +14,16 @@ from income_estimator.contracts import (
     validate_estimator_input,
 )
 from income_estimator.income_streams import detect_income_streams
-from income_estimator.models import reconstruct_monthly_income, reconstruct_recurring_income
+from income_estimator.models import (
+    GradientBoostedTransactionClassifier,
+    reconstruct_monthly_income,
+    reconstruct_recurring_income,
+)
+from income_estimator.models.transaction_classifier import MODEL_FEATURE_VERSION
 from income_estimator.transaction_intelligence import (
     FEATURE_VERSION,
     IncomeRuleClassifier,
+    ModelIncomeClassifier,
     RuleConfig,
     extract_transaction_features,
 )
@@ -24,6 +31,7 @@ from income_estimator.transaction_intelligence import (
 ESTIMATOR_VERSION = "rule-based-0.1.0"
 RECURRING_ESTIMATOR_VERSION = "recurring-streams-0.2.0"
 RECURRING_FEATURE_VERSION = "income-stream-features-1.0.0"
+SUPERVISED_ESTIMATOR_VERSION = "supervised-transactions-0.3.0"
 
 
 def _baseline_reconstruction_audit(
@@ -61,6 +69,7 @@ class RuleBasedIncomeEstimator:
 
     estimator_version = ESTIMATOR_VERSION
     feature_version = FEATURE_VERSION
+    model_versions: tuple[str, ...] = ()
 
     def __init__(self, rule_config: RuleConfig | None = None) -> None:
         self.classifier = IncomeRuleClassifier(rule_config)
@@ -97,8 +106,9 @@ class RuleBasedIncomeEstimator:
             metadata=ArtifactMetadata(
                 estimator_version=self.estimator_version,
                 feature_version=self.feature_version,
-                input_contract_version=ESTIMATOR_CONTRACT_VERSION,
+                input_contract_version=validated.schema_version,
                 output_contract_version=ESTIMATOR_CONTRACT_VERSION,
+                model_versions=self.model_versions,
             ),
             estimate=estimate,
             transaction_decisions=decisions,
@@ -123,9 +133,26 @@ class RecurringIncomeEstimator(RuleBasedIncomeEstimator):
         return reconstruct_recurring_income(request, decisions, streams)
 
 
+class SupervisedIncomeEstimator(RecurringIncomeEstimator):
+    """Estimator 0.3 candidate; safety exclusions remain deterministic."""
+
+    estimator_version = SUPERVISED_ESTIMATOR_VERSION
+    feature_version = MODEL_FEATURE_VERSION
+
+    def __init__(self, model_path: Path, rule_config: RuleConfig | None = None) -> None:
+        model = GradientBoostedTransactionClassifier.from_path(model_path)
+        self.classifier = ModelIncomeClassifier(
+            model,
+            IncomeRuleClassifier(rule_config),
+        )
+        self.model_versions = (model.artifact.model_version,)
+
+
 __all__ = [
     "ESTIMATOR_VERSION",
     "RECURRING_ESTIMATOR_VERSION",
+    "SUPERVISED_ESTIMATOR_VERSION",
     "RecurringIncomeEstimator",
     "RuleBasedIncomeEstimator",
+    "SupervisedIncomeEstimator",
 ]

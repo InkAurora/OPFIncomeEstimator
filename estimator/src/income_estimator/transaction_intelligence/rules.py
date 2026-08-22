@@ -115,6 +115,7 @@ class IncomeRuleClassifier:
             direction=item.source.direction,
             amount_minor=item.source.amount_minor,
             normalized_description=item.normalized_description,
+            counterparty_cluster=item.counterparty_cluster,
             classification=classification,
             income_probability_basis_points=probability,
             reason_codes=(reason,),

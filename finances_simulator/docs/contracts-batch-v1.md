@@ -1,4 +1,4 @@
-# Phase-7 Batch and Estimator Contract 1.0
+# Phase-7 Batch and Estimator Contracts 1.0–1.1
 
 Batch schema `1.0`, implemented by simulator orchestrator `0.7.0`, composes versioned single-customer
 runs into deterministic populations. Current examples use frozen engine `0.6.0` and observation
@@ -67,6 +67,29 @@ coverage[]: customer/account, configured percent, eligible/observed counts,
 Ground-truth classifications, true income, income profiles/sources, life events, anomalies, and
 latent state are absent. Older observation contracts normalize missing arrival/lineage fields and
 use complete-coverage defaults.
+
+## Estimator input 1.1
+
+Input `1.1` is a backward-compatible extension of `1.0`. Every nested record also carries schema
+version `1.1`. Transactions add these optional provider-observed fields:
+
+```text
+provider_transaction_type
+counterparty_name
+counterparty_document_hash
+balance_after_minor
+```
+
+It also adds observed balance snapshots:
+
+```text
+balances[]: balance_id, customer/account, reference_date, balance_minor, currency
+```
+
+All fields pass through an explicit allow list. The current simulator observation contract supplies
+balances and transaction balance-after values, but not provider transaction types or counterparties;
+the adapter leaves unavailable fields null and never sources them from private truth. Input `1.0`
+and its adapter remain frozen and supported.
 
 An estimator implements `estimate(request)` or is directly callable. Output contract `1.0` contains
 estimator version, input identity/currency, and one ordered record for every simulation month. Each

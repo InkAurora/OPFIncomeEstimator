@@ -13,20 +13,25 @@ correct measured limitations of deterministic methods rather than replace an une
 
 ## 2. Current state
 
-The financial simulator supports estimator milestones through `0.2`:
+The financial simulator and estimator support evaluated milestones through `0.3`:
 
 - simulator orchestrator `0.7.0` generates deterministic populations;
 - observation contract `1.5` includes incomplete-consent and data-quality artifacts;
-- estimator boundary contract `1.0` exposes an immutable observation-only request;
+- estimator boundary contracts `1.0` and `1.1` expose immutable observation-only requests;
 - automatic evaluation joins predictions with physically isolated private truth;
 - estimator `0.1.0` freezes the strict observation-only rule baseline;
 - estimator `0.2.0` adds deterministic stream detection and coverage-aware gap reconstruction;
-- fixed held-out artifacts compare both versions across complete, incomplete, and life-event suites.
+- input `1.1` optionally adds provider-visible counterparty, transaction type, balance-after, and
+  balance context;
+- experimental estimator `0.3.0` adds point-in-time features, customer-isolated training, and a
+  portable supervised transaction classifier;
+- fixed held-out artifacts compare promoted versions and record the `0.3` promotion decision.
 
-Boundary contract `1.0` is sufficient for an initial transaction-based baseline. It is not yet rich
-enough for the complete capacity model because it omits balances, card behavior, complete loan
-details, and investment balances. The existing private monthly truth also exposes one generic
-`true_income_minor` target rather than the distinct income concepts required by the estimator.
+Boundary contract `1.1` is backward compatible with `1.0`, but the current simulator observations do
+not populate its optional provider transaction type or counterparty fields. It remains insufficient
+for the complete capacity model because card behavior, complete loan details, and investment
+balances are absent. The existing private monthly truth also exposes one generic `true_income_minor`
+target rather than the distinct income concepts required by the estimator.
 
 ## 3. Income target definitions
 
@@ -328,7 +333,7 @@ Acceptance criteria:
 - recurring-income reconstruction improves over `0.1` on the held-out population without relying
   on private identifiers.
 
-### Estimator `0.3` — Supervised transaction classifier
+### Estimator `0.3` — Supervised transaction classifier — evaluated, not promoted
 
 Build a labeled training dataset through an isolated join:
 
@@ -348,6 +353,19 @@ Acceptance criteria:
 - false-positive rates for own transfers, loan disbursements, and investment redemptions remain
   within promotion thresholds established from the baseline;
 - model artifact records dataset, simulator, feature, and hyperparameter versions.
+
+Implemented candidate `supervised-transactions-0.3.0` uses deterministic gradient-boosted decision
+stumps with dependency-free JSON inference. Features are computed in observation order using only
+prior recurrence history. Synthetic private labels are joined only after observed feature
+extraction, and SHA-256 customer partitioning produces disjoint 70/15/15 train/validation/test
+groups. Rule exclusions for duplicates, reversals, visible own transfers, loan disbursements,
+investment redemptions, and exclusion descriptions cannot be overridden by the model.
+
+On the fixed 360-customer population, held-out candidate and baseline F1 both equal `0.99552372`,
+with precision `1.0`, recall `0.99108734`, and zero false positives for own transfers, loan
+disbursements, investment redemptions, and refunds. The strict-improvement criterion therefore
+records `NOT_PROMOTED`. The remaining false negatives in this synthetic population are protected
+reversed originals, so weakening the safety layer solely to improve this benchmark is rejected.
 
 ### Estimator `0.4` — Customer-month features
 

@@ -1,0 +1,247 @@
+{
+  "schema_version": "1.0",
+  "model_version": "transaction-gbdt-stumps-0.3.0",
+  "feature_version": "transaction-model-features-1.0.0",
+  "feature_names": [
+    "log_amount_minor",
+    "day_of_month",
+    "has_provider_transaction_type",
+    "has_observed_counterparty",
+    "has_balance_after",
+    "balance_to_amount_ratio",
+    "prior_same_counterparty_count",
+    "prior_same_counterparty_count_90d",
+    "prior_same_amount_ratio",
+    "days_since_prior_observation",
+    "amount_to_prior_mean_ratio",
+    "prior_amount_coefficient_of_variation",
+    "description_has_payroll",
+    "description_has_salary",
+    "description_has_wage",
+    "description_has_pension",
+    "description_has_service",
+    "description_has_profit",
+    "description_has_distribution",
+    "description_has_bonus",
+    "description_has_commission",
+    "description_has_dividend",
+    "description_has_benefit",
+    "description_has_transfer",
+    "description_has_loan",
+    "description_has_redemption",
+    "description_has_refund",
+    "description_has_reversal",
+    "description_has_estate",
+    "description_has_sale"
+  ],
+  "base_score": -0.354527868503,
+  "learning_rate": 0.1,
+  "decision_threshold_basis_points": 1500,
+  "trees": [
+    {
+      "feature_name": "log_amount_minor",
+      "threshold": 11.776957249655,
+      "left_value": -1.652698374939,
+      "right_value": 1.859276878925
+    },
+    {
+      "feature_name": "log_amount_minor",
+      "threshold": 11.776957249655,
+      "left_value": -1.544207183512,
+      "right_value": 1.63124134048
+    },
+    {
+      "feature_name": "log_amount_minor",
+      "threshold": 11.776957249655,
+      "left_value": -1.456928967257,
+      "right_value": 1.457222229461
+    },
+    {
+      "feature_name": "log_amount_minor",
+      "threshold": 12.644526944554,
+      "left_value": -1.271835261868,
+      "right_value": 1.457443975164
+    },
+    {
+      "feature_name": "day_of_month",
+      "threshold": 0.177419354839,
+      "left_value": 1.562609497563,
+      "right_value": -1.055436767348
+    },
+    {
+      "feature_name": "description_has_transfer",
+      "threshold": 0.5,
+      "left_value": 1.103989639335,
+      "right_value": -1.368146434237
+    },
+    {
+      "feature_name": "description_has_transfer",
+      "threshold": 0.5,
+      "left_value": 1.011991442437,
+      "right_value": -1.321789957213
+    },
+    {
+      "feature_name": "day_of_month",
+      "threshold": 0.177419354839,
+      "left_value": 1.314461301677,
+      "right_value": -0.940764321797
+    },
+    {
+      "feature_name": "log_amount_minor",
+      "threshold": 11.776957249655,
+      "left_value": -1.186423676049,
+      "right_value": 0.954265872195
+    },
+    {
+      "feature_name": "description_has_transfer",
+      "threshold": 0.5,
+      "left_value": 0.845722331129,
+      "right_value": -1.23607163068
+    },
+    {
+      "feature_name": "day_of_month",
+      "threshold": 0.177419354839,
+      "left_value": 1.149060214492,
+      "right_value": -0.852848115606
+    },
+    {
+      "feature_name": "description_has_transfer",
+      "threshold": 0.5,
+      "left_value": 0.757373021632,
+      "right_value": -1.192530758691
+    },
+    {
+      "feature_name": "day_of_month",
+      "threshold": 0.177419354839,
+      "left_value": 1.060427114502,
+      "right_value": -0.789561156174
+    },
+    {
+      "feature_name": "description_has_transfer",
+      "threshold": 0.5,
+      "left_value": 0.681920923335,
+      "right_value": -1.158372744063
+    },
+    {
+      "feature_name": "log_amount_minor",
+      "threshold": 10.952165137663,
+      "left_value": -1.13210184189,
+      "right_value": 0.654390560246
+    },
+    {
+      "feature_name": "day_of_month",
+      "threshold": 0.177419354839,
+      "left_value": 0.956601366761,
+      "right_value": -0.721398870477
+    },
+    {
+      "feature_name": "description_has_transfer",
+      "threshold": 0.5,
+      "left_value": 0.587458298605,
+      "right_value": -1.124211795972
+    },
+    {
+      "feature_name": "log_amount_minor",
+      "threshold": 10.952165137663,
+      "left_value": -1.095586411522,
+      "right_value": 0.564133181452
+    },
+    {
+      "feature_name": "description_has_transfer",
+      "threshold": 0.5,
+      "left_value": 0.517924712704,
+      "right_value": -1.10680300277
+    },
+    {
+      "feature_name": "day_of_month",
+      "threshold": 0.177419354839,
+      "left_value": 0.845993686497,
+      "right_value": -0.653727881619
+    },
+    {
+      "feature_name": "log_amount_minor",
+      "threshold": 10.952165137663,
+      "left_value": -1.06614835652,
+      "right_value": 0.486802675968
+    },
+    {
+      "feature_name": "description_has_transfer",
+      "threshold": 0.5,
+      "left_value": 0.446625860106,
+      "right_value": -1.087535638066
+    },
+    {
+      "feature_name": "days_since_prior_observation",
+      "threshold": 0.061643835616,
+      "left_value": -1.034151065101,
+      "right_value": 0.483872096524
+    },
+    {
+      "feature_name": "description_has_transfer",
+      "threshold": 0.5,
+      "left_value": 0.420710177668,
+      "right_value": -1.075789709409
+    },
+    {
+      "feature_name": "days_since_prior_observation",
+      "threshold": 0.006849315068,
+      "left_value": -0.983783023976,
+      "right_value": 0.457970009008
+    },
+    {
+      "feature_name": "log_amount_minor",
+      "threshold": 10.952165137663,
+      "left_value": -1.038124626085,
+      "right_value": 0.419278790982
+    },
+    {
+      "feature_name": "balance_to_amount_ratio",
+      "threshold": 5.494434283747,
+      "left_value": 0.549358876878,
+      "right_value": -0.76672709915
+    },
+    {
+      "feature_name": "days_since_prior_observation",
+      "threshold": 0.006849315068,
+      "left_value": -0.91435879456,
+      "right_value": 0.44477484113
+    },
+    {
+      "feature_name": "description_has_transfer",
+      "threshold": 0.5,
+      "left_value": 0.384914750323,
+      "right_value": -1.063514994136
+    },
+    {
+      "feature_name": "description_has_transfer",
+      "threshold": 0.5,
+      "left_value": 0.353048527597,
+      "right_value": -1.056188077408
+    },
+    {
+      "feature_name": "days_since_prior_observation",
+      "threshold": 0.006849315068,
+      "left_value": -0.883543121352,
+      "right_value": 0.457048158941
+    },
+    {
+      "feature_name": "description_has_transfer",
+      "threshold": 0.5,
+      "left_value": 0.334534807402,
+      "right_value": -1.048944855336
+    }
+  ],
+  "dataset_version": "synthetic-transactions-1.0.0",
+  "split_version": "customer-sha256-70-15-15-v1",
+  "simulator_version": "0.7.0",
+  "source_contract_versions": [
+    "1.3",
+    "1.4",
+    "1.5"
+  ],
+  "training_rounds_requested": 32,
+  "l2_regularization": 1.0,
+  "minimum_leaf_size": 8,
+  "training_customer_count": 249,
+  "validation_customer_count": 57
+}

@@ -27,6 +27,7 @@ class TransactionDecision(AuditModel):
     direction: Literal["CREDIT", "DEBIT"]
     amount_minor: int = Field(gt=0)
     normalized_description: str
+    counterparty_cluster: str
     classification: Literal["INCOME", "EXCLUDED", "AMBIGUOUS"]
     income_probability_basis_points: int = Field(ge=0, le=10_000)
     reason_codes: tuple[str, ...] = Field(min_length=1)
