@@ -924,6 +924,7 @@ def simulate_v4(
         ledger_entries=ledger_entries,
         life_event_transitions=transitions,
         anomalies=anomalies,
+        income_seasonality_basis_points=config.seasonality.income_multipliers_basis_points,
     )
 
 

@@ -193,8 +193,8 @@ def observed_domains(
     """Report which product domains are observable at the cutoff.
 
     Domain presence is itself point-in-time: a loan or investment record only counts once its
-    linked account transaction is visible, so a future product cannot make an earlier month look
-    better covered. Credit cards require estimator input 1.2 and are never observable here.
+    linked account transaction or its own dated product record is visible, so a future product
+    cannot make an earlier month look better covered. Credit cards require estimator input 1.2.
     """
 
     domains: set[str] = set()
@@ -204,13 +204,19 @@ def observed_domains(
         domains.add("BALANCES")
     if any(
         item.disbursement_transaction_id in available_transaction_ids for item in request.loans
-    ):
+    ) or getattr(request, "loan_balances", ()) or getattr(request, "loan_payments", ()):
         domains.add("LOANS")
-    if any(
-        item.related_account_transaction_id in available_transaction_ids
-        for item in request.investment_transactions
+    if (
+        any(
+            item.related_account_transaction_id in available_transaction_ids
+            for item in request.investment_transactions
+        )
+        or getattr(request, "investments", ())
+        or getattr(request, "investment_balances", ())
     ):
         domains.add("INVESTMENTS")
+    if getattr(request, "credit_cards", ()):
+        domains.add("CREDIT_CARDS")
     return frozenset(domains)
 
 

@@ -28,7 +28,7 @@ def request_file(tmp_path: Path, request_payload, transaction) -> Path:
         ((), "recurring-streams-0.2.0"),
         (("--baseline-0.1",), "rule-based-0.1.0"),
         (("--audit",), "transaction_decisions"),
-        (("--features",), "customer-month-features-1.0.0"),
+        (("--features",), "customer-month-features-1.1.0"),
     ],
 )
 def test_cli_emits_each_view(request_file: Path, capsys, flags, marker) -> None:

@@ -59,6 +59,13 @@ The simulator adapter maps balances but leaves provider and counterparty fields 
 current observation contract does not expose them. Runtime imports no simulator, training, or
 private-truth module.
 
+Input contract `1.2` adds the observed product data the capacity model needs: credit cards, credit
+limits, card transactions, card invoices, loan payments, loan balances, investments, and investment
+balances. Every collection is optional, so a consent scope that omits a domain stays valid and is
+reported as unobserved rather than as zero. Product records carry their provider-visible date; the
+simulator adapter `build_estimator_input_v1_2` maps every domain its scenario contract exposes and
+reads no private field.
+
 Estimator `0.3` is implemented as an experimental supervised transaction-classifier candidate. Its
 training zone extracts point-in-time observed features before joining private synthetic labels,
 splits by customer, trains deterministic gradient-boosted decision stumps, and exports a validated
@@ -115,14 +122,16 @@ The versioned schema holds 98 features in seven groups:
 - **context:** available balance and staleness, observed loans and disbursements, and investment
   contributions, redemptions, and net flow;
 - **capacity:** card spend, credit utilization, installment commitment, monthly debt payment,
-  outstanding debt, and investment balance.
+  outstanding debt, and investment balance, all computed from estimator input `1.2`.
 
 Features that cannot be computed are reported with an explicit reason instead of a zero:
-`CONTRACT_DOMAIN_UNAVAILABLE` for the capacity group, which needs estimator input `1.2`;
-`NO_OBSERVED_RECORDS` when a product domain has not been observed by the cutoff;
-`INSUFFICIENT_HISTORY` for dispersion over fewer than two months; and `UNDEFINED_ZERO_DENOMINATOR`
-when a ratio would divide by zero. Product domains are themselves point-in-time: a loan counts only
-once its disbursement transaction is visible, so a later product cannot make an earlier month look
+`CONTRACT_DOMAIN_UNAVAILABLE` when the request is on contract `1.0` or `1.1` and cannot express the
+capacity group at all; `NO_OBSERVED_RECORDS` when the contract does carry a domain but nothing has
+been observed by the cutoff; `INSUFFICIENT_HISTORY` for dispersion over fewer than two months; and
+`UNDEFINED_ZERO_DENOMINATOR` when a ratio would divide by zero. The first two are deliberately
+distinct: a request that cannot describe cards is not the same as a customer who holds none.
+Product domains are themselves point-in-time: a loan counts only once its disbursement transaction
+or its own dated product record is visible, so a later product cannot make an earlier month look
 better covered.
 
 One documented exception to per-cutoff recomputation: `effective_consent_coverage_basis_points` and

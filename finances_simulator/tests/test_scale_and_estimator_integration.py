@@ -15,6 +15,7 @@ from finances_simulator.config import load_scenario_config
 from finances_simulator.integration import (
     BaselineIncomeEstimator,
     build_estimator_input,
+    build_estimator_input_v1_2,
     evaluate_population,
 )
 from finances_simulator.simulation.primitives import SIMULATOR_VERSION
@@ -218,3 +219,75 @@ def test_phase7_version_and_batch_argument_validation(phase7_config) -> None:
         )
     with pytest.raises(ValueError, match="less than or equal"):
         generate_population(phase7_config, population_size=100_001, seed=1)
+
+
+def test_estimator_input_1_2_exposes_products_without_private_fields(
+    project_root: Path,
+) -> None:
+    config = load_scenario_config(
+        project_root / "configs" / "scenarios" / "salaried_loans_investments.yaml"
+    )
+    population = generate_population(
+        config,
+        population_size=1,
+        seed=42,
+        months=12,
+        workers=1,
+    )
+    member = population.members[0]
+
+    request = build_estimator_input_v1_2(member)
+    payload = request.model_dump(mode="json")
+    forbidden = {
+        "economic_type",
+        "income_profile",
+        "income_source_id",
+        "life_event_id",
+        "true_income_minor",
+        "annual_interest_basis_points",
+        "institution_name",
+    }
+
+    assert request.schema_version == "1.2"
+    assert forbidden.isdisjoint(payload)
+    assert all(
+        forbidden.isdisjoint(record)
+        for collection in payload.values()
+        if isinstance(collection, list)
+        for record in collection
+    )
+
+    observations = member.observations
+    assert len(request.credit_cards) == len(observations.credit_cards)
+    assert len(request.credit_limits) == len(observations.credit_limits)
+    assert len(request.card_transactions) == len(observations.credit_card_transactions)
+    assert len(request.card_invoices) == len(observations.credit_card_invoices)
+    assert len(request.loan_payments) == len(observations.loan_payments)
+    assert len(request.loan_balances) == len(observations.loan_balances)
+    assert len(request.investments) == len(observations.investments)
+    assert len(request.investment_balances) == len(observations.investment_balances)
+
+
+def test_estimator_input_1_2_tolerates_contracts_without_products(
+    project_root: Path,
+) -> None:
+    """Schema 1.0 has no product domains; the adapter must still produce a valid request."""
+
+    config = load_scenario_config(
+        project_root / "configs" / "scenarios" / "salaried_basic.yaml"
+    )
+    population = generate_population(
+        config,
+        population_size=1,
+        seed=42,
+        months=3,
+        workers=1,
+    )
+
+    request = build_estimator_input_v1_2(population.members[0])
+
+    assert request.schema_version == "1.2"
+    assert request.transactions
+    assert request.credit_cards == ()
+    assert request.loan_payments == ()
+    assert request.investment_balances == ()

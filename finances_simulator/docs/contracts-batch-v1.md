@@ -1,4 +1,4 @@
-# Phase-7 Batch and Estimator Contracts 1.0–1.1
+# Phase-7 Batch and Estimator Contracts 1.0–1.2
 
 Batch schema `1.0`, implemented by simulator orchestrator `0.7.0`, composes versioned single-customer
 runs into deterministic populations. Current examples use frozen engine `0.6.0` and observation
@@ -90,6 +90,35 @@ All fields pass through an explicit allow list. The current simulator observatio
 balances and transaction balance-after values, but not provider transaction types or counterparties;
 the adapter leaves unavailable fields null and never sources them from private truth. Input `1.0`
 and its adapter remain frozen and supported.
+
+## Estimator input 1.2
+
+Input `1.2` is a backward-compatible extension of `1.1` that adds the observed product data a
+capacity model needs. Every nested record carries schema version `1.2`, and every new collection is
+optional, so a consent scope that omits a domain stays valid:
+
+```text
+credit_cards[]:        card_id, institution_id, opened_on, status
+credit_limits[]:       credit_limit_id, card_id, reference_date, total/used/available limit
+card_transactions[]:   card_transaction_id, card_id, occurred_at, amount, installment_count
+card_invoices[]:       invoice_id, card_id, statement_close_date, due_date, amount, paid, status
+loan_payments[]:       loan_payment_id, loan_id, installment number/count, due_date, split amounts
+loan_balances[]:       loan_balance_id, loan_id, reference_date, remaining_principal_minor
+investments[]:         investment_id, institution_id, opened_on, status
+investment_balances[]: investment_balance_id, investment_id, reference_date, balance_minor
+```
+
+Product records carry their provider-visible date rather than an arrival timestamp, matching the
+balances added in `1.1`. Point-in-time consumers filter each collection on its own date; arrival
+delay for product records is not modeled at this version. Card, loan, and investment records must
+reference a card, loan, or investment present in the same request, and credit-limit snapshots must
+satisfy `total = used + available`.
+
+The adapter reads only allow-listed observed fields. Institution and product labels, interest
+terms, and invoice items are deliberately left out because the estimator does not need them, and
+no private truth field is ever sourced. `build_estimator_input_v1_2` accepts scenarios from every
+contract version: one whose observation contract predates a product domain simply contributes no
+records for it. Inputs `1.0` and `1.1` and their adapters remain frozen and supported.
 
 An estimator implements `estimate(request)` or is directly callable. Output contract `1.0` contains
 estimator version, input identity/currency, and one ordered record for every simulation month. Each

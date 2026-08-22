@@ -1,9 +1,8 @@
-"""Balance, loan, investment, and not-yet-contracted capacity context.
+"""Balance, loan, and investment context observed through account activity.
 
-Contract `1.1` exposes account balances plus loan and investment links. Card behavior, credit
-limits, loan payment schedules, outstanding balances, and investment positions arrive with input
-`1.2`. Until then those features are reported missing with an explicit reason instead of being
-defaulted to zero, because a zero would claim the customer holds no debt and no investments.
+These features describe what the deposit-account view can see: the latest balances, loan
+disbursements linked to visible credits, and investment flows linked to visible transactions. The
+product-side capacity view added by estimator input `1.2` lives in ``capacity.py``.
 """
 
 from __future__ import annotations
@@ -12,19 +11,7 @@ from datetime import date
 
 from income_estimator.features.monthly import PointInTimeView
 from income_estimator.features.outcomes import FeatureOutcome, missing, present
-from income_estimator.features.schema import (
-    MISSING_CONTRACT_DOMAIN_UNAVAILABLE,
-    MISSING_NO_OBSERVED_RECORDS,
-)
-
-CAPACITY_FEATURES_REQUIRING_INPUT_1_2 = (
-    "card_spend_3m_minor",
-    "credit_utilization_ratio",
-    "installment_commitment_minor",
-    "monthly_debt_payment_minor",
-    "outstanding_debt_minor",
-    "investment_balance_minor",
-)
+from income_estimator.features.schema import MISSING_NO_OBSERVED_RECORDS
 
 
 def _balance_features(view: PointInTimeView) -> dict[str, FeatureOutcome]:
@@ -115,17 +102,13 @@ def _investment_features(view: PointInTimeView) -> dict[str, FeatureOutcome]:
 
 
 def context_features(view: PointInTimeView) -> dict[str, FeatureOutcome]:
-    """Return observed product context plus declared gaps for capacity inputs."""
+    """Return balance, loan, and investment context observed from account activity."""
 
     return {
         **_balance_features(view),
         **_loan_features(view),
         **_investment_features(view),
-        **{
-            name: missing(MISSING_CONTRACT_DOMAIN_UNAVAILABLE)
-            for name in CAPACITY_FEATURES_REQUIRING_INPUT_1_2
-        },
     }
 
 
-__all__ = ["CAPACITY_FEATURES_REQUIRING_INPUT_1_2", "context_features"]
+__all__ = ["context_features"]

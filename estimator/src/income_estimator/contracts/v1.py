@@ -183,7 +183,12 @@ def validate_estimator_input(request: Any) -> EstimatorInputV1:
         if not callable(dump):
             raise TypeError("request must be a mapping or expose model_dump()")
         payload = dump(mode="python")
-    if payload.get("schema_version", "1.0") == "1.1":
+    schema_version = payload.get("schema_version", "1.0")
+    if schema_version == "1.2":
+        from income_estimator.contracts.v1_2 import EstimatorInputV12
+
+        return EstimatorInputV12.model_validate(payload)
+    if schema_version == "1.1":
         from income_estimator.contracts.v1_1 import EstimatorInputV11
 
         return EstimatorInputV11.model_validate(payload)

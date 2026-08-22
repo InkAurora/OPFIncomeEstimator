@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from typing import Literal
 
-FEATURE_SET_VERSION = "customer-month-features-1.0.0"
+FEATURE_SET_VERSION = "customer-month-features-1.1.0"
 
 FeatureGroup = Literal[
     "CASH_FLOW",
@@ -50,6 +50,8 @@ MISSING_REASONS = (
 )
 
 PRODUCT_DOMAINS = ("TRANSACTIONS", "BALANCES", "LOANS", "INVESTMENTS", "CREDIT_CARDS")
+
+CAPACITY_FEATURE_CONTRACT_VERSION = "1.2"
 
 
 @dataclass(frozen=True, slots=True)
@@ -536,42 +538,48 @@ _CAPACITY_SCHEMA: tuple[FeatureSpec, ...] = (
         group="CAPACITY",
         unit="MINOR",
         window_months=3,
-        formula="requires estimator input 1.2 card_transactions; unavailable in contract 1.1",
+        formula="sum of observed card purchase amounts in the trailing 3 months",
     ),
     FeatureSpec(
         name="credit_utilization_ratio",
         group="CAPACITY",
         unit="RATIO",
         window_months=None,
-        formula="requires estimator input 1.2 credit_limits; unavailable in contract 1.1",
+        formula="summed used limit divided by summed total limit of the latest card snapshots",
     ),
     FeatureSpec(
         name="installment_commitment_minor",
         group="CAPACITY",
         unit="MINOR",
         window_months=None,
-        formula="requires estimator input 1.2 card_invoices; unavailable in contract 1.1",
+        formula=(
+            "unbilled remainder of observed installment purchases, billing one installment per "
+            "calendar month from the purchase month; contract 1.2 exposes no statement close day"
+        ),
     ),
     FeatureSpec(
         name="monthly_debt_payment_minor",
         group="CAPACITY",
         unit="MINOR",
-        window_months=None,
-        formula="requires estimator input 1.2 loan_payments; unavailable in contract 1.1",
+        window_months=1,
+        formula="sum of observed loan installment totals due in the reference month",
     ),
     FeatureSpec(
         name="outstanding_debt_minor",
         group="CAPACITY",
         unit="MINOR",
         window_months=None,
-        formula="requires estimator input 1.2 loan_balances; unavailable in contract 1.1",
+        formula=(
+            "latest remaining principal summed across loans plus latest used limit summed across "
+            "cards"
+        ),
     ),
     FeatureSpec(
         name="investment_balance_minor",
         group="CAPACITY",
         unit="MINOR",
         window_months=None,
-        formula="requires estimator input 1.2 investment_balances; unavailable in contract 1.1",
+        formula="latest observed balance summed across investments",
     ),
 )
 

@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 ESTIMATOR_CONTRACT_VERSION = "1.0"
 ESTIMATOR_INPUT_CONTRACT_VERSION = "1.1"
+ESTIMATOR_INPUT_CONTRACT_VERSION_1_2 = "1.2"
 
 
 class EstimatorContractModel(BaseModel):
@@ -186,6 +187,163 @@ class EstimatorInputV11(EstimatorInputV1):
         return self
 
 
+class EstimatorAccountV12(EstimatorAccountV11):
+    schema_version: Literal["1.2"] = "1.2"
+
+
+class EstimatorTransactionV12(EstimatorTransactionV11):
+    schema_version: Literal["1.2"] = "1.2"
+
+
+class EstimatorLoanV12(EstimatorLoanV11):
+    schema_version: Literal["1.2"] = "1.2"
+
+
+class EstimatorInvestmentTransactionV12(EstimatorInvestmentTransactionV11):
+    schema_version: Literal["1.2"] = "1.2"
+
+
+class EstimatorCoverageV12(EstimatorCoverageV11):
+    schema_version: Literal["1.2"] = "1.2"
+
+
+class EstimatorBalanceV12(EstimatorBalanceV11):
+    schema_version: Literal["1.2"] = "1.2"
+
+
+class EstimatorProductModel(EstimatorContractModel):
+    """Observed product record added by estimator input 1.2."""
+
+    schema_version: Literal["1.2"] = "1.2"
+    customer_id: str
+    currency: str
+
+
+class EstimatorCreditCardV12(EstimatorProductModel):
+    card_id: str
+    institution_id: str
+    opened_on: str
+    status: Literal["ACTIVE", "CLOSED"] = "ACTIVE"
+
+
+class EstimatorCreditLimitV12(EstimatorProductModel):
+    credit_limit_id: str
+    card_id: str
+    reference_date: str
+    total_limit_minor: int = Field(gt=0)
+    used_limit_minor: int = Field(ge=0)
+    available_limit_minor: int = Field(ge=0)
+
+
+class EstimatorCardTransactionV12(EstimatorProductModel):
+    card_transaction_id: str
+    card_id: str
+    occurred_at: str
+    amount_minor: int = Field(gt=0)
+    description: str
+    installment_count: int = Field(gt=0)
+
+
+class EstimatorCardInvoiceV12(EstimatorProductModel):
+    invoice_id: str
+    card_id: str
+    statement_close_date: str
+    due_date: str
+    amount_due_minor: int = Field(gt=0)
+    paid_amount_minor: int = Field(ge=0)
+    status: Literal["CLOSED", "PAID"]
+    paid_at: str | None = None
+
+
+class EstimatorLoanPaymentV12(EstimatorProductModel):
+    loan_payment_id: str
+    loan_id: str
+    installment_number: int = Field(gt=0)
+    installment_count: int = Field(gt=0)
+    due_date: str
+    principal_amount_minor: int = Field(gt=0)
+    interest_amount_minor: int = Field(ge=0)
+    total_amount_minor: int = Field(gt=0)
+    remaining_principal_after_minor: int = Field(ge=0)
+    paid_at: str | None = None
+    payment_transaction_id: str | None = None
+
+
+class EstimatorLoanBalanceV12(EstimatorProductModel):
+    loan_balance_id: str
+    loan_id: str
+    reference_date: str
+    remaining_principal_minor: int = Field(ge=0)
+
+
+class EstimatorInvestmentV12(EstimatorProductModel):
+    investment_id: str
+    institution_id: str
+    opened_on: str
+    status: Literal["ACTIVE", "CLOSED"] = "ACTIVE"
+
+
+class EstimatorInvestmentBalanceV12(EstimatorProductModel):
+    investment_balance_id: str
+    investment_id: str
+    reference_date: str
+    balance_minor: int = Field(ge=0)
+
+
+class EstimatorInputV12(EstimatorInputV11):
+    """Observed product data for capacity modeling; every collection stays optional."""
+
+    schema_version: Literal["1.2"] = "1.2"
+    accounts: tuple[EstimatorAccountV12, ...]
+    transactions: tuple[EstimatorTransactionV12, ...]
+    loans: tuple[EstimatorLoanV12, ...] = ()
+    investment_transactions: tuple[EstimatorInvestmentTransactionV12, ...] = ()
+    coverage: tuple[EstimatorCoverageV12, ...] = ()
+    balances: tuple[EstimatorBalanceV12, ...] = ()
+    credit_cards: tuple[EstimatorCreditCardV12, ...] = ()
+    credit_limits: tuple[EstimatorCreditLimitV12, ...] = ()
+    card_transactions: tuple[EstimatorCardTransactionV12, ...] = ()
+    card_invoices: tuple[EstimatorCardInvoiceV12, ...] = ()
+    loan_payments: tuple[EstimatorLoanPaymentV12, ...] = ()
+    loan_balances: tuple[EstimatorLoanBalanceV12, ...] = ()
+    investments: tuple[EstimatorInvestmentV12, ...] = ()
+    investment_balances: tuple[EstimatorInvestmentBalanceV12, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_product_scope(self) -> Self:
+        products = (
+            *self.credit_cards,
+            *self.credit_limits,
+            *self.card_transactions,
+            *self.card_invoices,
+            *self.loan_payments,
+            *self.loan_balances,
+            *self.investments,
+            *self.investment_balances,
+        )
+        if any(record.customer_id != self.customer_id for record in products):
+            raise ValueError("all product records must belong to customer_id")
+        if any(record.currency != self.currency for record in products):
+            raise ValueError("product currencies must match input currency")
+        card_ids = {record.card_id for record in self.credit_cards}
+        carded = (*self.credit_limits, *self.card_transactions, *self.card_invoices)
+        if any(record.card_id not in card_ids for record in carded):
+            raise ValueError("card records must reference an observed credit card")
+        loan_ids = {record.loan_id for record in self.loans}
+        if any(
+            record.loan_id not in loan_ids
+            for record in (*self.loan_payments, *self.loan_balances)
+        ):
+            raise ValueError("loan records must reference an observed loan")
+        investment_ids = {record.investment_id for record in self.investments}
+        if any(
+            record.investment_id not in investment_ids
+            for record in self.investment_balances
+        ):
+            raise ValueError("investment balances must reference an observed investment")
+        return self
+
+
 class MonthlyIncomeEstimateV1(EstimatorContractModel):
     month: str = Field(pattern=r"^\d{4}-\d{2}$")
     estimated_income_minor: int = Field(ge=0)
@@ -236,6 +394,7 @@ class IncomeEstimator(Protocol):
 __all__ = [
     "ESTIMATOR_CONTRACT_VERSION",
     "ESTIMATOR_INPUT_CONTRACT_VERSION",
+    "ESTIMATOR_INPUT_CONTRACT_VERSION_1_2",
     "EstimatorAccountV1",
     "EstimatorContractModel",
     "EstimatorCoverageV1",
@@ -250,6 +409,21 @@ __all__ = [
     "EstimatorInvestmentTransactionV11",
     "EstimatorLoanV11",
     "EstimatorTransactionV11",
+    "EstimatorAccountV12",
+    "EstimatorBalanceV12",
+    "EstimatorCardInvoiceV12",
+    "EstimatorCardTransactionV12",
+    "EstimatorCoverageV12",
+    "EstimatorCreditCardV12",
+    "EstimatorCreditLimitV12",
+    "EstimatorInputV12",
+    "EstimatorInvestmentBalanceV12",
+    "EstimatorInvestmentTransactionV12",
+    "EstimatorInvestmentV12",
+    "EstimatorLoanBalanceV12",
+    "EstimatorLoanPaymentV12",
+    "EstimatorLoanV12",
+    "EstimatorTransactionV12",
     "IncomeEstimateV1",
     "IncomeEstimator",
     "MonthlyIncomeEstimateV1",

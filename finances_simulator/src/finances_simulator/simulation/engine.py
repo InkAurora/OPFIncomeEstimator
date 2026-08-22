@@ -68,6 +68,7 @@ class SimulationRun:
     anomalies: tuple[FinancialAnomaly, ...] = ()
     world_config_sha256: str | None = None
     world_simulator_version: str | None = None
+    income_seasonality_basis_points: tuple[int, ...] = ()
 
 
 def simulate_v0(

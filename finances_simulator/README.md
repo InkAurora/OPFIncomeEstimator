@@ -150,7 +150,8 @@ contributions have no available-funds check.
 
 Exact fields and semantics:
 
-- [batch and estimator contract 1.0](docs/contracts-batch-v1.md)
+- [batch and estimator contracts 1.0 to 1.2](docs/contracts-batch-v1.md)
+- [private income target contract 1.0](docs/contracts-income-targets-v1.md)
 - [contract schema 1.5](docs/contracts-v1-5.md)
 - [contract schema 1.4](docs/contracts-v1-4.md)
 - [contract schema 1.3](docs/contracts-v1-3.md)
@@ -241,6 +242,46 @@ exercises all three coverage levels and every deposit-transaction degradation ty
 The Phase-7
 [two-member population reference](examples/generated/phase7_population_seed_100_count_2/population_manifest.json)
 anchors deterministic Parquet, estimator-boundary, and evaluation output.
+
+## Estimator input adapters
+
+`build_estimator_input`, `build_estimator_input_v1_1`, and `build_estimator_input_v1_2` normalize a
+generated scenario into the versioned estimator boundary. Contract `1.2` adds observed credit
+cards, credit limits, card transactions, card invoices, loan payments, loan balances, investments,
+and investment balances, so a capacity model can see what the customer owes and owns. Each
+collection is optional: a scenario whose observation contract predates a domain contributes no
+records for it, and the estimator reports that domain as unobserved rather than as zero. Every
+adapter reads an explicit allow list of observed fields and never a private one. See
+[batch and estimator contracts 1.0 to 1.2](docs/contracts-batch-v1.md).
+
+## Private income targets
+
+The customer-month record carries realized income only, as `true_income_minor`. The estimator also
+needs expected and sustainable income, so `project_income_targets` derives the five targets defined
+by [ADR 0001](../docs/adr/0001-income-target-definitions.md) from the hidden run, beside the engine
+whose parameters define them:
+
+```python
+from finances_simulator.ground_truth import project_income_targets
+
+targets = project_income_targets(generated.simulation)
+```
+
+Expectations are exact rather than sampled. One attempt's expected amount is its base amount scaled
+by source seasonality, scenario seasonality, and payment probability, because the engine's
+volatility shock has zero mean. Over forty stochastic customers, realized and expected totals agree
+within `5%`; on a deterministic scenario they are equal.
+
+Forward-looking targets apply the state effective at the reference cutoff and never a later life
+event, so they describe capacity known at the reference date rather than a forecast privileged with
+future knowledge. Bonuses are realized and expected income but never sustainable income, and a
+source schedule that merely fills the simulated window is not read as income ending. Construction
+rules are fixed by [ADR 0002](../docs/adr/0002-income-target-construction.md) and the field list is
+in [private income target contract 1.0](docs/contracts-income-targets-v1.md).
+
+Targets require the private income-source record introduced by contract `1.3`. They are private
+truth: joinable with observed features only inside an isolated training or evaluation step, never
+inside estimator runtime.
 
 ## Responsibilities
 

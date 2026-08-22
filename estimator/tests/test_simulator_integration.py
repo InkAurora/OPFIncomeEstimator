@@ -8,7 +8,11 @@ pytest.importorskip("pyarrow")
 
 from finances_simulator.batch import generate_population
 from finances_simulator.config import load_scenario_config
-from finances_simulator.integration import build_estimator_input_v1_1, evaluate_population
+from finances_simulator.integration import (
+    build_estimator_input_v1_1,
+    build_estimator_input_v1_2,
+    evaluate_population,
+)
 
 from income_estimator.features import build_customer_month_features
 from income_estimator.pipeline import RecurringIncomeEstimator, RuleBasedIncomeEstimator
@@ -118,4 +122,41 @@ def test_customer_month_features_discover_products_only_after_they_are_observed(
     assert trailing_income == sorted(trailing_income)
 
     payload = first.model_dump_json()
+    assert all(field not in payload for field in PRIVATE_TRUTH_FIELDS)
+
+
+def test_simulator_builds_product_aware_input_1_2() -> None:
+    simulator_root = Path(__file__).parents[2] / "finances_simulator"
+    config = load_scenario_config(
+        simulator_root / "configs/scenarios/salaried_loans_investments.yaml"
+    )
+    population = generate_population(
+        config,
+        population_size=1,
+        seed=42,
+        months=12,
+        workers=1,
+    )
+
+    request = build_estimator_input_v1_2(population.members[0])
+
+    assert request.schema_version == "1.2"
+    assert request.credit_cards and request.credit_limits and request.card_transactions
+    assert request.loan_payments and request.loan_balances
+    assert request.investments and request.investment_balances
+    assert all(item.customer_id == request.customer_id for item in request.credit_limits)
+
+    table = build_customer_month_features(request)
+    opening = table.rows[0].to_mapping()
+    closing = table.rows[-1].to_mapping()
+
+    assert table.input_contract_version == "1.2"
+    assert closing["credit_utilization_ratio"] is not None
+    assert closing["investment_balance_minor"] > 0
+    assert closing["outstanding_debt_minor"] > 0
+    assert closing["observed_domain_count"] == 5
+    assert closing["data_completeness_score_basis_points"] == 10_000
+    assert closing["observed_domain_count"] > opening["observed_domain_count"]
+
+    payload = table.model_dump_json()
     assert all(field not in payload for field in PRIVATE_TRUTH_FIELDS)

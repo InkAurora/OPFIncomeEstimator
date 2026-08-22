@@ -16,6 +16,7 @@ from income_estimator.contracts.features_v1 import (
     CustomerMonthFeatureValueV1,
 )
 from income_estimator.contracts.v1 import EstimatorInputV1, validate_estimator_input
+from income_estimator.features.capacity import capacity_features
 from income_estimator.features.cashflow import cash_flow_features
 from income_estimator.features.context import context_features
 from income_estimator.features.coverage import activity_features, coverage_features
@@ -48,6 +49,7 @@ FEATURE_GROUP_BUILDERS = (
     coverage_features,
     activity_features,
     context_features,
+    capacity_features,
 )
 
 

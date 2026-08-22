@@ -26,14 +26,19 @@ The financial simulator and estimator support evaluated milestones through `0.4`
 - experimental estimator `0.3.0` adds point-in-time features, customer-isolated training, and a
   portable supervised transaction classifier;
 - fixed held-out artifacts compare promoted versions and record the `0.3` promotion decision;
-- feature set `customer-month-features-1.0.0` publishes point-in-time customer-month rows built by
-  replaying the promoted `0.2` estimator at each reference-month cutoff.
+- feature set `customer-month-features-1.1.0` publishes point-in-time customer-month rows built by
+  replaying the promoted `0.2` estimator at each reference-month cutoff;
+- estimator input `1.2` exposes observed cards, limits, card transactions, invoices, loan payments,
+  loan balances, investments, and investment balances, so the capacity feature group is computed;
+- private contract `income-targets-1.0` projects all five income targets from the hidden run, so
+  `sustainable_monthly_income` now exists as a trainable label.
 
 Boundary contract `1.1` is backward compatible with `1.0`, but the current simulator observations do
-not populate its optional provider transaction type or counterparty fields. It remains insufficient
-for the complete capacity model because card behavior, complete loan details, and investment
-balances are absent. The existing private monthly truth also exposes one generic `true_income_minor`
-target rather than the distinct income concepts required by the estimator.
+not populate its optional provider transaction type or counterparty fields, so counterparty-aware
+stream clustering still falls back to normalized descriptions. Contract `1.2` closes the product
+gap: card behavior, loan servicing and outstanding principal, and investment positions are now
+observable. Private contract `income-targets-1.0` closes the target gap: realized, expected, and
+sustainable income are now distinct labels rather than one generic `true_income_minor`.
 
 ## 3. Income target definitions
 
@@ -63,6 +68,16 @@ Proposed definitions:
 The final architecture decision must also specify treatment of bonuses, source start/end dates, job
 changes, zero-income months, partial months, and fewer than 12 months of history. No supervised model
 should be trained before these definitions are fixed.
+
+[ADR 0001](adr/0001-income-target-definitions.md) fixes the definitions and
+[ADR 0002](adr/0002-income-target-construction.md) fixes their construction, including every rule
+deferred above. Targets are projected by the simulator, beside the engine whose parameters define
+the expectation, and consumed by the estimator training zone. Expectations are exact rather than
+sampled: the engine's volatility shock has zero mean, so one attempt's expected amount is its base
+amount scaled by source seasonality, scenario seasonality, and payment probability. Forward-looking
+targets apply the state effective at the reference cutoff and never a later life event, so
+`sustainable_monthly_income` measures capacity known at the reference date rather than a forecast
+privileged with future knowledge.
 
 ## 4. Target architecture
 
@@ -193,7 +208,7 @@ Optional fields are required because not every institution or consent scope will
 information. Counterparty identifiers must be synthetic or appropriately transformed; private
 simulator income-source identifiers must never be substituted for observed identifiers.
 
-### 6.2 Estimator input `1.2`
+### 6.2 Estimator input `1.2` — implemented
 
 Add the complete observed product data needed by the capacity model:
 
@@ -210,6 +225,13 @@ investment_balances[]
 
 Input `1.0` remains supported for the first baseline. New fields should be introduced through a
 versioned adapter rather than by allowing estimator code to consume simulator bundles directly.
+
+Implemented as `EstimatorInputV12` with `build_estimator_input_v1_2` on the simulator side. Every
+new collection is optional, product records carry their provider-visible date rather than an
+arrival timestamp, and card, loan, and investment records must reference a product present in the
+same request. `card_invoice_items` is deliberately omitted: installment commitment is derived from
+the purchase and its installment count, which is what a provider view exposes. Arrival delay for
+product records is not modeled at this version.
 
 ### 6.3 Estimator output `1.1`
 
@@ -430,18 +452,23 @@ to records observable at that month's cutoff and replays the promoted `0.2` pipe
 feature can read a later arrival. Product-domain availability is evaluated at the same cutoff, so a
 loan or investment becomes visible only once its linked transaction is observed.
 
-The cash-flow, stability, source, and coverage groups are complete. The capacity group is declared
-but reports `CONTRACT_DOMAIN_UNAVAILABLE` until estimator input `1.2` exposes cards, credit limits,
-loan payments, loan balances, and investment balances. Observed balance, loan-disbursement, and
-investment-flow context is available from contract `1.1`. Consent-coverage features are the one
-documented exception to per-cutoff recomputation: they carry provider-declared window-level
-metadata, because contract `1.1` publishes no monthly coverage measurement.
+Every group is now computed. Feature set `customer-month-features-1.1.0` fills the capacity group
+from estimator input `1.2`; a request on contract `1.0` or `1.1` still reports those six features
+as `CONTRACT_DOMAIN_UNAVAILABLE`, which stays distinct from the `NO_OBSERVED_RECORDS` reported when
+a contract carries a domain but nothing has been observed by the cutoff. Consent-coverage features
+are the one documented exception to per-cutoff recomputation: they carry provider-declared
+window-level metadata, because no contract yet publishes a monthly coverage measurement.
 
 `FEATURE_SET_VERSION` and `FEATURE_SCHEMA_FINGERPRINT` freeze names, groups, units, windows, and
 formulas; tests assert both, so a formula change fails until the version is bumped. The rejected
 `0.3` classifier remains optional and is recorded in `model_versions` when supplied.
 
 ### Estimator `0.5` — Capacity estimator
+
+Both prerequisites are in place. Private contract `income-targets-1.0` supplies
+`sustainable_monthly_income` for scenarios on contract `1.3` and above, and estimator input `1.2`
+supplies the observed card, loan, and investment data behind the capacity feature group. Training
+can therefore use the full customer-month feature table against a real capacity label.
 
 Train a customer-level tabular regressor using cash-flow, cards, loans, investments, balances,
 behavior, history, and coverage. Initial target:

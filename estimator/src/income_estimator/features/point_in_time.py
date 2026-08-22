@@ -44,13 +44,27 @@ def cutoff_date(request: EstimatorInputV1, reference_month: str) -> date:
     return min(month_end_date(reference_month), window_end)
 
 
+PRODUCT_DATE_FIELDS = (
+    ("balances", "reference_date"),
+    ("credit_cards", "opened_on"),
+    ("credit_limits", "reference_date"),
+    ("card_transactions", "occurred_at"),
+    ("card_invoices", "statement_close_date"),
+    ("loan_payments", "due_date"),
+    ("loan_balances", "reference_date"),
+    ("investments", "opened_on"),
+    ("investment_balances", "reference_date"),
+)
+
+
 def slice_request(request: EstimatorInputV1, cutoff: date) -> EstimatorInputV1:
     """Narrow a validated request to records observable at ``cutoff``.
 
-    Transactions keep only those observed at or before the cutoff, balances keep only those whose
-    reference date has passed, and the window shrinks so downstream code treats the cutoff as the
-    end of history. Accounts, coverage, loan links, and investment links are consent metadata
-    without observation dates; they are retained but can only ever exclude a visible transaction.
+    Transactions keep only those observed at or before the cutoff, every product collection keeps
+    only records whose provider-visible date has passed, and the window shrinks so downstream code
+    treats the cutoff as the end of history. Accounts, coverage, loan links, and investment
+    transaction links are consent metadata without observation dates; they are retained but can
+    only ever exclude a visible transaction.
     """
 
     cutoff_iso = cutoff.isoformat()
@@ -65,10 +79,12 @@ def slice_request(request: EstimatorInputV1, cutoff: date) -> EstimatorInputV1:
             item for item in request.transactions if item.observed_at <= cutoff_iso
         ),
     }
-    balances = getattr(request, "balances", None)
-    if balances is not None:
-        update["balances"] = tuple(
-            item for item in balances if item.reference_date <= cutoff_iso
+    for collection_name, date_field in PRODUCT_DATE_FIELDS:
+        records = getattr(request, collection_name, None)
+        if records is None:
+            continue
+        update[collection_name] = tuple(
+            item for item in records if getattr(item, date_field) <= cutoff_iso
         )
     return request.model_copy(update=update)
 
