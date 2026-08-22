@@ -28,7 +28,8 @@ contract changes, milestones, evaluation metrics, and acceptance criteria.
 
 ## Current milestone
 
-Estimator `0.2` adds recurrence-based reconstruction without machine learning:
+Estimator `0.4` adds a point-in-time customer-month feature table on top of the promoted `0.2`
+reconstruction. Estimator `0.2` remains the default estimate producer:
 
 ```text
 Observed transactions
@@ -68,6 +69,98 @@ and recall `0.99108734`; both recorded zero critical false positives. Because pr
 strict F1 improvement, `0.3` is **not promoted** and `0.2` remains the default. See
 [`training/artifacts`](training/artifacts/README.md) for the reproducible artifact and report.
 
+## Customer-month features (0.4)
+
+`build_customer_month_features` produces one point-in-time row per `customer_id` and
+`reference_month`, keyed to the last observable day of that month:
+
+```text
+Estimator input 1.0 / 1.1
+        |
+        v
+slice_request(cutoff)          <- observed_at <= cutoff, balances at or before cutoff
+        |
+        v
+RecurringIncomeEstimator.explain
+        |
+        v
+monthly observation series
+        |
+        v
+cash flow | stability | sources | coverage | activity | context
+        |
+        v
+CustomerMonthFeatureTableV1
+```
+
+Each reference month re-runs the deterministic pipeline on a request narrowed to the records
+observable at that cutoff, so point-in-time safety is a property of the input rather than of each
+formula. A transaction posted in January but observed in March is invisible to January, February,
+and every rolling window computed before it arrived.
+
+The versioned schema holds 98 features in seven groups:
+
+- **cash flow:** gross credits, debits, probability-weighted probable income, and reconstructed
+  income over trailing 1, 3, 6, and 12 months, plus imputed income and excluded own transfers, loan
+  disbursements, investment redemptions, and refunds;
+- **stability:** mean, median, standard deviation, variance, coefficient of variation, zero-income
+  months, quartiles, minimum, and maximum of the reconstructed monthly income series;
+- **sources:** active, recurring, and ecosystem stream counts, trailing source income, largest
+  source share, Herfindahl-Hirschman concentration, recurrence scores, and months since last
+  source activity;
+- **coverage:** observed months, accounts, institutions, declared consent coverage, observed
+  product domains, and a composite completeness score;
+- **activity:** transaction, credit, and debit counts, distinct credit counterparties, and days
+  since the last credit or transaction;
+- **context:** available balance and staleness, observed loans and disbursements, and investment
+  contributions, redemptions, and net flow;
+- **capacity:** card spend, credit utilization, installment commitment, monthly debt payment,
+  outstanding debt, and investment balance.
+
+Features that cannot be computed are reported with an explicit reason instead of a zero:
+`CONTRACT_DOMAIN_UNAVAILABLE` for the capacity group, which needs estimator input `1.2`;
+`NO_OBSERVED_RECORDS` when a product domain has not been observed by the cutoff;
+`INSUFFICIENT_HISTORY` for dispersion over fewer than two months; and `UNDEFINED_ZERO_DENOMINATOR`
+when a ratio would divide by zero. Product domains are themselves point-in-time: a loan counts only
+once its disbursement transaction is visible, so a later product cannot make an earlier month look
+better covered.
+
+One documented exception to per-cutoff recomputation: `effective_consent_coverage_basis_points` and
+`minimum_account_coverage_basis_points` come from provider-declared consent records that describe
+the whole window. Contract `1.1` exposes no monthly coverage measurement, so those two features
+carry window-level metadata and say so in their schema formula.
+
+`FEATURE_SET_VERSION` and `FEATURE_SCHEMA_FINGERPRINT` freeze every name, unit, window, and formula.
+The fingerprint is asserted in tests, so changing a formula fails until the version is bumped
+deliberately.
+
+```python
+from income_estimator import build_customer_month_features
+
+table = build_customer_month_features(request)
+row = table.row("2026-06")
+row.to_mapping()["income_median_12m_minor"]
+row.missing_features
+```
+
+```bash
+income-estimator --features request.json
+```
+
+The default estimator is promoted `0.2`. The rejected `0.3` classifier stays optional and is
+recorded in `model_versions` when passed explicitly:
+
+```python
+from pathlib import Path
+
+from income_estimator import SupervisedIncomeEstimator, build_customer_month_features
+
+table = build_customer_month_features(
+    request,
+    SupervisedIncomeEstimator(Path("training/artifacts/transaction-classifier-0.3.0.json")),
+)
+```
+
 Install and test it with:
 
 ```bash
@@ -100,6 +193,7 @@ one input-contract file and prints either view:
 ```bash
 income-estimator request.json
 income-estimator --audit request.json
+income-estimator --features request.json
 income-estimator --baseline-0.1 request.json
 income-estimator --model training/artifacts/transaction-classifier-0.3.0.json request.json
 ```

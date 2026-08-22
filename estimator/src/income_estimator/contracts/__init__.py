@@ -7,6 +7,12 @@ from income_estimator.contracts.audit import (
     MonthlyReconstructionAudit,
     TransactionDecision,
 )
+from income_estimator.contracts.features_v1 import (
+    CUSTOMER_MONTH_FEATURE_CONTRACT_VERSION,
+    CustomerMonthFeatureRowV1,
+    CustomerMonthFeatureTableV1,
+    CustomerMonthFeatureValueV1,
+)
 from income_estimator.contracts.v1 import (
     ESTIMATOR_CONTRACT_VERSION,
     EstimatorAccountV1,
@@ -31,9 +37,13 @@ from income_estimator.contracts.v1_1 import (
 )
 
 __all__ = [
+    "CUSTOMER_MONTH_FEATURE_CONTRACT_VERSION",
     "ESTIMATOR_CONTRACT_VERSION",
     "ESTIMATOR_INPUT_CONTRACT_VERSION",
     "ArtifactMetadata",
+    "CustomerMonthFeatureRowV1",
+    "CustomerMonthFeatureTableV1",
+    "CustomerMonthFeatureValueV1",
     "EstimationAudit",
     "EstimatorAccountV1",
     "EstimatorCoverageV1",

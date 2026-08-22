@@ -62,8 +62,14 @@ regression or added false-income classifications. Input contract `1.1` now accep
 counterparty, provider transaction type, transaction-balance, and balance records. An isolated,
 customer-split transaction-classifier pipeline produced experimental candidate `0.3.0`; it tied the
 rule baseline on held-out F1 (`0.99552372`) with zero critical false positives, so the promotion gate
-kept `0.2.0` as the default. Next work is estimator `0.4` customer-month features, while provider
-adapters must populate the new optional context before counterparty-aware gains can be measured. See
+kept `0.2.0` as the default. Estimator `0.4` adds feature set `customer-month-features-1.0.0`: a
+versioned, point-in-time table of `98` features per `customer_id` and `reference_month`, covering
+rolling cash flow, income stability, source structure, coverage, account activity, and observed
+balance, loan, and investment context. Each reference month replays the promoted `0.2` estimator on
+a request narrowed to that month's cutoff, and capacity features stay explicitly missing until input
+`1.2` exposes cards, loan schedules, and investment balances. Next work is estimator `0.5`
+capacity modeling, while provider adapters must populate the new optional context before
+counterparty-aware gains can be measured. See
 [`docs/estimator-implementation-plan.md`](docs/estimator-implementation-plan.md).
 
 ## Simulator quick start

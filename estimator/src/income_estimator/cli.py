@@ -10,6 +10,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
+from income_estimator.features import build_customer_month_features
 from income_estimator.pipeline import (
     RecurringIncomeEstimator,
     RuleBasedIncomeEstimator,
@@ -23,8 +24,14 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--audit", action="store_true", help="Emit internal decisions and streams")
     parser.add_argument(
         "--baseline-0.1",
+        dest="baseline_0_1",
         action="store_true",
         help="Use coverage-scaled rule baseline instead of recurring-stream estimator",
+    )
+    parser.add_argument(
+        "--features",
+        action="store_true",
+        help="Emit the point-in-time customer-month feature table instead of an estimate",
     )
     parser.add_argument(
         "--model",
@@ -44,7 +51,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             estimator = RuleBasedIncomeEstimator()
         else:
             estimator = RecurringIncomeEstimator()
-        result = estimator.explain(payload) if args.audit else estimator.estimate(payload)
+        if args.features:
+            result = build_customer_month_features(payload, estimator)
+        elif args.audit:
+            result = estimator.explain(payload)
+        else:
+            result = estimator.estimate(payload)
     except (OSError, json.JSONDecodeError, ValidationError, TypeError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2

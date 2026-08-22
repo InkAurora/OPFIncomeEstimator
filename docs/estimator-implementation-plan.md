@@ -13,7 +13,7 @@ correct measured limitations of deterministic methods rather than replace an une
 
 ## 2. Current state
 
-The financial simulator and estimator support evaluated milestones through `0.3`:
+The financial simulator and estimator support evaluated milestones through `0.4`:
 
 - simulator orchestrator `0.7.0` generates deterministic populations;
 - observation contract `1.5` includes incomplete-consent and data-quality artifacts;
@@ -25,7 +25,9 @@ The financial simulator and estimator support evaluated milestones through `0.3`
   balance context;
 - experimental estimator `0.3.0` adds point-in-time features, customer-isolated training, and a
   portable supervised transaction classifier;
-- fixed held-out artifacts compare promoted versions and record the `0.3` promotion decision.
+- fixed held-out artifacts compare promoted versions and record the `0.3` promotion decision;
+- feature set `customer-month-features-1.0.0` publishes point-in-time customer-month rows built by
+  replaying the promoted `0.2` estimator at each reference-month cutoff.
 
 Boundary contract `1.1` is backward compatible with `1.0`, but the current simulator observations do
 not populate its optional provider transaction type or counterparty fields. It remains insufficient
@@ -367,7 +369,7 @@ disbursements, investment redemptions, and refunds. The strict-improvement crite
 records `NOT_PROMOTED`. The remaining false negatives in this synthetic population are protected
 reversed originals, so weakening the safety layer solely to improve this benchmark is rejected.
 
-### Estimator `0.4` — Customer-month features
+### Estimator `0.4` — Customer-month features — implemented for contract `1.1`
 
 Create point-in-time features keyed by:
 
@@ -420,6 +422,24 @@ Acceptance criteria:
 - repeated computation produces identical values;
 - feature schemas and formulas are versioned;
 - missing product domains produce explicit missingness indicators rather than invented zero values.
+
+Implemented feature set `customer-month-features-1.0.0` emits `98` features per
+`customer_id` and `reference_month` through contract `CustomerMonthFeatureTableV1`. Point-in-time
+safety is enforced on the input rather than per formula: every reference month narrows the request
+to records observable at that month's cutoff and replays the promoted `0.2` pipeline on it, so no
+feature can read a later arrival. Product-domain availability is evaluated at the same cutoff, so a
+loan or investment becomes visible only once its linked transaction is observed.
+
+The cash-flow, stability, source, and coverage groups are complete. The capacity group is declared
+but reports `CONTRACT_DOMAIN_UNAVAILABLE` until estimator input `1.2` exposes cards, credit limits,
+loan payments, loan balances, and investment balances. Observed balance, loan-disbursement, and
+investment-flow context is available from contract `1.1`. Consent-coverage features are the one
+documented exception to per-cutoff recomputation: they carry provider-declared window-level
+metadata, because contract `1.1` publishes no monthly coverage measurement.
+
+`FEATURE_SET_VERSION` and `FEATURE_SCHEMA_FINGERPRINT` freeze names, groups, units, windows, and
+formulas; tests assert both, so a formula change fails until the version is bumped. The rejected
+`0.3` classifier remains optional and is recorded in `model_versions` when supplied.
 
 ### Estimator `0.5` — Capacity estimator
 
