@@ -11,6 +11,12 @@ package.module:attribute` to run it over a deterministic population. Contract de
 The simulator's `baseline-1.0.0` implementation exists only to exercise this boundary and reporting
 pipeline. It is not the estimator proposed by this component.
 
+The estimator will be developed incrementally: observation preprocessing, transaction
+intelligence, income-stream detection, monthly cash-flow reconstruction, customer-level capacity
+modeling, ensemble estimation, calibrated intervals, confidence, and explainability. See the
+[estimator implementation plan](../docs/estimator-implementation-plan.md) for target definitions,
+contract changes, milestones, evaluation metrics, and acceptance criteria.
+
 ## Responsibilities
 
 - Validate the estimator input contract.
@@ -19,6 +25,29 @@ pipeline. It is not the estimator proposed by this component.
 - Produce an estimate for a defined period, such as monthly income.
 - Return evidence, assumptions, warnings, and confidence information with the estimate.
 - Version estimation behavior so a result can be reproduced and audited.
+
+## Current milestone
+
+Implement Estimator `0.1` without machine learning:
+
+```text
+Observed transactions
+        |
+        v
+TransactionFeatureExtractor
+        |
+        v
+IncomeRuleClassifier
+        |
+        v
+IncomeStreamDetector
+        |
+        v
+MonthlyIncomeReconstructor
+```
+
+This baseline must establish where and why deterministic reconstruction fails before supervised
+models are introduced.
 
 ## Proposed output characteristics
 

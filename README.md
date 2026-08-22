@@ -15,7 +15,8 @@ The project aims to transform consented financial data into explainable income e
 
 - [`estimator`](estimator/README.md) consumes normalized financial observations and produces an estimate with supporting evidence and confidence information.
 - [`finances_simulator`](finances_simulator/README.md) creates synthetic client scenarios for development, testing, and validation.
-- [`docs/implementation-plan.md`](docs/implementation-plan.md) defines the simulator architecture, delivery phases, contracts, and acceptance criteria.
+- [`docs/implementation-plan.md`](docs/implementation-plan.md) defines the simulator implementation plan.
+- [`docs/estimator-implementation-plan.md`](docs/estimator-implementation-plan.md) defines the estimator architecture, model progression, evaluation strategy, and acceptance criteria.
 
 ## Intended data flow
 
@@ -55,7 +56,8 @@ schema validation at component boundaries, estimator contract `1.0`, and automat
 Its members use frozen engine `0.6.0` and observation contract `1.5`, including consent coverage and
 observation artifacts. Contracts `1.4` through `1.0` remain supported with byte-stable reference
 outputs. A transparent baseline exercises integration; production estimator logic and provider
-adapters remain unimplemented.
+adapters remain unimplemented. The next milestone is the rule-based estimator baseline defined in
+[`docs/estimator-implementation-plan.md`](docs/estimator-implementation-plan.md).
 
 ## Simulator quick start
 
