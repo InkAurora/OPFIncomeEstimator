@@ -78,8 +78,11 @@ Estimator `0.5` adds a promoted capacity estimator for `sustainable_monthly_inco
 whose logistic gate decides whether capacity is zero and whose anchored regressor sizes it
 otherwise. On held-out data it improves mean absolute error from `55,455` to `25,055` minor units
 against the best deterministic baseline, improves both full-coverage and partial-consent segments,
-and predicts zero-income customers exactly. Next work is estimator `0.6` ensemble routing, then
-`0.7` calibrated intervals and confidence. Provider adapters must still populate the optional
+and predicts zero-income customers exactly. Estimator output `1.1` separates realized from sustainable income and carries component estimates,
+disagreement, confidence, and excluded evidence without disturbing any `1.0` field. Estimator `0.6`
+routes both targets deterministically and reaches held-out MAE `21,227` against `23,236` for its
+best individual component. Quantiles stay absent with a stated reason until `0.7` calibrates them.
+Next work is estimator `0.7` calibrated intervals and confidence. Provider adapters must still populate the optional
 counterparty context before counterparty-aware gains can be measured. See
 [`docs/estimator-implementation-plan.md`](docs/estimator-implementation-plan.md).
 

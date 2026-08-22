@@ -29,6 +29,7 @@ def request_file(tmp_path: Path, request_payload, transaction) -> Path:
         (("--baseline-0.1",), "rule-based-0.1.0"),
         (("--audit",), "transaction_decisions"),
         (("--features",), "customer-month-features-1.1.0"),
+        (("--ensemble",), "ensemble-0.6.0"),
     ],
 )
 def test_cli_emits_each_view(request_file: Path, capsys, flags, marker) -> None:

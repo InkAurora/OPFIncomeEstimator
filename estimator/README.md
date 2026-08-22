@@ -154,6 +154,7 @@ row.missing_features
 
 ```bash
 income-estimator --features request.json
+income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.5.0.json request.json
 ```
 
 The default estimator is promoted `0.2`. The rejected `0.3` classifier stays optional and is
@@ -218,6 +219,62 @@ row = build_customer_month_features(request).row("2026-06")
 model.predict_minor(row.to_mapping())
 ```
 
+## Ensemble and output contract 1.1 (0.6)
+
+Output `1.0` carries one number per month. Contract `1.1` adds sustainable income, component
+estimates, disagreement, confidence, excluded evidence, and every producing version, while leaving
+the `1.0` fields untouched so an existing consumer keeps working.
+
+Estimator `0.6` routes two ensembles, not one. Cash-flow and recurring-stream reconstruction
+produce `realized_income_month`; the capacity model produces `sustainable_monthly_income`. Those
+are distinct targets under ADR 0001, so blending them would produce a number with no definition.
+
+Routing is deterministic and documented. A learned meta-model needs out-of-fold base predictions,
+which do not exist yet; fitting one on in-sample component output would leak training performance
+into the weights.
+
+Realized income keeps the promoted `0.2` reconstruction, with frozen `0.1` visible at zero weight.
+Sustainable income goes to the capacity model except where income is stable, where last month's
+reconstruction is already the answer and the model only adds noise. Conditioning that exception on
+full coverage as well was measured and rejected: on the intersection the model wins again, and the
+narrower rule made the ensemble worse than its own best component.
+
+Held-out, 312 rows: routed MAE `21,227` against `23,236` for the best individual component, WAPE
+`0.0388`. Routing improves the stable, partial-consent, short-history, middle-income, and
+high-income segments; the complete-coverage segment is `0.35%` worse, which the report records
+rather than hides.
+
+```bash
+python -m evaluation.ensemble_benchmark --population-size-per-suite 80 --workers 4
+```
+
+Quantiles stay absent on purpose. `0.6` produces point estimates and routing, not calibrated
+intervals, so `p10` and `p90` are `None` with `quantile_unavailable_reason` set until `0.7`
+measures their coverage. An absent quantile is never a point estimate widened by a guess.
+
+```python
+from pathlib import Path
+
+from income_estimator import EnsembleIncomeEstimator
+
+estimate = EnsembleIncomeEstimator(
+    Path("training/artifacts/capacity-estimator-0.5.0.json")
+).estimate_v1_1(request)
+month = estimate.monthly_estimates[-1]
+month.realized_income_estimate_minor
+month.sustainable_income_p50_minor
+month.confidence_score_basis_points
+month.routing_reason_codes
+```
+
+Confidence combines coverage, history length, income stability, classification certainty, and
+component agreement under documented weights, then caps the result at observed coverage. High
+confidence cannot coexist with known low coverage, so a customer whose consent hides half their
+accounts is never reported as well understood however tidy the visible half looks.
+
+The capacity artifact is optional. Without it the ensemble still answers, using the
+recurring-stream component, and says `CAPACITY_MODEL_UNAVAILABLE` in the routing reasons.
+
 Install and test it with:
 
 ```bash
@@ -251,6 +308,7 @@ one input-contract file and prints either view:
 income-estimator request.json
 income-estimator --audit request.json
 income-estimator --features request.json
+income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.5.0.json request.json
 income-estimator --baseline-0.1 request.json
 income-estimator --model training/artifacts/transaction-classifier-0.3.0.json request.json
 ```

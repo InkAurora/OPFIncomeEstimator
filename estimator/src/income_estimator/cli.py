@@ -12,6 +12,7 @@ from pydantic import ValidationError
 
 from income_estimator.features import build_customer_month_features
 from income_estimator.pipeline import (
+    EnsembleIncomeEstimator,
     RecurringIncomeEstimator,
     RuleBasedIncomeEstimator,
     SupervisedIncomeEstimator,
@@ -34,6 +35,16 @@ def _parser() -> argparse.ArgumentParser:
         help="Emit the point-in-time customer-month feature table instead of an estimate",
     )
     parser.add_argument(
+        "--ensemble",
+        action="store_true",
+        help="Use estimator 0.6 routing and emit output contract 1.1",
+    )
+    parser.add_argument(
+        "--capacity-model",
+        type=Path,
+        help="Capacity model artifact for --ensemble sustainable income",
+    )
+    parser.add_argument(
         "--model",
         type=Path,
         help="Use experimental estimator 0.3 with this JSON model artifact",
@@ -45,7 +56,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         payload = json.loads(args.input.read_text(encoding="utf-8"))
-        if args.model is not None:
+        if args.ensemble:
+            estimator = EnsembleIncomeEstimator(args.capacity_model)
+        elif args.model is not None:
             estimator = SupervisedIncomeEstimator(args.model)
         elif args.baseline_0_1:
             estimator = RuleBasedIncomeEstimator()
@@ -53,6 +66,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             estimator = RecurringIncomeEstimator()
         if args.features:
             result = build_customer_month_features(payload, estimator)
+        elif args.ensemble:
+            result = estimator.estimate_v1_1(payload)
         elif args.audit:
             result = estimator.explain(payload)
         else:

@@ -13,7 +13,7 @@ correct measured limitations of deterministic methods rather than replace an une
 
 ## 2. Current state
 
-The financial simulator and estimator support evaluated milestones through `0.5`:
+The financial simulator and estimator support evaluated milestones through `0.6`:
 
 - simulator orchestrator `0.7.0` generates deterministic populations;
 - observation contract `1.5` includes incomplete-consent and data-quality artifacts;
@@ -32,6 +32,9 @@ The financial simulator and estimator support evaluated milestones through `0.5`
   loan balances, investments, and investment balances, so the capacity feature group is computed;
 - promoted capacity estimator `capacity-gbdt-stumps-0.5.0` predicts sustainable monthly income from
   the customer-month table and beats every deterministic baseline on held-out data;
+- estimator output `1.1` separates realized from sustainable income and carries component
+  estimates, disagreement, confidence, and excluded evidence;
+- estimator `0.6` routes both targets deterministically and beats its best individual component;
 - private contract `income-targets-1.0` projects all five income targets from the hidden run, so
   `sustainable_monthly_income` now exists as a trainable label.
 
@@ -235,7 +238,7 @@ same request. `card_invoice_items` is deliberately omitted: installment commitme
 the purchase and its installment count, which is what a provider view exposes. Arrival delay for
 product records is not modeled at this version.
 
-### 6.3 Estimator output `1.1`
+### 6.3 Estimator output `1.1` — implemented
 
 The eventual output should include:
 
@@ -265,6 +268,13 @@ model_versions
 
 Initial versions may expose only the fields they can support honestly. Point estimates must not be
 presented with false precision when history is short or income is volatile.
+
+Implemented as `IncomeEstimateV11`, a strict extension of output `1.0`: every `1.0` field keeps its
+meaning, so an existing consumer reads a `1.1` record unchanged. Realized and sustainable income
+never share a field. A quantile is present only when calibrated; `0.6` therefore leaves `p10` and
+`p90` absent with `quantile_unavailable_reason` set to `UNCALIBRATED_INTERVAL`, and an absent
+quantile is never a point estimate widened by a guess. Component estimates stay visible with their
+weights even when routing gave a component zero weight.
 
 ## 7. Versioned delivery roadmap
 
@@ -508,7 +518,7 @@ against `21,429`, and exact prediction for zero-income customers. The only segme
 baseline wins is perfectly stable salaried income, where last month's reconstruction is already the
 answer. The report records `PROMOTED`.
 
-### Estimator `0.6` — Ensemble
+### Estimator `0.6` — Ensemble — implemented
 
 Combine:
 
@@ -531,6 +541,25 @@ Acceptance criteria:
 - weights and routing decisions are explainable;
 - disagreement lowers confidence;
 - component estimates remain visible in output diagnostics.
+
+Implemented as two routed ensembles rather than one. The plan draws a single box, but cash-flow and
+recurring-stream reconstruction produce `realized_income_month` while the capacity model produces
+`sustainable_monthly_income`; those are distinct targets under ADR 0001, so blending them would
+produce a number with no definition.
+
+Realized income keeps the promoted `0.2` reconstruction with frozen `0.1` visible at zero weight.
+Sustainable income routes to the capacity model except where income is stable, where last month's
+reconstruction is already the answer. Conditioning that exception on full coverage as well was
+measured and rejected: on the intersection the model wins again, and the narrower rule made the
+ensemble worse than its own best component. Routing stays deterministic because a learned
+meta-model needs out-of-fold base predictions, which do not exist yet.
+
+Held-out on 312 rows the routed estimate reaches MAE `21,227` against `23,236` for the best
+individual component, WAPE `0.0388`, improving the stable, partial-consent, short-history, and
+middle- and high-income segments. The complete-coverage segment is `0.35%` worse and the report
+records it. Confidence combines coverage, history, stability, classification certainty, and
+component agreement under documented weights, then caps the result at observed coverage, so high
+confidence cannot coexist with known low coverage.
 
 ### Estimator `0.7` — Quantiles and confidence
 

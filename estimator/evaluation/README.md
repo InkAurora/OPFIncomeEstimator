@@ -12,3 +12,13 @@ customer identifiers and row-level truth are not written. Generate aggregate JSO
 cd estimator
 python -m evaluation.run_benchmark --workers 4
 ```
+
+`ensemble_benchmark.py` compares estimator `0.6` routing against every individual component on
+fixed held-out seeds, records which routing rule fired on each row, and writes
+`baselines/ensemble-0.6.0-report.json`. Promotion requires the routed estimate to be no worse than
+the best component overall and strictly better in at least one segment:
+
+```bash
+cd estimator
+python -m evaluation.ensemble_benchmark --population-size-per-suite 80 --workers 4
+```

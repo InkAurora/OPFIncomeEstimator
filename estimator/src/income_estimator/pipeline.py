@@ -7,11 +7,17 @@ from typing import Any
 
 from income_estimator.contracts import (
     ESTIMATOR_CONTRACT_VERSION,
+    ESTIMATOR_OUTPUT_CONTRACT_VERSION,
     ArtifactMetadata,
     EstimationAudit,
     IncomeEstimateV1,
     MonthlyReconstructionAudit,
     validate_estimator_input,
+)
+from income_estimator.contracts.output_v1_1 import (
+    IncomeEstimateV11,
+    IncomeStreamSummaryV11,
+    MonthlyIncomeEstimateV11,
 )
 from income_estimator.income_streams import detect_income_streams
 from income_estimator.models import (
@@ -19,6 +25,8 @@ from income_estimator.models import (
     reconstruct_monthly_income,
     reconstruct_recurring_income,
 )
+from income_estimator.models.capacity import GradientBoostedCapacityModel
+from income_estimator.models.ensemble import ENSEMBLE_VERSION, combine_month
 from income_estimator.models.transaction_classifier import MODEL_FEATURE_VERSION
 from income_estimator.transaction_intelligence import (
     FEATURE_VERSION,
@@ -32,6 +40,7 @@ ESTIMATOR_VERSION = "rule-based-0.1.0"
 RECURRING_ESTIMATOR_VERSION = "recurring-streams-0.2.0"
 RECURRING_FEATURE_VERSION = "income-stream-features-1.0.0"
 SUPERVISED_ESTIMATOR_VERSION = "supervised-transactions-0.3.0"
+ENSEMBLE_ESTIMATOR_VERSION = "ensemble-0.6.0"
 
 
 def _baseline_reconstruction_audit(
@@ -148,10 +157,133 @@ class SupervisedIncomeEstimator(RecurringIncomeEstimator):
         self.model_versions = (model.artifact.model_version,)
 
 
+class EnsembleIncomeEstimator(RecurringIncomeEstimator):
+    """Estimator 0.6: route realized and sustainable targets and publish output 1.1.
+
+    Realized income keeps the promoted `0.2` reconstruction; the frozen `0.1` baseline stays
+    visible as a component with zero weight so the choice remains auditable. Sustainable income is
+    routed between the capacity model and the deterministic baselines. The capacity artifact is
+    optional: without it the estimator still answers, using the recurring-stream component, and
+    says so in the routing reasons.
+    """
+
+    estimator_version = ENSEMBLE_ESTIMATOR_VERSION
+
+    def __init__(
+        self,
+        capacity_model_path: Path | None = None,
+        rule_config: RuleConfig | None = None,
+    ) -> None:
+        super().__init__(rule_config)
+        self.rule_config = rule_config
+        self.capacity = (
+            GradientBoostedCapacityModel.from_path(capacity_model_path)
+            if capacity_model_path is not None
+            else None
+        )
+        self.model_versions = (
+            (self.capacity.artifact.model_version,) if self.capacity is not None else ()
+        )
+
+    def estimate_v1_1(self, request: Any) -> IncomeEstimateV11:
+        """Return realized and sustainable estimates with components and confidence."""
+
+        from income_estimator.features import build_customer_month_features
+
+        validated = validate_estimator_input(request)
+        audit = self.explain(validated)
+        baseline = RuleBasedIncomeEstimator(self.rule_config)
+        baseline_by_month = {
+            item.month: item.estimated_income_minor
+            for item in baseline.estimate(validated).monthly_estimates
+        }
+        features_by_month = {
+            row.reference_month: row.to_mapping()
+            for row in build_customer_month_features(validated, self).rows
+        }
+        excluded_by_month: dict[str, list[str]] = {}
+        for decision in audit.transaction_decisions:
+            if decision.classification == "EXCLUDED" and decision.direction == "CREDIT":
+                excluded_by_month.setdefault(decision.posted_month, []).append(
+                    decision.transaction_id
+                )
+
+        monthly: list[MonthlyIncomeEstimateV11] = []
+        for estimate in audit.estimate.monthly_estimates:
+            features = features_by_month.get(estimate.month, {})
+            result = combine_month(
+                estimate.estimated_income_minor,
+                features,
+                self.capacity,
+                realized_components={
+                    "cashflow_baseline_0_1": baseline_by_month.get(estimate.month, 0),
+                    "recurring_streams_0_2": estimate.estimated_income_minor,
+                },
+                realized_selected="recurring_streams_0_2",
+            )
+            monthly.append(
+                MonthlyIncomeEstimateV11(
+                    month=estimate.month,
+                    estimated_income_minor=estimate.estimated_income_minor,
+                    realized_income_estimate_minor=result.realized_income_minor,
+                    confidence_lower_minor=estimate.confidence_lower_minor,
+                    confidence_upper_minor=estimate.confidence_upper_minor,
+                    contributing_transaction_ids=estimate.contributing_transaction_ids,
+                    excluded_transaction_ids=tuple(
+                        sorted(
+                            set(excluded_by_month.get(estimate.month, ()))
+                            - set(estimate.contributing_transaction_ids)
+                        )
+                    ),
+                    sustainable_income_p50_minor=result.sustainable_income_minor,
+                    quantile_unavailable_reason=result.quantile_unavailable_reason,
+                    component_estimates=result.components,
+                    component_disagreement_basis_points=result.disagreement_basis_points,
+                    confidence_score_basis_points=result.confidence_score_basis_points,
+                    confidence_components=result.confidence_components,
+                    routing_reason_codes=result.routing_reason_codes,
+                )
+            )
+
+        return IncomeEstimateV11(
+            estimator_version=self.estimator_version,
+            run_id=validated.run_id,
+            customer_id=validated.customer_id,
+            currency=validated.currency,
+            monthly_estimates=tuple(monthly),
+            feature_version=self.feature_version,
+            input_contract_version=validated.schema_version,
+            model_versions=self.model_versions,
+            component_versions=(
+                ESTIMATOR_VERSION,
+                RECURRING_ESTIMATOR_VERSION,
+                ENSEMBLE_VERSION,
+            ),
+            income_streams=tuple(
+                IncomeStreamSummaryV11(
+                    stream_id=stream.stream_id,
+                    counterparty_cluster=stream.counterparty_cluster,
+                    first_seen=stream.first_seen,
+                    last_seen=stream.last_seen,
+                    frequency=stream.frequency,
+                    median_amount_minor=stream.median_amount_minor,
+                    recurrence_score_basis_points=stream.recurrence_score_basis_points,
+                    pattern=stream.pattern,
+                    transaction_ids=stream.transaction_ids,
+                )
+                for stream in audit.income_streams
+            ),
+        )
+
+
 __all__ = [
+    "ENSEMBLE_ESTIMATOR_VERSION",
+    "ESTIMATOR_CONTRACT_VERSION",
+    "ESTIMATOR_OUTPUT_CONTRACT_VERSION",
     "ESTIMATOR_VERSION",
     "RECURRING_ESTIMATOR_VERSION",
     "SUPERVISED_ESTIMATOR_VERSION",
+    "EnsembleIncomeEstimator",
     "RecurringIncomeEstimator",
     "RuleBasedIncomeEstimator",
     "SupervisedIncomeEstimator",
