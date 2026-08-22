@@ -40,9 +40,28 @@ def _recurrence_score(dates: list[date], amounts: list[int]) -> int:
     return min(10_000, count_score + regularity_score + stability_score)
 
 
+def _stream_pattern(
+    frequency: str,
+    recurrence_score: int,
+    item_count: int,
+    month_count: int,
+) -> str:
+    if (
+        frequency in {"WEEKLY", "BIWEEKLY", "MONTHLY", "QUARTERLY"}
+        and recurrence_score >= 7_000
+        and item_count >= 3
+        and month_count >= 3
+    ):
+        return "RECURRING_SOURCE"
+    if item_count >= 4 and month_count >= 3:
+        return "INCOME_ECOSYSTEM"
+    return "ONE_OFF"
+
+
 def detect_income_streams(
     decisions: tuple[TransactionDecision, ...],
     posted_at_by_id: dict[str, str],
+    account_id_by_id: dict[str, str],
 ) -> tuple[IncomeStream, ...]:
     """Group classified income using normalized description as v1 cluster key."""
 
@@ -64,6 +83,12 @@ def detect_income_streams(
         amounts = [item.amount_minor for item in ordered]
         mean_amount = fmean(amounts)
         amount_cv = pstdev(amounts) / mean_amount if mean_amount else 0.0
+        frequency = _frequency(dates)
+        recurrence_score = _recurrence_score(dates, amounts)
+        monthly_amounts: dict[str, int] = defaultdict(int)
+        for item in ordered:
+            monthly_amounts[item.posted_month] += item.amount_minor
+        observed_months = tuple(sorted(monthly_amounts))
         identity = sha256(cluster.encode("utf-8")).hexdigest()[:16]
         streams.append(
             IncomeStream(
@@ -71,12 +96,23 @@ def detect_income_streams(
                 counterparty_cluster=cluster,
                 first_seen=dates[0].isoformat(),
                 last_seen=dates[-1].isoformat(),
-                frequency=_frequency(dates),
+                frequency=frequency,
                 median_amount_minor=round(median(amounts)),
                 amount_coefficient_of_variation=round(amount_cv, 8),
-                recurrence_score_basis_points=_recurrence_score(dates, amounts),
+                recurrence_score_basis_points=recurrence_score,
                 income_probability_basis_points=round(
                     fmean(item.income_probability_basis_points for item in ordered)
+                ),
+                pattern=_stream_pattern(
+                    frequency,
+                    recurrence_score,
+                    len(ordered),
+                    len(observed_months),
+                ),
+                expected_monthly_amount_minor=round(median(monthly_amounts.values())),
+                observed_months=observed_months,
+                account_ids=tuple(
+                    sorted({account_id_by_id[item.transaction_id] for item in ordered})
                 ),
                 transaction_ids=tuple(item.transaction_id for item in ordered),
             )

@@ -10,7 +10,7 @@ from finances_simulator.batch import generate_population
 from finances_simulator.config import load_scenario_config
 from finances_simulator.integration import evaluate_population
 
-from income_estimator.pipeline import RuleBasedIncomeEstimator
+from income_estimator.pipeline import RecurringIncomeEstimator, RuleBasedIncomeEstimator
 
 
 def test_estimator_runs_through_simulator_boundary() -> None:
@@ -30,3 +30,24 @@ def test_estimator_runs_through_simulator_boundary() -> None:
     assert evaluation.report.overall.count == 3
     assert evaluation.report.overall.mean_absolute_error_minor == 0
     assert evaluation.report.false_income_classification.false_classification_count == 0
+
+
+def test_recurring_reconstruction_improves_incomplete_observation() -> None:
+    simulator_root = Path(__file__).parents[2] / "finances_simulator"
+    config = load_scenario_config(
+        simulator_root / "configs/scenarios/incomplete_observation.yaml"
+    )
+    population = generate_population(
+        config,
+        population_size=20,
+        seed=10_000,
+        months=12,
+        workers=2,
+    )
+
+    baseline = evaluate_population(population, RuleBasedIncomeEstimator()).report
+    recurring = evaluate_population(population, RecurringIncomeEstimator()).report
+
+    assert recurring.estimator_version == "recurring-streams-0.2.0"
+    assert recurring.overall.mean_absolute_error_minor < baseline.overall.mean_absolute_error_minor
+    assert recurring.false_income_classification.false_classification_count == 0

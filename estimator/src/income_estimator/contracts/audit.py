@@ -49,7 +49,22 @@ class IncomeStream(AuditModel):
     amount_coefficient_of_variation: float = Field(ge=0)
     recurrence_score_basis_points: int = Field(ge=0, le=10_000)
     income_probability_basis_points: int = Field(ge=0, le=10_000)
+    pattern: Literal["RECURRING_SOURCE", "INCOME_ECOSYSTEM", "ONE_OFF"]
+    expected_monthly_amount_minor: int = Field(gt=0)
+    observed_months: tuple[str, ...] = Field(min_length=1)
+    account_ids: tuple[str, ...] = Field(min_length=1)
     transaction_ids: tuple[str, ...] = Field(min_length=1)
+
+
+class MonthlyReconstructionAudit(AuditModel):
+    month: str
+    observed_income_minor: int = Field(ge=0)
+    imputed_income_minor: int = Field(ge=0)
+    coverage_adjustment_minor: int = Field(ge=0)
+    estimated_income_minor: int = Field(ge=0)
+    imputed_stream_ids: tuple[str, ...] = ()
+    contributing_transaction_ids: tuple[str, ...] = ()
+    reason_codes: tuple[str, ...] = Field(min_length=1)
 
 
 class EstimationAudit(AuditModel):
@@ -57,11 +72,13 @@ class EstimationAudit(AuditModel):
     estimate: IncomeEstimateV1
     transaction_decisions: tuple[TransactionDecision, ...]
     income_streams: tuple[IncomeStream, ...]
+    monthly_reconstructions: tuple[MonthlyReconstructionAudit, ...]
 
 
 __all__ = [
     "ArtifactMetadata",
     "EstimationAudit",
     "IncomeStream",
+    "MonthlyReconstructionAudit",
     "TransactionDecision",
 ]

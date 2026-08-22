@@ -10,13 +10,18 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from income_estimator.pipeline import RuleBasedIncomeEstimator
+from income_estimator.pipeline import RecurringIncomeEstimator, RuleBasedIncomeEstimator
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="income-estimator")
     parser.add_argument("input", type=Path, help="EstimatorInputV1 JSON file")
     parser.add_argument("--audit", action="store_true", help="Emit internal decisions and streams")
+    parser.add_argument(
+        "--baseline-0.1",
+        action="store_true",
+        help="Use coverage-scaled rule baseline instead of recurring-stream estimator",
+    )
     return parser
 
 
@@ -24,7 +29,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         payload = json.loads(args.input.read_text(encoding="utf-8"))
-        estimator = RuleBasedIncomeEstimator()
+        estimator = (
+            RuleBasedIncomeEstimator()
+            if args.baseline_0_1
+            else RecurringIncomeEstimator()
+        )
         result = estimator.explain(payload) if args.audit else estimator.estimate(payload)
     except (OSError, json.JSONDecodeError, ValidationError, TypeError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)

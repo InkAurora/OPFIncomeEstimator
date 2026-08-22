@@ -28,7 +28,7 @@ contract changes, milestones, evaluation metrics, and acceptance criteria.
 
 ## Current milestone
 
-Implement Estimator `0.1` without machine learning:
+Estimator `0.2` adds recurrence-based reconstruction without machine learning:
 
 ```text
 Observed transactions
@@ -46,13 +46,14 @@ IncomeStreamDetector
 MonthlyIncomeReconstructor
 ```
 
-This baseline must establish where and why deterministic reconstruction fails before supervised
-models are introduced.
+Estimator `0.1.0` remains frozen as comparison baseline. Estimator `0.2.0` keeps observed classified
+income at face value and imputes only evidence-backed gaps from stable streams when measured account
+coverage is incomplete. Full-coverage zero months remain zero. Every imputation records amount,
+stream IDs, supporting transaction IDs, and reason codes.
 
-Estimator `0.1.0` now provides this first executable pipeline. It validates a strict local copy of
-boundary contract `1.0`, applies point-in-time normalization, emits reason-coded transaction
-decisions, groups selected credits into deterministic streams, and reconstructs monthly realized
-income with observation-coverage adjustment. It imports no simulator or private-truth module.
+Contract `1.0` lacks observed counterparty identifiers, so stream clustering currently uses exact
+normalized descriptions. Counterparty-aware income ecosystems remain blocked on input contract
+`1.1`. Runtime imports no simulator or private-truth module.
 
 Install and test it with:
 
@@ -65,10 +66,11 @@ pytest
 Use it directly from Python:
 
 ```python
-from income_estimator import RuleBasedIncomeEstimator
+from income_estimator import RecurringIncomeEstimator, RuleBasedIncomeEstimator
 
-estimate = RuleBasedIncomeEstimator().estimate(request)
-audit = RuleBasedIncomeEstimator().explain(request)
+estimate = RecurringIncomeEstimator().estimate(request)
+audit = RecurringIncomeEstimator().explain(request)
+baseline = RuleBasedIncomeEstimator().estimate(request)
 ```
 
 `estimate` matches shared output contract `1.0`. `audit` additionally contains every transaction
@@ -78,6 +80,7 @@ one input-contract file and prints either view:
 ```bash
 income-estimator request.json
 income-estimator --audit request.json
+income-estimator --baseline-0.1 request.json
 ```
 
 Run it through the simulator population harness with:
@@ -88,9 +91,14 @@ finances-simulator generate-batch \
   --seed 100 \
   --population-size 100 \
   --workers 4 \
-  --estimator income_estimator:RuleBasedIncomeEstimator \
-  --output ../finances_simulator/output/estimator-0.1-baseline
+  --estimator income_estimator:RecurringIncomeEstimator \
+  --output ../finances_simulator/output/estimator-0.2
 ```
+
+Frozen held-out results and chart live in
+[`evaluation/baselines`](evaluation/baselines/README.md). On 1,200 incomplete-observation
+customer-months, MAE falls from `151532.4` to `4000.0` minor units (`97.36%`) without increasing
+false-income classifications. Complete income-diverse and life-event suites do not regress.
 
 Target semantics are fixed in
 [`docs/adr/0001-income-target-definitions.md`](../docs/adr/0001-income-target-definitions.md).

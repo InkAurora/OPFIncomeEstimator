@@ -13,13 +13,15 @@ correct measured limitations of deterministic methods rather than replace an une
 
 ## 2. Current state
 
-The financial simulator is ready to support the first estimator milestone:
+The financial simulator supports estimator milestones through `0.2`:
 
 - simulator orchestrator `0.7.0` generates deterministic populations;
 - observation contract `1.5` includes incomplete-consent and data-quality artifacts;
 - estimator boundary contract `1.0` exposes an immutable observation-only request;
 - automatic evaluation joins predictions with physically isolated private truth;
-- `baseline-1.0.0` validates integration but is not a production estimator.
+- estimator `0.1.0` freezes the strict observation-only rule baseline;
+- estimator `0.2.0` adds deterministic stream detection and coverage-aware gap reconstruction;
+- fixed held-out artifacts compare both versions across complete, incomplete, and life-event suites.
 
 Boundary contract `1.0` is sufficient for an initial transaction-based baseline. It is not yet rich
 enough for the complete capacity model because it omits balances, card behavior, complete loan
@@ -235,7 +237,7 @@ presented with false precision when history is short or income is volatile.
 
 ## 7. Versioned delivery roadmap
 
-### Estimator `0.0` — Foundation
+### Estimator `0.0` — Foundation — implemented
 
 Implement:
 
@@ -254,7 +256,7 @@ Acceptance criteria:
 - reference-month features cannot inspect later observations;
 - estimator version, feature version, contract version, and model version are recorded.
 
-### Estimator `0.1` — Rule-based cash-flow baseline
+### Estimator `0.1` — Rule-based cash-flow baseline — implemented
 
 Implement:
 
@@ -286,7 +288,7 @@ Acceptance criteria:
 - monthly estimates contain valid contributing transaction IDs;
 - simulator evaluation produces overall and segmented baseline reports.
 
-### Estimator `0.2` — Income streams
+### Estimator `0.2` — Income streams — implemented for contract `1.0`
 
 Implement recurring-source and income-ecosystem detection.
 
@@ -312,6 +314,11 @@ Two supported patterns:
 
 Begin with deterministic normalized-counterparty grouping. Add fuzzy clustering only after errors
 show that exact grouping is insufficient.
+
+Contract `1.0` implementation uses normalized description as observed cluster proxy. Stable streams
+impute missing months only when measured account coverage is incomplete; complete-coverage zeros are
+preserved. Many-payer ecosystem detection remains limited until contract `1.1` exposes observed
+counterparty fields.
 
 Acceptance criteria:
 

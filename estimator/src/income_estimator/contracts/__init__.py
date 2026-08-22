@@ -4,6 +4,7 @@ from income_estimator.contracts.audit import (
     ArtifactMetadata,
     EstimationAudit,
     IncomeStream,
+    MonthlyReconstructionAudit,
     TransactionDecision,
 )
 from income_estimator.contracts.v1 import (
@@ -31,6 +32,7 @@ __all__ = [
     "EstimatorTransactionV1",
     "IncomeEstimateV1",
     "IncomeStream",
+    "MonthlyReconstructionAudit",
     "MonthlyIncomeEstimateV1",
     "TransactionDecision",
     "validate_estimator_input",

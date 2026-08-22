@@ -5,14 +5,15 @@ from income_estimator.contracts import (
     IncomeEstimateV1,
     MonthlyIncomeEstimateV1,
 )
-from income_estimator.pipeline import RuleBasedIncomeEstimator
+from income_estimator.pipeline import RecurringIncomeEstimator, RuleBasedIncomeEstimator
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "EstimatorInputV1",
     "IncomeEstimateV1",
     "MonthlyIncomeEstimateV1",
+    "RecurringIncomeEstimator",
     "RuleBasedIncomeEstimator",
     "__version__",
 ]

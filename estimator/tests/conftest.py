@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from calendar import monthrange
 from collections.abc import Callable
 
 import pytest
@@ -10,6 +11,9 @@ import pytest
 @pytest.fixture
 def request_payload() -> Callable[..., dict[str, object]]:
     def build(*, transactions: list[dict[str, object]], months: int = 2) -> dict[str, object]:
+        end_month_index = 2026 * 12 + months
+        end_year = (end_month_index - 1) // 12
+        end_month = (end_month_index - 1) % 12 + 1
         return {
             "schema_version": "1.0",
             "source_contract_schema_version": "1.5",
@@ -17,7 +21,10 @@ def request_payload() -> Callable[..., dict[str, object]]:
             "customer_id": "customer-test",
             "currency": "BRL",
             "window_start": "2026-01-01",
-            "window_end": "2026-02-28",
+            "window_end": (
+                f"{end_year:04d}-{end_month:02d}-"
+                f"{monthrange(end_year, end_month)[1]:02d}"
+            ),
             "months": months,
             "accounts": [
                 {
