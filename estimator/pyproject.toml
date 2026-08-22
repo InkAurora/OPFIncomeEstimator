@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "income-estimator"
+version = "0.1.0"
+description = "Explainable income estimation from normalized financial observations"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.9,<3",
+]
+
+[project.scripts]
+income-estimator = "income_estimator.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "PyYAML>=6.0,<7",
+    "pyarrow>=17,<24",
+    "pytest>=8.3,<9",
+    "ruff>=0.8,<1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "../finances_simulator/src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]

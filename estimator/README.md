@@ -49,6 +49,52 @@ MonthlyIncomeReconstructor
 This baseline must establish where and why deterministic reconstruction fails before supervised
 models are introduced.
 
+Estimator `0.1.0` now provides this first executable pipeline. It validates a strict local copy of
+boundary contract `1.0`, applies point-in-time normalization, emits reason-coded transaction
+decisions, groups selected credits into deterministic streams, and reconstructs monthly realized
+income with observation-coverage adjustment. It imports no simulator or private-truth module.
+
+Install and test it with:
+
+```bash
+cd estimator
+python -m pip install -e ".[dev]"
+pytest
+```
+
+Use it directly from Python:
+
+```python
+from income_estimator import RuleBasedIncomeEstimator
+
+estimate = RuleBasedIncomeEstimator().estimate(request)
+audit = RuleBasedIncomeEstimator().explain(request)
+```
+
+`estimate` matches shared output contract `1.0`. `audit` additionally contains every transaction
+classification reason, detected stream, feature version, and artifact version. The JSON CLI accepts
+one input-contract file and prints either view:
+
+```bash
+income-estimator request.json
+income-estimator --audit request.json
+```
+
+Run it through the simulator population harness with:
+
+```bash
+finances-simulator generate-batch \
+  --config ../finances_simulator/configs/scenarios/income_diverse.yaml \
+  --seed 100 \
+  --population-size 100 \
+  --workers 4 \
+  --estimator income_estimator:RuleBasedIncomeEstimator \
+  --output ../finances_simulator/output/estimator-0.1-baseline
+```
+
+Target semantics are fixed in
+[`docs/adr/0001-income-target-definitions.md`](../docs/adr/0001-income-target-definitions.md).
+
 ## Proposed output characteristics
 
 An estimator result should make these points explicit:

@@ -1,0 +1,74 @@
+"""Shared estimator fixtures."""
+
+from __future__ import annotations
+
+from collections.abc import Callable
+
+import pytest
+
+
+@pytest.fixture
+def request_payload() -> Callable[..., dict[str, object]]:
+    def build(*, transactions: list[dict[str, object]], months: int = 2) -> dict[str, object]:
+        return {
+            "schema_version": "1.0",
+            "source_contract_schema_version": "1.5",
+            "run_id": "run-test",
+            "customer_id": "customer-test",
+            "currency": "BRL",
+            "window_start": "2026-01-01",
+            "window_end": "2026-02-28",
+            "months": months,
+            "accounts": [
+                {
+                    "schema_version": "1.0",
+                    "customer_id": "customer-test",
+                    "account_id": "checking",
+                    "institution_id": "bank-a",
+                    "currency": "BRL",
+                },
+                {
+                    "schema_version": "1.0",
+                    "customer_id": "customer-test",
+                    "account_id": "savings",
+                    "institution_id": "bank-b",
+                    "currency": "BRL",
+                },
+            ],
+            "transactions": transactions,
+            "coverage": [],
+        }
+
+    return build
+
+
+@pytest.fixture
+def transaction() -> Callable[..., dict[str, object]]:
+    def build(
+        transaction_id: str,
+        *,
+        posted_at: str = "2026-01-05",
+        observed_at: str | None = None,
+        direction: str = "CREDIT",
+        amount_minor: int = 500_000,
+        description: str = "MONTHLY PAYROLL CREDIT",
+        account_id: str = "checking",
+        duplicate_of_transaction_id: str | None = None,
+        reversal_of_transaction_id: str | None = None,
+    ) -> dict[str, object]:
+        return {
+            "schema_version": "1.0",
+            "transaction_id": transaction_id,
+            "customer_id": "customer-test",
+            "account_id": account_id,
+            "posted_at": posted_at,
+            "observed_at": observed_at or posted_at,
+            "direction": direction,
+            "amount_minor": amount_minor,
+            "currency": "BRL",
+            "description": description,
+            "duplicate_of_transaction_id": duplicate_of_transaction_id,
+            "reversal_of_transaction_id": reversal_of_transaction_id,
+        }
+
+    return build

@@ -55,8 +55,10 @@ Simulator orchestrator `0.7.0` implements deterministic parallel populations, pa
 schema validation at component boundaries, estimator contract `1.0`, and automatic evaluation.
 Its members use frozen engine `0.6.0` and observation contract `1.5`, including consent coverage and
 observation artifacts. Contracts `1.4` through `1.0` remain supported with byte-stable reference
-outputs. A transparent baseline exercises integration; production estimator logic and provider
-adapters remain unimplemented. The next milestone is the rule-based estimator baseline defined in
+outputs. Estimator `0.1.0` now implements the first observation-only rule baseline: strict contract
+validation, point-in-time normalization, auditable classification, deterministic streams, and
+monthly reconstruction. Provider adapters and trained models remain unimplemented. Next work is
+baseline error analysis and recurrence-driven handling of incomplete observations, as defined in
 [`docs/estimator-implementation-plan.md`](docs/estimator-implementation-plan.md).
 
 ## Simulator quick start

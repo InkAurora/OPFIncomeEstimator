@@ -173,7 +173,9 @@ def _call_estimator(
         raw_result = estimator(request)
     else:
         raise TypeError("estimator must be callable or expose estimate(request)")
-    result = IncomeEstimateV1.model_validate(raw_result)
+    dump = getattr(raw_result, "model_dump", None)
+    result_payload = dump(mode="python") if callable(dump) else raw_result
+    result = IncomeEstimateV1.model_validate(result_payload)
     expected_months = tuple(
         f"{item.year:04d}-{item.month:02d}"
         for item in _month_sequence(request.window_start, request.months)
