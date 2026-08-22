@@ -160,3 +160,53 @@ def test_simulator_builds_product_aware_input_1_2() -> None:
 
     payload = table.model_dump_json()
     assert all(field not in payload for field in PRIVATE_TRUTH_FIELDS)
+
+
+def test_stress_suites_are_reported_separately_with_training_provenance() -> None:
+    from evaluation.stress_report import SUITES, evaluate_suite
+    from income_estimator.pipeline import EnsembleIncomeEstimator
+
+    project_root = Path(__file__).parents[2]
+    artifacts = project_root / "estimator" / "training" / "artifacts"
+    estimator = EnsembleIncomeEstimator(
+        artifacts / "capacity-estimator-0.5.0.json",
+        calibration_path=artifacts / "quantile-calibration-0.7.0.json",
+    )
+    held_out = [suite for suite in SUITES if not suite.in_training_distribution]
+    assert {suite.name for suite in held_out} >= {"noisy", "high_volatility"}
+
+    noisy = next(suite for suite in SUITES if suite.name == "noisy")
+    result = evaluate_suite(
+        noisy,
+        project_root=project_root,
+        estimator=estimator,
+        population_size=3,
+        months=12,
+        workers=1,
+    )
+
+    assert result["in_training_distribution"] is False
+    assert result["realized_income"]["count"] == 36
+    assert result["sustainable_income"]["count"] > 0
+    assert result["false_income_month_count"] == 0
+    assert result["mean_confidence_basis_points"] is not None
+
+
+def test_a_scenario_below_contract_1_3_reports_targets_as_unavailable() -> None:
+    from evaluation.stress_report import SUITES, evaluate_suite
+    from income_estimator.pipeline import EnsembleIncomeEstimator
+
+    project_root = Path(__file__).parents[2]
+    clean = next(suite for suite in SUITES if suite.name == "clean")
+
+    result = evaluate_suite(
+        clean,
+        project_root=project_root,
+        estimator=EnsembleIncomeEstimator(),
+        population_size=2,
+        months=6,
+        workers=1,
+    )
+
+    assert result["sustainable_income"]["unavailable_reason"] == "CONTRACT_BELOW_1_3"
+    assert result["realized_income"]["count"] == 12

@@ -68,6 +68,12 @@ redemption links. It is not a production income model. Integrate another estimat
 
 The loader dispatches on the required top-level `schema_version`:
 
+- [`noisy_observation.yaml`](configs/scenarios/noisy_observation.yaml) uses contract `1.5` and
+  engine `0.6.0`: an estimator stress suite with complete consent but a heavily degraded feed and
+  four income-shaped non-income credits, including an own transfer described as a PIX receipt.
+- [`high_volatility.yaml`](configs/scenarios/high_volatility.yaml) uses contract `1.5` and engine
+  `0.6.0`: an estimator stress suite with a clean feed and unstable income, where self-employed and
+  business sources pay irregularly, vary widely, and swing with the calendar.
 - [`incomplete_observation.yaml`](configs/scenarios/incomplete_observation.yaml) uses contract `1.5`
   and engine `0.6.0`: standard 100%, 70%, and 40% consent, account overrides, provider
   descriptions, and deterministic missing, late, duplicate, and reversal records.

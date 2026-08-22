@@ -83,7 +83,11 @@ disagreement, confidence, and excluded evidence without disturbing any `1.0` fie
 routes both targets deterministically and reaches held-out MAE `21,227` against `23,236` for its
 best individual component. Estimator `0.7` fills those quantiles with split-conformal intervals calibrated on out-of-fold
 residuals, reaching held-out coverage `0.8365` against a nominal `0.80` with confidence monotonic
-against relative error. Next work is estimator `0.8` explainability and stress evaluation. Provider adapters must still populate the optional
+against relative error. Estimator `0.8` adds explanation contract `1.0` with exact feature contributions, model cards for
+every promoted artifact, and six separately reported stress suites. Two suites sit outside the
+training distribution and expose the current limits: noisy observation gives the worst realized
+error, and high-volatility income gives the worst sustainable error with interval coverage of
+`0.375` against a nominal `0.80`. Every milestone in the estimator plan is now implemented. Provider adapters must still populate the optional
 counterparty context before counterparty-aware gains can be measured. See
 [`docs/estimator-implementation-plan.md`](docs/estimator-implementation-plan.md).
 
@@ -106,7 +110,8 @@ finances-simulator generate-batch \
 pytest
 ```
 
-Use `configs/scenarios/life_events.yaml` for frozen schema `1.4`,
+Use `configs/scenarios/noisy_observation.yaml` or `configs/scenarios/high_volatility.yaml` for the
+estimator stress suites, `configs/scenarios/life_events.yaml` for frozen schema `1.4`,
 `configs/scenarios/income_diverse.yaml` for frozen schema `1.3`,
 `configs/scenarios/salaried_loans_investments.yaml` for frozen schema `1.2`,
 `configs/scenarios/salaried_multi_account_card.yaml` for frozen schema `1.1`, or

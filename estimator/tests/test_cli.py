@@ -30,6 +30,7 @@ def request_file(tmp_path: Path, request_payload, transaction) -> Path:
         (("--audit",), "transaction_decisions"),
         (("--features",), "customer-month-features-1.1.0"),
         (("--ensemble",), "ensemble-0.6.0"),
+        (("--explain",), "monthly_explanations"),
     ],
 )
 def test_cli_emits_each_view(request_file: Path, capsys, flags, marker) -> None:

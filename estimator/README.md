@@ -320,6 +320,54 @@ month.sustainable_income_p10_minor, month.sustainable_income_p90_minor
 Without a calibration artifact the estimator still answers, leaving `p10` and `p90` absent with
 `quantile_unavailable_reason` set.
 
+## Explainability and stress evaluation (0.8)
+
+`explain_estimate` returns explanation contract `1.0`: every credit with the rule that decided it,
+detected streams, component estimates, confidence decomposition, and the capacity model's feature
+contributions. Nothing is re-decided, so an explanation can never disagree with the estimate it
+explains, and a test asserts they agree field by field.
+
+Feature contributions are exact rather than approximated. The capacity model is additive over
+stumps, so each tree attributes to exactly one feature; the decomposition is a property of the model
+rather than an estimate of it. Reported contributions are truncated to the largest ones with the
+remainder folded into a single entry, so the printed decomposition still reconstructs the
+prediction. The contract rejects one that does not.
+
+```bash
+income-estimator --explain --capacity-model training/artifacts/capacity-estimator-0.5.0.json --calibration training/artifacts/quantile-calibration-0.7.0.json request.json
+```
+
+[Model cards](docs/model-cards.md) cover every promoted artifact, each with its measured results and
+its known failure modes. A test asserts no promoted version is missing a card.
+
+### Stress suites
+
+Six suites are reported separately, never pooled, because a pooled average hides the regime where an
+estimator fails. Two of them, `noisy` and `high_volatility`, were never in training, so they measure
+generalization to new conditions rather than to new customers.
+
+```bash
+python -m evaluation.stress_report --population-size 20 --workers 4
+```
+
+| suite | in training | realized WAPE | sustainable WAPE | interval coverage |
+|---|---|---|---|---|
+| clean | no | 0.000 | contract below 1.3 | — |
+| normal | yes | 0.000 | 0.147 | 0.688 |
+| partial_consent | yes | 0.008 | 0.018 | 0.971 |
+| life_events | yes | 0.000 | 0.024 | 1.000 |
+| noisy | no | 0.179 | 0.092 | 0.883 |
+| high_volatility | no | 0.000 | 0.443 | 0.375 |
+
+Both held-out suites expose real weakness. The noisy suite is the worst realized error by a wide
+margin: an asset sale, a merchant refund, and an own transfer described as a PIX receipt are exactly
+the credits the rules were built to reject, and some get through. The high-volatility suite is the
+worst sustainable error and the worst interval coverage, at `0.375` against a nominal `0.80`, so the
+stated interval does not hold outside the calibration distribution.
+
+No suite produced a single false-income month: the estimator never invented income where truth was
+zero.
+
 Install and test it with:
 
 ```bash

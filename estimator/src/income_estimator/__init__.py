@@ -9,6 +9,7 @@ from income_estimator.contracts import (
     IncomeEstimateV11,
     MonthlyIncomeEstimateV1,
 )
+from income_estimator.explainability import build_explanation
 from income_estimator.features import (
     FEATURE_NAMES,
     FEATURE_SCHEMA,
@@ -31,7 +32,7 @@ from income_estimator.pipeline import (
     SupervisedIncomeEstimator,
 )
 
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 
 __all__ = [
     "FEATURE_NAMES",
@@ -54,5 +55,6 @@ __all__ = [
     "RuleBasedIncomeEstimator",
     "SupervisedIncomeEstimator",
     "build_customer_month_features",
+    "build_explanation",
     "__version__",
 ]

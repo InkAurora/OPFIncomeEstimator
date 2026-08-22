@@ -14,6 +14,7 @@ from income_estimator.contracts import (
     MonthlyReconstructionAudit,
     validate_estimator_input,
 )
+from income_estimator.contracts.explanation_v1 import EstimationExplanationV1
 from income_estimator.contracts.output_v1_1 import (
     IncomeEstimateV11,
     IncomeStreamSummaryV11,
@@ -195,10 +196,29 @@ class EnsembleIncomeEstimator(RecurringIncomeEstimator):
             versions.append(self.intervals.artifact.calibration_version)
         self.model_versions = tuple(versions)
 
+    def explain_estimate(self, request: Any) -> EstimationExplanationV1:
+        """Return the production-facing explanation for a routed estimate."""
+
+        from income_estimator.explainability import build_explanation
+
+        validated = validate_estimator_input(request)
+        return build_explanation(
+            self.estimate_v1_1(validated),
+            self.explain(validated),
+            features_by_month=self._features_by_month(validated),
+            capacity=self.capacity,
+        )
+
+    def _features_by_month(self, request: Any) -> dict[str, dict[str, float | int | None]]:
+        from income_estimator.features import build_customer_month_features
+
+        return {
+            row.reference_month: row.to_mapping()
+            for row in build_customer_month_features(request, self).rows
+        }
+
     def estimate_v1_1(self, request: Any) -> IncomeEstimateV11:
         """Return realized and sustainable estimates with components and confidence."""
-
-        from income_estimator.features import build_customer_month_features
 
         validated = validate_estimator_input(request)
         audit = self.explain(validated)
@@ -207,10 +227,7 @@ class EnsembleIncomeEstimator(RecurringIncomeEstimator):
             item.month: item.estimated_income_minor
             for item in baseline.estimate(validated).monthly_estimates
         }
-        features_by_month = {
-            row.reference_month: row.to_mapping()
-            for row in build_customer_month_features(validated, self).rows
-        }
+        features_by_month = self._features_by_month(validated)
         excluded_by_month: dict[str, list[str]] = {}
         for decision in audit.transaction_decisions:
             if decision.classification == "EXCLUDED" and decision.direction == "CREDIT":

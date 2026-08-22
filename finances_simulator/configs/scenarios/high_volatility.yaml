@@ -1,0 +1,185 @@
+schema_version: "1.5"
+
+# Stress suite: unstable income with a clean observation feed. Sources pay irregularly, vary widely
+# in amount, and swing with the calendar, so this suite isolates income volatility from noise and
+# from partial consent. Nothing here is degraded and no anomaly fires.
+
+scenario:
+  name: high_volatility
+  start_date: 2024-01-01
+  default_months: 12
+
+customer:
+  currency: BRL
+  primary_account_ref: primary_checking
+
+customer_factory:
+  income_profiles:
+    - income_profile: SELF_EMPLOYED
+      weight_basis_points: 6000
+      source_bundles:
+        - source_bundle_ref: irregular_client_work
+          weight_basis_points: 10000
+          sources:
+            - source_ref: client_receipts
+              income_kind: SELF_EMPLOYMENT
+              payer: Example Client Group
+              description: CONSULTING SERVICE RECEIPT
+              destination_account_ref: primary_checking
+              amount_distribution:
+                minimum_minor: 150000
+                maximum_minor: 900000
+                step_minor: 10000
+              day_of_month: 14
+              frequency: MONTHLY
+              start_month_index: 0
+              occurrences: 12
+              payment_probability_basis_points: 6500
+              volatility_basis_points: 4500
+              seasonality_basis_points: [6000, 7000, 9000, 11000, 13000, 14000, 12000, 10000, 9000, 8000, 7000, 14000]
+            - source_ref: quarterly_profit
+              income_kind: BUSINESS_PROFIT
+              payer: Example Partnership
+              description: PROFIT DISTRIBUTION
+              destination_account_ref: primary_checking
+              amount_distribution:
+                minimum_minor: 200000
+                maximum_minor: 600000
+                step_minor: 10000
+              day_of_month: 22
+              frequency: QUARTERLY
+              start_month_index: 1
+              occurrences: 4
+              payment_probability_basis_points: 7500
+              volatility_basis_points: 3500
+              seasonality_basis_points: [10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000]
+    - income_profile: BUSINESS_OWNER
+      weight_basis_points: 4000
+      source_bundles:
+        - source_bundle_ref: lumpy_distributions
+          weight_basis_points: 10000
+          sources:
+            - source_ref: owner_distribution
+              income_kind: BUSINESS_PROFIT
+              payer: Example Holding Company
+              description: CASH DISTRIBUTION
+              destination_account_ref: primary_checking
+              amount_distribution:
+                minimum_minor: 300000
+                maximum_minor: 1500000
+                step_minor: 50000
+              day_of_month: 9
+              frequency: EVERY_TWO_MONTHS
+              start_month_index: 0
+              occurrences: 6
+              payment_probability_basis_points: 8000
+              volatility_basis_points: 5000
+              seasonality_basis_points: [10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 15000]
+  behavior_profiles:
+    - behavior_profile: BALANCED
+      weight_basis_points: 10000
+      spending_multiplier_basis_points: 10000
+      saving_multiplier_basis_points: 10000
+  wealth_profiles:
+    - wealth_band: MIDDLE
+      weight_basis_points: 10000
+      deposit_balance_multiplier_basis_points: 10000
+      investment_balance_multiplier_basis_points: 10000
+
+institutions:
+  - institution_ref: bank_volatile
+    institution_id: fictional-bank-300
+    institution_name: Volatile Income Bank
+
+accounts:
+  - account_ref: primary_checking
+    institution_ref: bank_volatile
+    account_label: Primary checking account
+    account_type: CHECKING
+    opening_balance_minor: 400000
+  - account_ref: reserve_savings
+    institution_ref: bank_volatile
+    account_label: Reserve savings account
+    account_type: SAVINGS
+    opening_balance_minor: 200000
+
+fixed_expenses:
+  - rule_id: housing
+    category: housing
+    amount_minor: 170000
+    day_of_month: 10
+    payee: Example Property Management
+    description: MONTHLY RENT
+    source_account_ref: primary_checking
+
+variable_expenses:
+  count_min: 5
+  count_max: 8
+  amount_min_minor: 2000
+  amount_max_minor: 15000
+  day_min: 11
+  day_max: 26
+  source_account_ref: primary_checking
+  merchants:
+    - entity: Example Supermarket
+      description: PIX PAYMENT SUPERMARKET
+    - entity: Example Pharmacy
+      description: PIX PAYMENT PHARMACY
+    - entity: Example Restaurant
+      description: CARD PAYMENT RESTAURANT
+
+own_transfers:
+  - rule_id: reserve_transfer
+    source_account_ref: primary_checking
+    destination_account_ref: reserve_savings
+    amount_minor: 40000
+    day_of_month: 7
+    outgoing_description: PIX SENT TO OWN RESERVE
+    incoming_description: PIX RECEIVED
+
+credit_cards: []
+card_purchase_rules: []
+loans: []
+investments:
+  - investment_ref: reserve_fund
+    institution_ref: bank_volatile
+    investment_label: Reserve fixed income fund
+    investment_type: FIXED_INCOME
+    opening_balance_minor: 60000
+    monthly_return_basis_points: 80
+    return_description: MONTHLY FIXED-INCOME RETURN
+
+investment_contribution_rules:
+  - rule_id: monthly_contribution
+    investment_ref: reserve_fund
+    account_ref: primary_checking
+    amount_minor: 30000
+    day_of_month: 12
+    start_month_index: 0
+    interval_months: 1
+    occurrences: 12
+    description: MONTHLY INVESTMENT CONTRIBUTION
+
+investment_redemption_rules: []
+
+initial_life_state:
+  job_title: Consultant
+
+seasonality: {}
+life_events: []
+
+anomalies: []
+
+observation_degradation:
+  consent:
+    default_coverage_percent: 100
+  institution_descriptions:
+    - institution_ref: bank_volatile
+      description_prefix: VIB
+      reversal_prefix: ESTORNO
+  missing_record_basis_points: 0
+  late_record_basis_points: 0
+  duplicate_record_basis_points: 0
+  reversal_record_basis_points: 0
+  maximum_late_days: 1
+  maximum_reversal_delay_days: 1

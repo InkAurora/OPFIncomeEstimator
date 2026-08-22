@@ -22,3 +22,11 @@ the best component overall and strictly better in at least one segment:
 cd estimator
 python -m evaluation.ensemble_benchmark --population-size-per-suite 80 --workers 4
 ```
+
+`stress_report.py` runs the routed estimator across six named suites and reports each separately,
+recording for every suite whether the promoted models were trained on its conditions:
+
+```bash
+cd estimator
+python -m evaluation.stress_report --population-size 20 --workers 4
+```

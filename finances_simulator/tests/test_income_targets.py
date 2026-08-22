@@ -225,3 +225,53 @@ def test_contracts_without_private_income_sources_are_rejected(scenario_root: Pa
 
     with pytest.raises(IncomeTargetProjectionError, match="1.3"):
         project_income_targets(generated.simulation)
+
+
+def test_stress_scenarios_generate_deterministically(scenario_root: Path) -> None:
+    """The noisy and high-volatility suites must be reproducible like every other scenario."""
+
+    for name in ("noisy_observation", "high_volatility"):
+        config = load_scenario_config(scenario_root / f"{name}.yaml")
+        first = generate_scenario(config, seed=42, months=12)
+        second = generate_scenario(config, seed=42, months=12)
+
+        assert first.observations.transactions == second.observations.transactions
+        assert first.ground_truth.customer_months == second.ground_truth.customer_months
+        assert project_income_targets(first.simulation) == project_income_targets(
+            second.simulation
+        )
+
+
+def test_noisy_suite_emits_income_shaped_non_income_credits(scenario_root: Path) -> None:
+    config = load_scenario_config(scenario_root / "noisy_observation.yaml")
+    generated = generate_scenario(config, seed=42, months=12)
+
+    anomaly_types = {item.anomaly_type.value for item in generated.ground_truth.anomalies}
+    assert anomaly_types == {
+        "LARGE_PIX_TRANSFER",
+        "REFUND",
+        "ASSET_SALE",
+        "INVESTMENT_REDEMPTION",
+    }
+
+    observed = generated.observations.transactions
+    assert any(item.duplicate_of_transaction_id is not None for item in observed)
+    assert any(item.reversal_of_transaction_id is not None for item in observed)
+    assert any(item.observed_at > item.posted_at for item in observed)
+
+
+def test_high_volatility_suite_produces_unstable_income(scenario_root: Path) -> None:
+    from finances_simulator.batch import generate_population
+
+    config = load_scenario_config(scenario_root / "high_volatility.yaml")
+    population = generate_population(config, population_size=6, seed=42, months=12, workers=1)
+
+    zero_months = 0
+    total_months = 0
+    for member in population.members:
+        amounts = [item.true_income_minor for item in member.ground_truth.customer_months]
+        zero_months += sum(1 for value in amounts if value == 0)
+        total_months += len(amounts)
+        assert not member.ground_truth.anomalies
+
+    assert zero_months > total_months // 4

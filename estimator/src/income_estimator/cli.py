@@ -50,6 +50,11 @@ def _parser() -> argparse.ArgumentParser:
         help="Conformal calibration artifact for --ensemble sustainable income quantiles",
     )
     parser.add_argument(
+        "--explain",
+        action="store_true",
+        help="Emit the explanation contract 1.0 evidence report; implies --ensemble",
+    )
+    parser.add_argument(
         "--model",
         type=Path,
         help="Use experimental estimator 0.3 with this JSON model artifact",
@@ -61,7 +66,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         payload = json.loads(args.input.read_text(encoding="utf-8"))
-        if args.ensemble:
+        if args.ensemble or args.explain:
             estimator = EnsembleIncomeEstimator(
                 args.capacity_model,
                 calibration_path=args.calibration,
@@ -74,6 +79,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             estimator = RecurringIncomeEstimator()
         if args.features:
             result = build_customer_month_features(payload, estimator)
+        elif args.explain:
+            result = estimator.explain_estimate(payload)
         elif args.ensemble:
             result = estimator.estimate_v1_1(payload)
         elif args.audit:

@@ -13,7 +13,7 @@ correct measured limitations of deterministic methods rather than replace an une
 
 ## 2. Current state
 
-The financial simulator and estimator support evaluated milestones through `0.7`:
+The financial simulator and estimator support every milestone in this plan, through `0.8`:
 
 - simulator orchestrator `0.7.0` generates deterministic populations;
 - observation contract `1.5` includes incomplete-consent and data-quality artifacts;
@@ -37,6 +37,8 @@ The financial simulator and estimator support evaluated milestones through `0.7`
 - estimator `0.6` routes both targets deterministically and beats its best individual component;
 - estimator `0.7` publishes split-conformal intervals calibrated on out-of-fold residuals, with
   measured coverage and confidence monotonic against relative error;
+- estimator `0.8` adds explanation contract `1.0`, model cards, and six separately reported
+  stress suites, two of which sit outside the training distribution;
 - private contract `income-targets-1.0` projects all five income targets from the hidden run, so
   `sustainable_monthly_income` now exists as a trainable label.
 
@@ -611,7 +613,7 @@ calibration with per-band offsets is the natural next step and is deliberately n
 Annual quantiles remain absent because deriving them from monthly quantiles requires a measured
 dependence structure across months.
 
-### Estimator `0.8` — Explainability and stress evaluation
+### Estimator `0.8` — Explainability and stress evaluation — implemented
 
 Add:
 
@@ -629,6 +631,28 @@ Acceptance criteria:
 - normal, noisy, partial-consent, high-volatility, life-event, adversarial, and out-of-distribution
   suites are reported separately;
 - production-facing output distinguishes estimate, uncertainty interval, and confidence.
+
+Implemented as explanation contract `1.0`, assembled entirely from evidence the pipeline already
+produced, so an explanation cannot disagree with the estimate it explains. Feature contributions are
+exact rather than approximated: the capacity model is additive over stumps, so each tree attributes
+to exactly one feature. Truncated reports fold the remainder into one entry and the contract rejects
+a decomposition that fails to reconstruct the prediction.
+
+Six suites are reported separately: `clean`, `normal`, `partial_consent`, `life_events`, `noisy`,
+and `high_volatility`. Each declares whether the promoted models were trained on its conditions,
+which distinguishes generalization to new customers from generalization to new conditions.
+
+Held-out conditions expose real weakness and are recorded rather than smoothed over. The `noisy`
+suite produces the worst realized error at WAPE `0.179` against `0.000` to `0.008` elsewhere. The
+`high_volatility` suite produces the worst sustainable error at WAPE `0.443` and interval coverage
+of `0.375` against a nominal `0.80`, so the stated interval does not hold outside the calibration
+distribution. No suite produced a false-income month.
+
+Two suites named in this plan are deliberately not implemented. `adversarial` needs credits
+constructed to defeat the rules rather than merely resemble income, which requires new anomaly types
+rather than configuration. `out_of_distribution` needs a held-out income profile excluded from
+training, which changes the training split rather than adding a scenario. Both are scoped work, not
+oversights.
 
 ## 8. Transaction intelligence specification
 

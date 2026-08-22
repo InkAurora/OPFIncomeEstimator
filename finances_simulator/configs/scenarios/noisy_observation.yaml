@@ -1,0 +1,178 @@
+schema_version: "1.5"
+
+# Stress suite: observation noise and estimator-confounding credits, with income itself unchanged.
+# Consent stays complete so this suite isolates noise from coverage. Every credit that looks like
+# income but is not appears here: an own transfer described as a PIX receipt, a merchant refund, an
+# asset sale, and an investment redemption.
+
+scenario:
+  name: noisy_observation
+  start_date: 2024-01-01
+  default_months: 12
+
+customer:
+  currency: BRL
+  primary_account_ref: primary_checking
+
+customer_factory:
+  income_profiles:
+    - income_profile: SALARIED
+      weight_basis_points: 10000
+      source_bundles:
+        - source_bundle_ref: salary_only
+          weight_basis_points: 10000
+          sources:
+            - source_ref: salary
+              income_kind: SALARY
+              payer: Example Employer Ltd.
+              description: MONTHLY PAYROLL CREDIT
+              destination_account_ref: primary_checking
+              amount_distribution:
+                minimum_minor: 500000
+                maximum_minor: 700000
+                step_minor: 10000
+              day_of_month: 5
+              frequency: MONTHLY
+              start_month_index: 0
+              occurrences: 12
+              payment_probability_basis_points: 10000
+              volatility_basis_points: 300
+              seasonality_basis_points: [10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000]
+  behavior_profiles:
+    - behavior_profile: BALANCED
+      weight_basis_points: 10000
+      spending_multiplier_basis_points: 10000
+      saving_multiplier_basis_points: 10000
+  wealth_profiles:
+    - wealth_band: MIDDLE
+      weight_basis_points: 10000
+      deposit_balance_multiplier_basis_points: 10000
+      investment_balance_multiplier_basis_points: 10000
+
+institutions:
+  - institution_ref: bank_noisy
+    institution_id: fictional-bank-200
+    institution_name: Noisy Feed Bank
+
+accounts:
+  - account_ref: primary_checking
+    institution_ref: bank_noisy
+    account_label: Primary checking account
+    account_type: CHECKING
+    opening_balance_minor: 400000
+  - account_ref: reserve_savings
+    institution_ref: bank_noisy
+    account_label: Reserve savings account
+    account_type: SAVINGS
+    opening_balance_minor: 200000
+
+fixed_expenses:
+  - rule_id: housing
+    category: housing
+    amount_minor: 170000
+    day_of_month: 10
+    payee: Example Property Management
+    description: MONTHLY RENT
+    source_account_ref: primary_checking
+
+variable_expenses:
+  count_min: 5
+  count_max: 8
+  amount_min_minor: 2000
+  amount_max_minor: 15000
+  day_min: 11
+  day_max: 26
+  source_account_ref: primary_checking
+  merchants:
+    - entity: Example Supermarket
+      description: PIX PAYMENT SUPERMARKET
+    - entity: Example Pharmacy
+      description: PIX PAYMENT PHARMACY
+    - entity: Example Restaurant
+      description: CARD PAYMENT RESTAURANT
+
+own_transfers:
+  - rule_id: reserve_transfer
+    source_account_ref: primary_checking
+    destination_account_ref: reserve_savings
+    amount_minor: 40000
+    day_of_month: 7
+    outgoing_description: PIX SENT TO OWN RESERVE
+    incoming_description: PIX RECEIVED
+
+credit_cards: []
+card_purchase_rules: []
+loans: []
+investments:
+  - investment_ref: reserve_fund
+    institution_ref: bank_noisy
+    investment_label: Reserve fixed income fund
+    investment_type: FIXED_INCOME
+    opening_balance_minor: 60000
+    monthly_return_basis_points: 80
+    return_description: MONTHLY FIXED-INCOME RETURN
+
+investment_contribution_rules:
+  - rule_id: monthly_contribution
+    investment_ref: reserve_fund
+    account_ref: primary_checking
+    amount_minor: 30000
+    day_of_month: 12
+    start_month_index: 0
+    interval_months: 1
+    occurrences: 12
+    description: MONTHLY INVESTMENT CONTRIBUTION
+
+investment_redemption_rules: []
+
+initial_life_state:
+  job_title: Analyst
+
+seasonality: {}
+life_events: []
+
+anomalies:
+  - anomaly_ref: large_pix
+    anomaly_type: LARGE_PIX_TRANSFER
+    occurred_at: 2024-02-20
+    amount_minor: 550000
+    source_account_ref: primary_checking
+    destination_account_ref: reserve_savings
+    outgoing_description: PIX TRANSFER TO OWN RESERVE
+    incoming_description: PIX RECEIVED
+  - anomaly_ref: merchant_refund
+    anomaly_type: REFUND
+    occurred_at: 2024-04-22
+    amount_minor: 62000
+    destination_account_ref: primary_checking
+    source_entity: Example Electronics Merchant
+    description: PURCHASE REFUND
+  - anomaly_ref: vehicle_sale
+    anomaly_type: ASSET_SALE
+    occurred_at: 2024-07-18
+    amount_minor: 240000
+    destination_account_ref: primary_checking
+    buyer: Example Vehicle Buyer
+    asset_type: VEHICLE
+    description: VEHICLE SALE PROCEEDS
+  - anomaly_ref: reserve_redemption
+    anomaly_type: INVESTMENT_REDEMPTION
+    occurred_at: 2024-10-20
+    amount_minor: 120000
+    investment_ref: reserve_fund
+    destination_account_ref: primary_checking
+    description: INVESTMENT REDEMPTION
+
+observation_degradation:
+  consent:
+    default_coverage_percent: 100
+  institution_descriptions:
+    - institution_ref: bank_noisy
+      description_prefix: NFB
+      reversal_prefix: ESTORNO
+  missing_record_basis_points: 0
+  late_record_basis_points: 3500
+  duplicate_record_basis_points: 2000
+  reversal_record_basis_points: 1500
+  maximum_late_days: 21
+  maximum_reversal_delay_days: 45

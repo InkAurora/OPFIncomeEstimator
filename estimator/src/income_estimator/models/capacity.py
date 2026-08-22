@@ -120,6 +120,30 @@ class GradientBoostedCapacityModel:
             score += learning_rate * leaf
         return score
 
+    def contributions(
+        self,
+        features: Mapping[str, float | int | None],
+    ) -> dict[str, float]:
+        """Exact additive contribution of each feature to the log estimate.
+
+        Every tree is a stump, so it contributes ``learning_rate * leaf`` to exactly one feature.
+        The decomposition is therefore exact by construction rather than sampled or approximated,
+        as a general attribution method would have to be. Contributions plus the anchor and the
+        base score reconstruct the prediction up to floating-point summation order.
+        """
+
+        totals: dict[str, float] = {}
+        for tree in self.artifact.trees:
+            value = features.get(tree.feature_name)
+            if value is None:
+                leaf = tree.left_value if tree.missing_left else tree.right_value
+            else:
+                leaf = tree.left_value if value <= tree.threshold else tree.right_value
+            totals[tree.feature_name] = (
+                totals.get(tree.feature_name, 0.0) + self.artifact.learning_rate * leaf
+            )
+        return totals
+
     def predict_positive_basis_points(
         self,
         features: Mapping[str, float | int | None],
