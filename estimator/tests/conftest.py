@@ -62,6 +62,7 @@ def transaction() -> Callable[..., dict[str, object]]:
         account_id: str = "checking",
         duplicate_of_transaction_id: str | None = None,
         reversal_of_transaction_id: str | None = None,
+        repost_of_transaction_id: str | None = None,
     ) -> dict[str, object]:
         return {
             "schema_version": "1.0",
@@ -76,6 +77,7 @@ def transaction() -> Callable[..., dict[str, object]]:
             "description": description,
             "duplicate_of_transaction_id": duplicate_of_transaction_id,
             "reversal_of_transaction_id": reversal_of_transaction_id,
+            "repost_of_transaction_id": repost_of_transaction_id,
         }
 
     return build

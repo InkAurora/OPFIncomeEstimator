@@ -17,11 +17,13 @@ from finances_simulator.ground_truth.projector_v2 import GroundTruthBundleV2
 from finances_simulator.ground_truth.projector_v3 import GroundTruthBundleV3
 from finances_simulator.ground_truth.projector_v4 import GroundTruthBundleV4
 from finances_simulator.ground_truth.projector_v5 import GroundTruthBundleV5
+from finances_simulator.ground_truth.projector_v6 import GroundTruthBundleV6
 from finances_simulator.observations.projector_v1 import ObservationBundleV1
 from finances_simulator.observations.projector_v2 import ObservationBundleV2
 from finances_simulator.observations.projector_v3 import ObservationBundleV3
 from finances_simulator.observations.projector_v4 import ObservationBundleV4
 from finances_simulator.observations.projector_v5 import ObservationBundleV5
+from finances_simulator.observations.projector_v6 import ObservationBundleV6
 
 
 class OutputDirectoryNotEmptyError(FileExistsError):
@@ -104,7 +106,8 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
         | GroundTruthBundleV2
         | GroundTruthBundleV3
         | GroundTruthBundleV4
-        | GroundTruthBundleV5,
+        | GroundTruthBundleV5
+        | GroundTruthBundleV6,
     ):
         private_datasets["credit_card_transaction_ground_truth"] = _write_jsonl(
             private_directory / "credit_card_transaction_ground_truth.jsonl",
@@ -113,7 +116,11 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
         )
     if isinstance(
         truth,
-        GroundTruthBundleV2 | GroundTruthBundleV3 | GroundTruthBundleV4 | GroundTruthBundleV5,
+        GroundTruthBundleV2
+        | GroundTruthBundleV3
+        | GroundTruthBundleV4
+        | GroundTruthBundleV5
+        | GroundTruthBundleV6,
     ):
         private_datasets.update(
             {
@@ -134,13 +141,16 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
                 ),
             }
         )
-    if isinstance(truth, GroundTruthBundleV3 | GroundTruthBundleV4 | GroundTruthBundleV5):
+    if isinstance(
+        truth,
+        GroundTruthBundleV3 | GroundTruthBundleV4 | GroundTruthBundleV5 | GroundTruthBundleV6,
+    ):
         private_datasets["income_source_ground_truth"] = _write_jsonl(
             private_directory / "income_source_ground_truth.jsonl",
             truth.income_sources,
             schema_version=profile.contract_schema_version,
         )
-    if isinstance(truth, GroundTruthBundleV4 | GroundTruthBundleV5):
+    if isinstance(truth, GroundTruthBundleV4 | GroundTruthBundleV5 | GroundTruthBundleV6):
         private_datasets.update(
             {
                 "life_event_ground_truth": _write_jsonl(
@@ -178,7 +188,8 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
         | ObservationBundleV2
         | ObservationBundleV3
         | ObservationBundleV4
-        | ObservationBundleV5,
+        | ObservationBundleV5
+        | ObservationBundleV6,
     ):
         observed_datasets.update(
             {
@@ -211,7 +222,11 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
         )
     if isinstance(
         observations,
-        ObservationBundleV2 | ObservationBundleV3 | ObservationBundleV4 | ObservationBundleV5,
+        ObservationBundleV2
+        | ObservationBundleV3
+        | ObservationBundleV4
+        | ObservationBundleV5
+        | ObservationBundleV6,
     ):
         observed_datasets.update(
             {
@@ -248,7 +263,7 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
             }
         )
 
-    if isinstance(observations, ObservationBundleV5):
+    if isinstance(observations, ObservationBundleV5 | ObservationBundleV6):
         observed_datasets["observation_coverage"] = _write_jsonl(
             observed_directory / "observation_coverage.jsonl",
             observations.observation_coverage,
@@ -278,7 +293,7 @@ def _write_run_contents(generated: GeneratedScenario, working_directory: Path) -
         },
         "simulator_version": profile.simulator_version,
     }
-    if isinstance(observations, ObservationBundleV5):
+    if isinstance(observations, ObservationBundleV5 | ObservationBundleV6):
         eligible = sum(item.eligible_record_count for item in observations.observation_coverage)
         observed = sum(
             item.observed_original_record_count for item in observations.observation_coverage

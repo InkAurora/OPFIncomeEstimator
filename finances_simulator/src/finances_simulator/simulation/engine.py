@@ -223,6 +223,12 @@ def simulate(
     from finances_simulator.config_v3 import ScenarioConfigV3
     from finances_simulator.config_v4 import ScenarioConfigV4
     from finances_simulator.config_v5 import ScenarioConfigV5
+    from finances_simulator.config_v6 import ScenarioConfigV6
+
+    if isinstance(config, ScenarioConfigV6):
+        from finances_simulator.simulation.v6 import simulate_v6
+
+        return simulate_v6(config, seed=seed, months=months)
 
     if isinstance(config, ScenarioConfigV5):
         from finances_simulator.simulation.v5 import simulate_v5

@@ -75,6 +75,7 @@ def build_estimator_input(generated: GeneratedScenario) -> EstimatorInputV1:
             reversal_of_transaction_id=getattr(
                 item, "reversal_of_transaction_id", None
             ),
+            repost_of_transaction_id=getattr(item, "repost_of_transaction_id", None),
         )
         for item in observations.transactions
     )
@@ -171,6 +172,7 @@ def build_estimator_input_v1_1(generated: GeneratedScenario) -> EstimatorInputV1
             reversal_of_transaction_id=getattr(
                 item, "reversal_of_transaction_id", None
             ),
+            repost_of_transaction_id=getattr(item, "repost_of_transaction_id", None),
             balance_after_minor=getattr(item, "balance_after_minor", None),
         )
         for item in observations.transactions

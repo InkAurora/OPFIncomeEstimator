@@ -87,8 +87,8 @@ def test_partitioned_parquet_and_reports_are_byte_deterministic(
     manifest = json.loads(first_manifest_path.read_text(encoding="utf-8"))
     assert manifest["batch_schema_version"] == "1.0"
     assert manifest["simulator_version"] == "0.7.0"
-    assert manifest["source_simulator_version"] == "0.6.0"
-    assert manifest["contract_schema_version"] == "1.5"
+    assert manifest["source_simulator_version"] == "0.7.0"
+    assert manifest["contract_schema_version"] == "1.6"
     assert manifest["population_size"] == 3
     transaction_files = manifest["datasets"]["observed"]["transactions"]["files"]
     assert transaction_files
@@ -207,7 +207,7 @@ def test_phase7_reference_population_is_byte_stable(
 
 
 def test_phase7_version_and_batch_argument_validation(phase7_config) -> None:
-    assert SIMULATOR_VERSION == "0.7.0"
+    assert SIMULATOR_VERSION == "0.8.0"
     with pytest.raises(ValueError, match="population_size"):
         generate_population(phase7_config, population_size=0, seed=1)
     with pytest.raises(ValueError, match="workers"):

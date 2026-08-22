@@ -3,8 +3,8 @@
 This component generates deterministic synthetic financial histories for estimator development,
 automated tests, and evaluation. Phase-7 orchestrator `0.7.0` adds deterministic parallel
 populations, partitioned Parquet datasets, a versioned estimator boundary, and automatic evaluation
-reports. It runs frozen engine `0.6.0`/contract `1.5` members without changing their economics or
-record schemas. Older engines `0.5.0` through `0.1.0` remain available.
+reports. It runs frozen engine `0.7.0`/contract `1.6` members without changing their economics or
+record schemas. Older engines `0.6.0` through `0.1.0` remain available.
 
 ## Requirements and installation
 
@@ -22,7 +22,7 @@ compatible dependency ranges so the library can participate in a larger applicat
 
 ## Generate a scenario
 
-Run the current schema `1.5` scenario from this directory:
+Run the current schema `1.6` scenario from this directory:
 
 ```console
 python -m finances_simulator generate --config configs/scenarios/incomplete_observation.yaml --seed 42 --months 12 --output runs/incomplete-observation-seed-42
@@ -60,7 +60,7 @@ the simulation boundary, then validates estimator identity, months, currency, an
 
 The default `baseline` estimator is a transparent integration harness. It excludes visible
 duplicate/reversal lineage, observed own-transfer pairs, loan disbursement links, and investment
-redemption links. It is not a production income model. Integrate another estimator with
+redemption links, and counts the corrected re-post that follows an artifact reversal. It is not a production income model. Integrate another estimator with
 `--estimator package.module:attribute`; the attribute may be a no-argument class, an object exposing
 `estimate(request)`, or a callable. Results must satisfy estimator contract `1.0`.
 
@@ -68,15 +68,15 @@ redemption links. It is not a production income model. Integrate another estimat
 
 The loader dispatches on the required top-level `schema_version`:
 
-- [`noisy_observation.yaml`](configs/scenarios/noisy_observation.yaml) uses contract `1.5` and
-  engine `0.6.0`: an estimator stress suite with complete consent but a heavily degraded feed and
+- [`noisy_observation.yaml`](configs/scenarios/noisy_observation.yaml) uses contract `1.6` and
+  engine `0.7.0`: an estimator stress suite with complete consent but a heavily degraded feed and
   four income-shaped non-income credits, including an own transfer described as a PIX receipt.
 - [`high_volatility.yaml`](configs/scenarios/high_volatility.yaml) uses contract `1.5` and engine
   `0.6.0`: an estimator stress suite with a clean feed and unstable income, where self-employed and
   business sources pay irregularly, vary widely, and swing with the calendar.
-- [`incomplete_observation.yaml`](configs/scenarios/incomplete_observation.yaml) uses contract `1.5`
-  and engine `0.6.0`: standard 100%, 70%, and 40% consent, account overrides, provider
-  descriptions, and deterministic missing, late, duplicate, and reversal records.
+- [`incomplete_observation.yaml`](configs/scenarios/incomplete_observation.yaml) uses contract `1.6`
+  and engine `0.7.0`: standard 100%, 70%, and 40% consent, account overrides, provider
+  descriptions, and deterministic missing, late, duplicate, reversal, and corrected re-post records.
 - [`life_events.yaml`](configs/scenarios/life_events.yaml) uses contract `1.4` and engine `0.5.0`:
   income and household transitions, exceptional expenses and inflows, seasonal multipliers, and
   four correctly typed anomaly classes.
@@ -99,15 +99,16 @@ and adds 1 to 32 loans, 1 to 32 investments, and at least one contribution and r
 References, rule IDs, installment work, and scheduled-flow work are bounded and validated before
 simulation.
 
-Contract `1.5` separates the frozen V4 world fingerprint from V5 observation policy. Changing only
+Contract `1.6` separates the frozen V4 world fingerprint from V6 observation policy. Changing only
 consent or degradation settings preserves every hidden event, ledger posting, balance, product
 state, and private truth row. Default and institution coverage applies to all dated product
 streams; account coverage overrides its institution for deposit balances and transactions.
 
 Deposit transactions receive independently configured `0..10000` basis-point rates for missing,
-late, duplicate, and reversal records. `observed_at` measures delayed arrival. Duplicate and
-reversal records have unique IDs and reference their emitted original without exposing private
-labels. Provider prefixes format deposit, card, and investment descriptions. Per-account coverage
+late, duplicate, and reversal records. `observed_at` measures delayed arrival. Every reversal is an
+observation artifact and is followed by a mandatory corrected re-post, so the observed feed
+reconverges to truth. Duplicate, reversal, and re-post records have unique IDs and reference their
+emitted original without exposing private labels. Provider prefixes format deposit, card, and investment descriptions. Per-account coverage
 rows and an aggregate manifest summary measure effective coverage using original records only.
 
 Contract `1.3` replaces the single salary rule with `CustomerFactory`. It samples member index `0`
@@ -158,6 +159,7 @@ Exact fields and semantics:
 
 - [batch and estimator contracts 1.0 to 1.2](docs/contracts-batch-v1.md)
 - [private income target contract 1.0](docs/contracts-income-targets-v1.md)
+- [contract schema 1.6](docs/contracts-v1-6.md)
 - [contract schema 1.5](docs/contracts-v1-5.md)
 - [contract schema 1.4](docs/contracts-v1-4.md)
 - [contract schema 1.3](docs/contracts-v1-3.md)
@@ -183,6 +185,10 @@ Each populated Parquet row adds `batch_id`, `run_id`, `seed`, and `customer_buck
 Nested open objects are canonical JSON columns; primitive repeated fields remain Parquet lists.
 Manifest file hashes and embedded Arrow metadata make component-boundary verification explicit.
 See [batch contract 1.0](docs/contracts-batch-v1.md) for metric definitions and trust rules.
+
+Schema `1.6` retains the schema `1.5` tree and adds `repost_record_count` to the coverage dataset.
+Transaction rows add a nullable corrected re-post lineage link, so an artifact reversal no longer
+removes its amount from the observed feed permanently.
 
 Schema `1.5` retains the schema `1.4` tree and adds
 `observed/observation_coverage.jsonl`. Transaction rows add arrival date and nullable duplicate and
@@ -243,7 +249,7 @@ samples a mixed-income, balanced-behavior, high-wealth customer with two variabl
 frozen [schema-1.4 seed-42 reference run](examples/generated/life_events_seed_42/run_manifest.json)
 exercises all life-event and anomaly types across a 24-month salaried history.
 The current
-[schema-1.5 seed-42 reference run](examples/generated/incomplete_observation_seed_42/run_manifest.json)
+[schema-1.6 seed-42 reference run](examples/generated/incomplete_observation_seed_42/run_manifest.json)
 exercises all three coverage levels and every deposit-transaction degradation type.
 The Phase-7
 [two-member population reference](examples/generated/phase7_population_seed_100_count_2/population_manifest.json)
@@ -303,7 +309,7 @@ inside estimator runtime.
 ## Current limitations
 
 Each source run still generates one sampled customer and one currency; Phase 7 composes these runs
-into populations. Contract `1.5` supports effective-dated
+into populations. Contract `1.6` supports effective-dated
 changes to existing materialized income sources and household state alongside active
 checking/savings accounts, fixed-policy cards, personal constant-principal loans, and fixed-income
 investments. Property and vehicle ownership are counts, not valued balance-sheet assets. Loan and

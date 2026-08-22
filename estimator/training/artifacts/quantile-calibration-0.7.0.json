@@ -7,9 +7,9 @@
   "fold_count": 5,
   "nominal_lower_quantile": 0.1,
   "nominal_upper_quantile": 0.9,
-  "lower_log_offset": -0.214496621824,
-  "upper_log_offset": 0.194211162759,
+  "lower_log_offset": -0.156144164381,
+  "upper_log_offset": 0.174364855112,
   "zero_gate_certain_basis_points": 1000,
-  "calibration_row_count": 1848,
-  "calibration_customer_count": 154
+  "calibration_row_count": 2412,
+  "calibration_customer_count": 201
 }

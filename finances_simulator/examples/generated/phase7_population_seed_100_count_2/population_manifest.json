@@ -1,8 +1,8 @@
 {
-  "batch_id": "bat_77b87dbf6622eea71aec1ee4e6918094",
+  "batch_id": "bat_2468ef82704f5530d8e0c0426b495039",
   "batch_schema_version": "1.0",
-  "config_sha256": "ff23504be68d9dd07ec115aa6bcdeeed7a4b6bba0f1edafb12767ddaf52198e2",
-  "contract_schema_version": "1.5",
+  "config_sha256": "3283f81eb1c7a14700d1502f4e68df169d6f0c52c71b06650d767e83de0311aa",
+  "contract_schema_version": "1.6",
   "datasets": {
     "observed": {
       "accounts": {
@@ -11,14 +11,14 @@
             "customer_bucket": "01",
             "path": "observed/accounts/customer_bucket=01/part-00000.parquet",
             "record_count": 6,
-            "sha256": "2c62b1f39abda3010dce8974f2493f96a23b6a1dc0e4455ce8a58f6ff426d444"
+            "sha256": "de363bac7a4cdf8469bdfe66f06604c4301267fb932529740b01e24fbf11d7b1"
           }
         ],
         "models": [
-          "AccountV5"
+          "AccountV6"
         ],
         "record_count": 6,
-        "schema_sha256": "c05d6bfbadc33cdff944f853cc6ef573f34a338084156502905e0261683c05b3"
+        "schema_sha256": "0d52ebdf5681b5be36d492fa898d329cb88d4b7225e51a8be160685f3f465b05"
       },
       "balances": {
         "files": [
@@ -26,14 +26,14 @@
             "customer_bucket": "01",
             "path": "observed/balances/customer_bucket=01/part-00000.parquet",
             "record_count": 12,
-            "sha256": "e8f2c01911fbd5b2d00d810afb193dc5a26c29fd30718b5d536e34a55c408554"
+            "sha256": "295893897c2fc9fe6ed2a692572be79332f184ee888d6eb4eb22539bc50add9e"
           }
         ],
         "models": [
-          "BalanceV5"
+          "BalanceV6"
         ],
         "record_count": 12,
-        "schema_sha256": "711e1cc35617899c22b0c5f1ffdd008c719409af4d212ff8461cc18d7b9d771e"
+        "schema_sha256": "98900b62ddcc74a3fe0fd6bd40caed8d23329c7e78c347c87148d85a885a2af5"
       },
       "credit_card_invoice_items": {
         "files": [],
@@ -107,29 +107,29 @@
             "customer_bucket": "01",
             "path": "observed/observation_coverage/customer_bucket=01/part-00000.parquet",
             "record_count": 6,
-            "sha256": "48fe210076df6734b40349ea1a28c339086228963c1479c1c97024717547e230"
+            "sha256": "7da749e90c8e43d36b25a096d8daedf59d1afbbaa85e3dc01688785d08e0866b"
           }
         ],
         "models": [
-          "ObservationCoverageV5"
+          "ObservationCoverageV6"
         ],
         "record_count": 6,
-        "schema_sha256": "d828d6dcc59051a075398b33d78bd0fd9a6569c4d32b76e8dbad03f3116623e2"
+        "schema_sha256": "e5b466af71ae6705a823952b668fabf788248a4556e5421201b318cd28203734"
       },
       "transactions": {
         "files": [
           {
             "customer_bucket": "01",
             "path": "observed/transactions/customer_bucket=01/part-00000.parquet",
-            "record_count": 56,
-            "sha256": "e26ecb2b4fdbbd657a30cfc9703d8dc86f39dc27e122d10adf8bb7f596c9f874"
+            "record_count": 58,
+            "sha256": "0fbf7e93c7c39e3659f66516558a7ccaaa3b895399abbad3608d12dcb0043f14"
           }
         ],
         "models": [
-          "TransactionV5"
+          "TransactionV6"
         ],
-        "record_count": 56,
-        "schema_sha256": "cf1f24ff79b38c621239a8745349a149a4e28bd790b542f3a4d30ea8f23d6e6c"
+        "record_count": 58,
+        "schema_sha256": "edd4b19a06f1959d89b603ff0733c5c139fe11f599c617cc14fc9556f4c3db0e"
       }
     },
     "private": {
@@ -145,14 +145,14 @@
             "customer_bucket": "01",
             "path": "private/balance_sheets/customer_bucket=01/part-00000.parquet",
             "record_count": 6,
-            "sha256": "7016c80e569cdb16e3897f8b4cafc60723886d5ee9e535da422e08868b079b15"
+            "sha256": "31a25746d83db4c60d41c711d23d8108c28740366b9a83f243d4da3c62b269d5"
           }
         ],
         "models": [
-          "BalanceSheetGroundTruthV5"
+          "BalanceSheetGroundTruthV6"
         ],
         "record_count": 6,
-        "schema_sha256": "45ecf468310647e9f1e0c2bd4c50bfdda9ea08c616068df7c9d950468937b79c"
+        "schema_sha256": "34944f2cdd051b73a561e4b563d581bdb02a7a59a7cc650da32d3dc92e760feb"
       },
       "credit_card_transactions": {
         "files": [],
@@ -166,14 +166,14 @@
             "customer_bucket": "01",
             "path": "private/customer_months/customer_bucket=01/part-00000.parquet",
             "record_count": 6,
-            "sha256": "c8526ce9fda2a570e01a8e6531bdc25765b263a6ce776d3b99e30fdbc91251ce"
+            "sha256": "eacad59198da1216f5e1f39980d97e4daf99a59e611ea481b75d6be60db48098"
           }
         ],
         "models": [
-          "CustomerMonthGroundTruthV5"
+          "CustomerMonthGroundTruthV6"
         ],
         "record_count": 6,
-        "schema_sha256": "1b9abca98d8bc798e1e0b2c3c2be92ee66058d3776324a5901d25cf0278d5cd9"
+        "schema_sha256": "2cf7e8719969e2c5609325c36f3e4d0e72e1f807ca7db4800bcdd2b81df0f089"
       },
       "customers": {
         "files": [
@@ -181,14 +181,14 @@
             "customer_bucket": "01",
             "path": "private/customers/customer_bucket=01/part-00000.parquet",
             "record_count": 2,
-            "sha256": "342f687947bc6b748be818849632b06c81e625131937ac730fe9c096e60e2efa"
+            "sha256": "e5ef0d367f85b72d0608041dabaef8f64514e5b613b4e728d36702138a0c0164"
           }
         ],
         "models": [
-          "CustomerGroundTruthV5"
+          "CustomerGroundTruthV6"
         ],
         "record_count": 2,
-        "schema_sha256": "6f18c497a1e1554fb07d9bfdbb5e2f3a499ae3544429f2fbd32be395364a2b72"
+        "schema_sha256": "a87ae96131023de4408505872621966ed55d60625e84f7bb07dc487403ea7a2a"
       },
       "income_sources": {
         "files": [
@@ -196,14 +196,14 @@
             "customer_bucket": "01",
             "path": "private/income_sources/customer_bucket=01/part-00000.parquet",
             "record_count": 2,
-            "sha256": "86ee7b60595479141a6f2ef70f142b41be342b35e86376aa724d439a9f89a24c"
+            "sha256": "62b44f5cb4857812c9eaad083db88eecef95213cfc469386642763dfd99c9dbe"
           }
         ],
         "models": [
-          "IncomeSourceGroundTruthV5"
+          "IncomeSourceGroundTruthV6"
         ],
         "record_count": 2,
-        "schema_sha256": "3e92e24690bfcabe19cc8e140b73024c3c5ed097cf7225cc33090fd99db0907a"
+        "schema_sha256": "3f60beea3d709295be20d1254afddf0eb83bf3855e55e2f6bde22f40192d5f4f"
       },
       "investment_transactions": {
         "files": [],
@@ -229,14 +229,14 @@
             "customer_bucket": "01",
             "path": "private/transactions/customer_bucket=01/part-00000.parquet",
             "record_count": 60,
-            "sha256": "95d52b1c085444738a60455b1f3ee0cc7a6f6f9277f6b8d4b05efafc736c2c45"
+            "sha256": "e76acdf42d514e144dbcf4b41a8a29f14f04d57583f3460d86a98b1a0b3ab5c2"
           }
         ],
         "models": [
-          "TransactionGroundTruthV5"
+          "TransactionGroundTruthV6"
         ],
         "record_count": 60,
-        "schema_sha256": "dd145cd74ab8f389099c8112771f365358c057c6eb28e775aedfbd60f215bad8"
+        "schema_sha256": "76507fb43f956ffc31bb625753f467e006f647239208798bc5a093e0dc83220b"
       }
     }
   },
@@ -249,7 +249,7 @@
           "customer_bucket": "01",
           "path": "evaluation/estimates/customer_bucket=01/part-00000.parquet",
           "record_count": 6,
-          "sha256": "0f2570a7b5371e51ed08d0768f1a11bbb3433f790ff2e66f07e47e8638c428cc"
+          "sha256": "4ef22e0b8b6542049a034a54a021ccdd9a96938887ff49f872aa34f35eeb4fd3"
         }
       ],
       "record_count": 6,
@@ -257,7 +257,7 @@
     },
     "report": {
       "path": "evaluation/report.json",
-      "sha256": "849ec6ef0f7f1a10dcf8aa45030962b0571c20c220311451339eee63ab370242"
+      "sha256": "4ac2b2c744755be4ac37fe6cabe195398bec3b08fabaf05ac9fe147f264a8db0"
     }
   },
   "months": 3,
@@ -269,13 +269,13 @@
   "population_size": 2,
   "rng_algorithm": "sha256-counter-v1",
   "run_ids": [
-    "run_8b75037bd3c153cba77871b9499acbb8",
-    "run_e24bf3c958875317867b13533d25d7bf"
+    "run_4bf0cfce163f5793a6e111b0a37d848d",
+    "run_b6c1331c12ea5d558a54b81b18dd4416"
   ],
   "seeds": [
     100,
     101
   ],
   "simulator_version": "0.7.0",
-  "source_simulator_version": "0.6.0"
+  "source_simulator_version": "0.7.0"
 }

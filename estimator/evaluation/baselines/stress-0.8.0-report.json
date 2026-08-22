@@ -20,7 +20,7 @@
       "in_training_distribution": false,
       "interval_count": 0,
       "interval_coverage": null,
-      "mean_confidence_basis_points": 7320.0583,
+      "mean_confidence_basis_points": 7319.7583,
       "realized_income": {
         "count": 240,
         "mean_absolute_error_minor": 0.0,
@@ -41,8 +41,8 @@
       "false_income_month_count": 0,
       "in_training_distribution": true,
       "interval_count": 240,
-      "interval_coverage": 0.6875,
-      "mean_confidence_basis_points": 6927.8417,
+      "interval_coverage": 0.6125,
+      "mean_confidence_basis_points": 6928.1375,
       "realized_income": {
         "count": 240,
         "mean_absolute_error_minor": 0.0,
@@ -54,9 +54,9 @@
       "suite": "normal",
       "sustainable_income": {
         "count": 240,
-        "mean_absolute_error_minor": 62536.4958,
+        "mean_absolute_error_minor": 61482.0917,
         "mean_truth_minor": 425201.4,
-        "wape": 0.147075
+        "wape": 0.14459522
       }
     },
     {
@@ -65,22 +65,22 @@
       "false_income_month_count": 0,
       "in_training_distribution": true,
       "interval_count": 240,
-      "interval_coverage": 0.970833,
-      "mean_confidence_basis_points": 6459.9208,
+      "interval_coverage": 0.991667,
+      "mean_confidence_basis_points": 6605.25,
       "realized_income": {
         "count": 240,
-        "mean_absolute_error_minor": 5000.0,
+        "mean_absolute_error_minor": 0.0,
         "mean_truth_minor": 600000.0,
-        "wape": 0.00833333
+        "wape": 0.0
       },
       "scenario": "incomplete_observation.yaml",
       "seed": 630000,
       "suite": "partial_consent",
       "sustainable_income": {
         "count": 240,
-        "mean_absolute_error_minor": 10749.6375,
+        "mean_absolute_error_minor": 5388.7875,
         "mean_truth_minor": 600000.0,
-        "wape": 0.01791606
+        "wape": 0.00898131
       }
     },
     {
@@ -90,7 +90,7 @@
       "in_training_distribution": true,
       "interval_count": 240,
       "interval_coverage": 1.0,
-      "mean_confidence_basis_points": 7058.6667,
+      "mean_confidence_basis_points": 7057.15,
       "realized_income": {
         "count": 240,
         "mean_absolute_error_minor": 0.0,
@@ -102,9 +102,9 @@
       "suite": "life_events",
       "sustainable_income": {
         "count": 240,
-        "mean_absolute_error_minor": 12008.25,
+        "mean_absolute_error_minor": 12549.3333,
         "mean_truth_minor": 501529.1667,
-        "wape": 0.02394327
+        "wape": 0.02502214
       }
     },
     {
@@ -113,22 +113,22 @@
       "false_income_month_count": 0,
       "in_training_distribution": false,
       "interval_count": 240,
-      "interval_coverage": 0.883333,
-      "mean_confidence_basis_points": 6635.3333,
+      "interval_coverage": 0.9375,
+      "mean_confidence_basis_points": 7393.925,
       "realized_income": {
         "count": 240,
-        "mean_absolute_error_minor": 106630.1375,
+        "mean_absolute_error_minor": 9957.325,
         "mean_truth_minor": 594551.3583,
-        "wape": 0.17934555
+        "wape": 0.01674763
       },
       "scenario": "noisy_observation.yaml",
       "seed": 650000,
       "suite": "noisy",
       "sustainable_income": {
         "count": 240,
-        "mean_absolute_error_minor": 54525.3375,
+        "mean_absolute_error_minor": 21179.1333,
         "mean_truth_minor": 595500.0,
-        "wape": 0.09156228
+        "wape": 0.0355653
       }
     },
     {
@@ -137,8 +137,8 @@
       "false_income_month_count": 0,
       "in_training_distribution": false,
       "interval_count": 240,
-      "interval_coverage": 0.375,
-      "mean_confidence_basis_points": 5409.6042,
+      "interval_coverage": 0.3,
+      "mean_confidence_basis_points": 5407.775,
       "realized_income": {
         "count": 240,
         "mean_absolute_error_minor": 0.0,
@@ -150,9 +150,9 @@
       "suite": "high_volatility",
       "sustainable_income": {
         "count": 240,
-        "mean_absolute_error_minor": 159326.5,
+        "mean_absolute_error_minor": 166952.2667,
         "mean_truth_minor": 359450.0,
-        "wape": 0.4432508
+        "wape": 0.4644659
       }
     }
   ]

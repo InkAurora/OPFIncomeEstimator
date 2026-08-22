@@ -44,6 +44,7 @@ class EstimatorTransactionV1(EstimatorContractModel):
     description: str = Field(min_length=1)
     duplicate_of_transaction_id: str | None = None
     reversal_of_transaction_id: str | None = None
+    repost_of_transaction_id: str | None = None
 
     @model_validator(mode="after")
     def validate_dates_and_lineage(self) -> Self:
@@ -51,11 +52,15 @@ class EstimatorTransactionV1(EstimatorContractModel):
         observed_at = _parse_date(self.observed_at, "observed_at")
         if observed_at < posted_at:
             raise ValueError("observed_at must not precede posted_at")
-        if (
-            self.duplicate_of_transaction_id is not None
-            and self.reversal_of_transaction_id is not None
-        ):
-            raise ValueError("a transaction cannot be both a duplicate and a reversal")
+        links = (
+            self.duplicate_of_transaction_id,
+            self.reversal_of_transaction_id,
+            self.repost_of_transaction_id,
+        )
+        if sum(link is not None for link in links) > 1:
+            raise ValueError(
+                "a transaction may carry at most one of duplicate, reversal, or re-post lineage"
+            )
         return self
 
 

@@ -185,7 +185,7 @@
         "by_consent_coverage": [
           {
             "count": 1200,
-            "mean_absolute_error_minor": 151532.4,
+            "mean_absolute_error_minor": 133416.96,
             "median_absolute_error_minor": 69792.0,
             "schema_version": "1.0",
             "value": "80.83%"
@@ -194,29 +194,29 @@
         "by_income_type": [
           {
             "count": 1200,
-            "mean_absolute_error_minor": 151532.4,
+            "mean_absolute_error_minor": 133416.96,
             "median_absolute_error_minor": 69792.0,
             "schema_version": "1.0",
             "value": "SALARIED"
           }
         ],
-        "confidence_interval_coverage": 0.84583333,
+        "confidence_interval_coverage": 0.88,
         "customer_month_count": 1200,
         "estimator_version": "rule-based-0.1.0",
         "false_income_classification_rate": 0.0,
-        "mean_absolute_error_minor": 151532.4,
-        "mean_interval_width_minor": 118064.8,
+        "mean_absolute_error_minor": 133416.96,
+        "mean_interval_width_minor": 122833.92,
         "median_absolute_error_minor": 69792.0,
-        "root_mean_squared_error_minor": 244172.048484,
-        "symmetric_mean_absolute_percentage_error": 0.40131297,
-        "weighted_absolute_percentage_error": 0.252554
+        "root_mean_squared_error_minor": 217913.773021,
+        "symmetric_mean_absolute_percentage_error": 0.33673547,
+        "weighted_absolute_percentage_error": 0.2223616
       },
-      "batch_id": "bat_51f7be89b046c4358b517448892e1ee7",
+      "batch_id": "bat_eb143304fedfa580c00b16ced504b776",
       "candidate": {
         "by_consent_coverage": [
           {
             "count": 1200,
-            "mean_absolute_error_minor": 4000.0,
+            "mean_absolute_error_minor": 1000.0,
             "median_absolute_error_minor": 0.0,
             "schema_version": "1.0",
             "value": "80.83%"
@@ -225,38 +225,38 @@
         "by_income_type": [
           {
             "count": 1200,
-            "mean_absolute_error_minor": 4000.0,
+            "mean_absolute_error_minor": 1000.0,
             "median_absolute_error_minor": 0.0,
             "schema_version": "1.0",
             "value": "SALARIED"
           }
         ],
-        "confidence_interval_coverage": 0.99333333,
+        "confidence_interval_coverage": 0.99833333,
         "customer_month_count": 1200,
         "estimator_version": "recurring-streams-0.2.0",
         "false_income_classification_rate": 0.0,
-        "mean_absolute_error_minor": 4000.0,
-        "mean_interval_width_minor": 69193.4,
+        "mean_absolute_error_minor": 1000.0,
+        "mean_interval_width_minor": 67596.4,
         "median_absolute_error_minor": 0.0,
-        "root_mean_squared_error_minor": 48989.794856,
-        "symmetric_mean_absolute_percentage_error": 0.01333333,
-        "weighted_absolute_percentage_error": 0.00666667
+        "root_mean_squared_error_minor": 24494.897428,
+        "symmetric_mean_absolute_percentage_error": 0.00333333,
+        "weighted_absolute_percentage_error": 0.00166667
       },
       "comparison": {
         "candidate_does_not_regress": true,
         "candidate_false_positive_rate_not_higher": true,
-        "mae_improvement_minor": 147532.4,
-        "mae_improvement_percent": 0.97360301
+        "mae_improvement_minor": 132416.96,
+        "mae_improvement_percent": 0.9925047
       },
-      "config_sha256": "ff23504be68d9dd07ec115aa6bcdeeed7a4b6bba0f1edafb12767ddaf52198e2",
+      "config_sha256": "3283f81eb1c7a14700d1502f4e68df169d6f0c52c71b06650d767e83de0311aa",
       "first_seed": 30000,
       "last_seed": 30099,
       "months": 12,
       "population_size": 100,
       "rng_algorithm_version": "sha256-counter-v1",
       "scenario": "incomplete_observation.yaml",
-      "source_contract_schema_version": "1.5",
-      "source_simulator_version": "0.6.0",
+      "source_contract_schema_version": "1.6",
+      "source_simulator_version": "0.7.0",
       "suite": "incomplete_observation"
     },
     {

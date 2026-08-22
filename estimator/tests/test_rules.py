@@ -82,3 +82,34 @@ def test_reversal_excludes_both_records(request_payload, transaction) -> None:
 
     assert decisions["original"].reason_codes == ("REVERSED_ORIGINAL",)
     assert decisions["reversal"].reason_codes == ("REVERSAL_OBSERVATION",)
+
+
+def test_corrected_repost_is_counted_and_marked(request_payload, transaction) -> None:
+    """ADR 0004: the correction carries the income the reversed original no longer can."""
+
+    payload = request_payload(
+        transactions=[
+            transaction("original", amount_minor=10_000, description="SALARY PAYROLL"),
+            transaction(
+                "reversal",
+                amount_minor=10_000,
+                description="REVERSAL SALARY PAYROLL",
+                reversal_of_transaction_id="original",
+            ),
+            transaction(
+                "repost",
+                amount_minor=10_000,
+                description="SALARY PAYROLL",
+                repost_of_transaction_id="original",
+            ),
+        ]
+    )
+
+    audit = RuleBasedIncomeEstimator().explain(payload)
+    decisions = _decision_map(audit)
+
+    assert decisions["original"].reason_codes == ("REVERSED_ORIGINAL",)
+    assert decisions["reversal"].reason_codes == ("REVERSAL_OBSERVATION",)
+    assert decisions["repost"].classification == "INCOME"
+    assert decisions["repost"].reason_codes[-1] == "CORRECTED_REPOST"
+    assert audit.estimate.monthly_estimates[0].contributing_transaction_ids == ("repost",)

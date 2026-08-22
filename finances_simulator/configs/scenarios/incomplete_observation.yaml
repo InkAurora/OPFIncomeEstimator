@@ -1,4 +1,4 @@
-schema_version: "1.5"
+schema_version: "1.6"
 
 scenario:
   name: incomplete_observation

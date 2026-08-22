@@ -57,16 +57,22 @@ def build_labeled_dataset(
                     or not features.transaction.inside_window
                 ):
                     continue
+                repost_of = getattr(transaction, "repost_of_transaction_id", None)
                 source_id = (
                     transaction.duplicate_of_transaction_id
                     or transaction.reversal_of_transaction_id
+                    or repost_of
                     or transaction.transaction_id
                 )
                 economic_type = truth_by_id.get(source_id, "UNMATCHED")
+                # Under contract 1.6 a reversed original is superseded by its correction, so the
+                # re-post carries the label and the original it repairs does not. Labelling both
+                # would teach the classifier to count one payment twice.
                 label = int(
                     economic_type == "INCOME"
                     and transaction.duplicate_of_transaction_id is None
                     and transaction.reversal_of_transaction_id is None
+                    and not features.is_reversed_original
                 )
                 baseline = classifier.classify(features)
                 records.append(

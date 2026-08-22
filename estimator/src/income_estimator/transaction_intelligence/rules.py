@@ -109,6 +109,12 @@ class IncomeRuleClassifier:
         reason: str,
     ) -> TransactionDecision:
         item = features.transaction
+        reason_codes = (reason,)
+        # A corrected re-post is decided on its own merits like any other credit. The lineage is
+        # recorded so an auditor can see that a counted amount repairs a reversed original rather
+        # than adding a second, independent payment.
+        if getattr(item.source, "repost_of_transaction_id", None) is not None:
+            reason_codes = (*reason_codes, "CORRECTED_REPOST")
         return TransactionDecision(
             transaction_id=item.source.transaction_id,
             posted_month=item.posted_month,
@@ -118,7 +124,7 @@ class IncomeRuleClassifier:
             counterparty_cluster=item.counterparty_cluster,
             classification=classification,
             income_probability_basis_points=probability,
-            reason_codes=(reason,),
+            reason_codes=reason_codes,
         )
 
 

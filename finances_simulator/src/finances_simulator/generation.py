@@ -24,6 +24,10 @@ from finances_simulator.ground_truth.projector_v5 import (
     GroundTruthBundleV5,
     project_ground_truth_v5,
 )
+from finances_simulator.ground_truth.projector_v6 import (
+    GroundTruthBundleV6,
+    project_ground_truth_v6,
+)
 from finances_simulator.observations import ObservationBundle, project_observations
 from finances_simulator.observations.projector_v1 import (
     ObservationBundleV1,
@@ -45,6 +49,10 @@ from finances_simulator.observations.projector_v5 import (
     ObservationBundleV5,
     project_observations_v5,
 )
+from finances_simulator.observations.projector_v6 import (
+    ObservationBundleV6,
+    project_observations_v6,
+)
 from finances_simulator.simulation.engine import SimulationRun, simulate
 from finances_simulator.simulation.primitives import (
     V1_PROFILE,
@@ -52,6 +60,7 @@ from finances_simulator.simulation.primitives import (
     V3_PROFILE,
     V4_PROFILE,
     V5_PROFILE,
+    V6_PROFILE,
     simulation_namespace,
 )
 from finances_simulator.validation.v2 import validate_balance_sheet_truth
@@ -68,6 +77,7 @@ class GeneratedScenario:
         | GroundTruthBundleV3
         | GroundTruthBundleV4
         | GroundTruthBundleV5
+        | GroundTruthBundleV6
     )
     observations: (
         ObservationBundle
@@ -76,6 +86,7 @@ class GeneratedScenario:
         | ObservationBundleV3
         | ObservationBundleV4
         | ObservationBundleV5
+        | ObservationBundleV6
     )
 
 
@@ -95,7 +106,28 @@ def generate_scenario(
             simulation.world_simulator_version or simulation.profile.simulator_version
         ),
     )
-    if simulation.profile == V5_PROFILE:
+    if simulation.profile == V6_PROFILE:
+        from finances_simulator.config_v6 import ScenarioConfigV6
+
+        if not isinstance(config, ScenarioConfigV6):
+            raise TypeError("schema-1.6 generation requires ScenarioConfigV6")
+        observation_namespace = simulation_namespace(
+            simulation.config_sha256,
+            simulation.seed,
+            simulator_version=simulation.profile.simulator_version,
+        )
+        ground_truth = project_ground_truth_v6(simulation, namespace=world_namespace)
+        validate_balance_sheet_truth_v4(
+            ground_truth.balance_sheets,
+            ground_truth.customer_months,
+        )
+        observations = project_observations_v6(
+            simulation,
+            config,
+            world_namespace=world_namespace,
+            observation_namespace=observation_namespace,
+        )
+    elif simulation.profile == V5_PROFILE:
         from finances_simulator.config_v5 import ScenarioConfigV5
 
         if not isinstance(config, ScenarioConfigV5):

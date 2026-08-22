@@ -1,159 +1,159 @@
 {
-  "config_sha256": "ff23504be68d9dd07ec115aa6bcdeeed7a4b6bba0f1edafb12767ddaf52198e2",
-  "contract_schema_version": "1.5",
+  "config_sha256": "3283f81eb1c7a14700d1502f4e68df169d6f0c52c71b06650d767e83de0311aa",
+  "contract_schema_version": "1.6",
   "datasets": {
     "observed": {
       "accounts": {
         "path": "observed/accounts.jsonl",
         "record_count": 3,
-        "schema_version": "1.5",
-        "sha256": "ba705cf09af7ce73d32d8071034d982e6cff18d462b8766d2b91f0e6bee65a76"
+        "schema_version": "1.6",
+        "sha256": "a032438910f14573e76faeeacb9e5278a5e0bc49c188fa95c4d1a1ca1522f277"
       },
       "balances": {
         "path": "observed/balances.jsonl",
         "record_count": 25,
-        "schema_version": "1.5",
-        "sha256": "a04070f32cc4f0f03028e68462eeb9486a1c10a0d974529f7e674187a21dff6e"
+        "schema_version": "1.6",
+        "sha256": "4830b8d31c29e1f1ce7fb7f1f63c413528c044df4ed1081a6c1215c53fe5dc58"
       },
       "credit_card_invoice_items": {
         "path": "observed/credit_card_invoice_items.jsonl",
         "record_count": 0,
-        "schema_version": "1.5",
+        "schema_version": "1.6",
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
       "credit_card_invoices": {
         "path": "observed/credit_card_invoices.jsonl",
         "record_count": 0,
-        "schema_version": "1.5",
+        "schema_version": "1.6",
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
       "credit_card_transactions": {
         "path": "observed/credit_card_transactions.jsonl",
         "record_count": 0,
-        "schema_version": "1.5",
+        "schema_version": "1.6",
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
       "credit_cards": {
         "path": "observed/credit_cards.jsonl",
         "record_count": 0,
-        "schema_version": "1.5",
+        "schema_version": "1.6",
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
       "credit_limits": {
         "path": "observed/credit_limits.jsonl",
         "record_count": 0,
-        "schema_version": "1.5",
+        "schema_version": "1.6",
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
       "investment_balances": {
         "path": "observed/investment_balances.jsonl",
         "record_count": 0,
-        "schema_version": "1.5",
+        "schema_version": "1.6",
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
       "investment_transactions": {
         "path": "observed/investment_transactions.jsonl",
         "record_count": 0,
-        "schema_version": "1.5",
+        "schema_version": "1.6",
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
       "investments": {
         "path": "observed/investments.jsonl",
         "record_count": 0,
-        "schema_version": "1.5",
+        "schema_version": "1.6",
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
       "loan_balances": {
         "path": "observed/loan_balances.jsonl",
         "record_count": 0,
-        "schema_version": "1.5",
+        "schema_version": "1.6",
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
       "loan_payments": {
         "path": "observed/loan_payments.jsonl",
         "record_count": 0,
-        "schema_version": "1.5",
+        "schema_version": "1.6",
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
       "loans": {
         "path": "observed/loans.jsonl",
         "record_count": 0,
-        "schema_version": "1.5",
+        "schema_version": "1.6",
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
       "observation_coverage": {
         "path": "observed/observation_coverage.jsonl",
         "record_count": 3,
-        "schema_version": "1.5",
-        "sha256": "f4e559c73abd4459e2e170ef931b2820e78ab57b8d0afea58a19fa9fe6f3153f"
+        "schema_version": "1.6",
+        "sha256": "3fd6c1087e76a6a7e768ddf40ee0932c77683dac255d16b3d9278a6876b231e0"
       },
       "transactions": {
         "path": "observed/transactions.jsonl",
-        "record_count": 111,
-        "schema_version": "1.5",
-        "sha256": "0930151000db08c4546a8aaf1180d6c0e32f8c2531c052308b182798c36fca8d"
+        "record_count": 115,
+        "schema_version": "1.6",
+        "sha256": "8415a9c561e4c1e1a8d8e5b45214a1f4a7d856862c4177301538d92621325f35"
       }
     },
     "private": {
       "anomaly_ground_truth": {
         "path": "private/anomaly_ground_truth.jsonl",
         "record_count": 0,
-        "schema_version": "1.5",
+        "schema_version": "1.6",
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
       "balance_sheet_ground_truth": {
         "path": "private/balance_sheet_ground_truth.jsonl",
         "record_count": 12,
-        "schema_version": "1.5",
-        "sha256": "5ff80d580d80ec7c912c5fa3352f769d7e7e7ea8fa70dcab38d148f82aada35c"
+        "schema_version": "1.6",
+        "sha256": "84cf3c57c7a0a8968c3cd2be5bcf5063b63fa5c58d76f3c6b02bab14deae83be"
       },
       "credit_card_transaction_ground_truth": {
         "path": "private/credit_card_transaction_ground_truth.jsonl",
         "record_count": 0,
-        "schema_version": "1.5",
+        "schema_version": "1.6",
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
       "customer_ground_truth": {
         "path": "private/customer_ground_truth.jsonl",
         "record_count": 1,
-        "schema_version": "1.5",
-        "sha256": "5b7bc57e6c5c04520a0def8589c070999afdfcd10082a692bdb4e45d138deb1e"
+        "schema_version": "1.6",
+        "sha256": "af512448b884a8acd7431c59d1103ab83942d4055ad9b1a2c599de8fa2a5dd87"
       },
       "customer_month_ground_truth": {
         "path": "private/customer_month_ground_truth.jsonl",
         "record_count": 12,
-        "schema_version": "1.5",
-        "sha256": "9ba36f892cc2524ee3b5938ebbe178efb51b613015cc208204619030fee79097"
+        "schema_version": "1.6",
+        "sha256": "1de8ad1a2ec3977507f60280a32e30f8e0e216aed4c9e4ca8db3aea67942f270"
       },
       "income_source_ground_truth": {
         "path": "private/income_source_ground_truth.jsonl",
         "record_count": 1,
-        "schema_version": "1.5",
-        "sha256": "6200090495e32d952a1603ded527ad1137a90aa005ee438c09845cbfcd1e68b4"
+        "schema_version": "1.6",
+        "sha256": "1c67e9b4546bd8831ac18be29443b7a5c5e02b6ec2b085a5e23d67f18bee3327"
       },
       "investment_transaction_ground_truth": {
         "path": "private/investment_transaction_ground_truth.jsonl",
         "record_count": 0,
-        "schema_version": "1.5",
+        "schema_version": "1.6",
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
       "life_event_ground_truth": {
         "path": "private/life_event_ground_truth.jsonl",
         "record_count": 0,
-        "schema_version": "1.5",
+        "schema_version": "1.6",
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
       "loan_payment_ground_truth": {
         "path": "private/loan_payment_ground_truth.jsonl",
         "record_count": 0,
-        "schema_version": "1.5",
+        "schema_version": "1.6",
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
       "transaction_ground_truth": {
         "path": "private/transaction_ground_truth.jsonl",
         "record_count": 120,
-        "schema_version": "1.5",
-        "sha256": "2412ba0ab36824084d200c81842f1e8c1418aa3a4fbc957614a0885b6c74068e"
+        "schema_version": "1.6",
+        "sha256": "a270c40355900c169892de11c8aa0094003587a396f03cf6bf02d9eec4484623"
       }
     }
   },
@@ -164,13 +164,13 @@
     "observed_original_record_count": 97
   },
   "rng_algorithm": "sha256-counter-v1",
-  "run_id": "run_902e6f14279257c588c665d57044735e",
+  "run_id": "run_2c54b82534de501b8227cfab542ca210",
   "scenario_name": "incomplete_observation",
   "seed": 42,
   "simulation_window": {
     "end_date": "2024-12-31",
     "start_date": "2024-01-01"
   },
-  "simulator_version": "0.6.0",
+  "simulator_version": "0.7.0",
   "world_config_sha256": "3e44f8373e5447487327a2b642ee3fd4b5c5e3c57e9f5be9cdfc545a1572a81a"
 }

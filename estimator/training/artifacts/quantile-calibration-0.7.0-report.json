@@ -1,17 +1,17 @@
 {
-  "artifact_sha256": "3ddf4d5bc02c73d63daf207a496991a9f3af634e72d39d8c4d63a7af45080709",
+  "artifact_sha256": "958cecbe1a13f257be298f61e9968b8bb7dc888d8181c47fae75ceebd335ebaa",
   "calibration": {
     "fold_row_counts": {
-      "0": 288,
-      "1": 396,
-      "2": 336,
-      "3": 348,
-      "4": 480
+      "0": 432,
+      "1": 504,
+      "2": 420,
+      "3": 444,
+      "4": 612
     },
-    "lower_log_offset": -0.214496621824,
-    "positive_residual_count": 1718,
-    "row_count": 1848,
-    "upper_log_offset": 0.194211162759
+    "lower_log_offset": -0.156144164381,
+    "positive_residual_count": 2236,
+    "row_count": 2412,
+    "upper_log_offset": 0.174364855112
   },
   "calibration_version": "conformal-intervals-0.7.0",
   "capacity_model_version": "capacity-gbdt-stumps-0.5.0",
@@ -20,69 +20,71 @@
   "method": "split-conformal-log-residual",
   "months": 12,
   "out_of_fold_version": "customer-sha256-kfold-v1",
-  "population_size_per_suite": 60,
+  "population_size_per_suite": 80,
   "promotion": {
     "coverage_tolerance": 0.05,
-    "failures": [],
-    "status": "PROMOTED"
+    "failures": [
+      "empirical coverage 0.8568 is more than 0.05 from nominal 0.80"
+    ],
+    "status": "NOT_PROMOTED"
   },
   "schema_version": "1.0",
   "test": {
     "by_confidence_band": {
       "high": {
-        "count": 146,
-        "empirical_coverage": 1.0,
-        "mean_absolute_error_minor": 14930.6849,
-        "mean_interval_width_minor": 249460.2945,
-        "median_interval_width_minor": 245958.0,
-        "wape": 0.02432229
+        "count": 229,
+        "empirical_coverage": 0.982533,
+        "mean_absolute_error_minor": 17251.9127,
+        "mean_interval_width_minor": 207204.0175,
+        "median_interval_width_minor": 204237.0,
+        "wape": 0.02765782
       },
       "low": {
-        "count": 51,
-        "empirical_coverage": 0.411765,
-        "mean_absolute_error_minor": 64391.2745,
-        "mean_interval_width_minor": 129815.1373,
-        "median_interval_width_minor": 107638.0,
-        "wape": 0.22140959
+        "count": 58,
+        "empirical_coverage": 0.396552,
+        "mean_absolute_error_minor": 76491.7414,
+        "mean_interval_width_minor": 107525.2414,
+        "median_interval_width_minor": 97174.0,
+        "wape": 0.2491482
       },
       "medium": {
-        "count": 115,
-        "empirical_coverage": 0.817391,
-        "mean_absolute_error_minor": 30292.2609,
-        "mean_interval_width_minor": 177514.6,
-        "median_interval_width_minor": 229543.0,
-        "wape": 0.06915543
+        "count": 181,
+        "empirical_coverage": 0.845304,
+        "mean_absolute_error_minor": 32296.5249,
+        "mean_interval_width_minor": 154126.9006,
+        "median_interval_width_minor": 197998.0,
+        "wape": 0.06996133
       }
     },
     "by_consent_coverage": {
       "complete": {
-        "count": 204,
-        "empirical_coverage": 0.759804,
-        "mean_absolute_error_minor": 35904.0588,
-        "mean_interval_width_minor": 182873.348,
-        "median_interval_width_minor": 206789.0,
-        "wape": 0.08135501
+        "count": 300,
+        "empirical_coverage": 0.776667,
+        "mean_absolute_error_minor": 41468.3233,
+        "mean_interval_width_minor": 158791.0433,
+        "median_interval_width_minor": 174055.0,
+        "wape": 0.08675133
       },
       "partial_or_undeclared": {
-        "count": 108,
-        "empirical_coverage": 0.981481,
-        "mean_absolute_error_minor": 15027.9352,
-        "mean_interval_width_minor": 242127.6944,
-        "median_interval_width_minor": 244601.0,
-        "wape": 0.02504656
+        "count": 168,
+        "empirical_coverage": 1.0,
+        "mean_absolute_error_minor": 10668.9464,
+        "mean_interval_width_minor": 202058.5714,
+        "median_interval_width_minor": 201277.0,
+        "wape": 0.01778158
       }
     },
     "by_income_range": {
       "positive": {
-        "count": 298,
-        "empirical_coverage": 0.828859,
-        "mean_absolute_error_minor": 30024.9832,
-        "mean_interval_width_minor": 212939.443,
-        "median_interval_width_minor": 241604.0,
-        "wape": 0.05778867
+        "count": 448,
+        "empirical_coverage": 0.850446,
+        "mean_absolute_error_minor": 31769.8214,
+        "mean_interval_width_minor": 182105.2522,
+        "median_interval_width_minor": 200361.0,
+        "wape": 0.05828272
       },
       "zero": {
-        "count": 14,
+        "count": 20,
         "empirical_coverage": 1.0,
         "mean_absolute_error_minor": 0.0,
         "mean_interval_width_minor": 0.0,
@@ -90,15 +92,15 @@
         "wape": null
       }
     },
-    "coverage_standard_error": 0.022646,
+    "coverage_standard_error": 0.01849,
     "nominal_coverage": 0.8,
     "overall": {
-      "count": 312,
-      "empirical_coverage": 0.836538,
-      "mean_absolute_error_minor": 28677.7083,
-      "mean_interval_width_minor": 203384.4679,
-      "median_interval_width_minor": 240245.5,
-      "wape": 0.05778867
+      "count": 468,
+      "empirical_coverage": 0.856838,
+      "mean_absolute_error_minor": 30412.1368,
+      "mean_interval_width_minor": 174322.9765,
+      "median_interval_width_minor": 200361.0,
+      "wape": 0.05828272
     }
   }
 }

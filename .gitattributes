@@ -1,2 +1,7 @@
 finances_simulator/examples/generated/**/*.json text eol=lf
 finances_simulator/examples/generated/**/*.jsonl text eol=lf
+
+# Frozen training artifacts are hashed byte for byte by their own reports, so a checkout that
+# rewrites their line endings breaks the promotion tests. Pin them the same way the reference runs
+# above are pinned.
+estimator/training/artifacts/*.json text eol=lf

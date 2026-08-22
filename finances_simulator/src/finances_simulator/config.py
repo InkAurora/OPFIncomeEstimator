@@ -134,6 +134,7 @@ if TYPE_CHECKING:
     from finances_simulator.config_v3 import ScenarioConfigV3
     from finances_simulator.config_v4 import ScenarioConfigV4
     from finances_simulator.config_v5 import ScenarioConfigV5
+    from finances_simulator.config_v6 import ScenarioConfigV6
 
     type ScenarioConfig = (
         ScenarioConfigV0
@@ -142,6 +143,7 @@ if TYPE_CHECKING:
         | ScenarioConfigV3
         | ScenarioConfigV4
         | ScenarioConfigV5
+        | ScenarioConfigV6
     )
 else:
     # Preserve the schema-1.0 public class API, including ``model_validate``.
@@ -211,10 +213,14 @@ def load_scenario_config(path: Path) -> ScenarioConfig:
         from finances_simulator.config_v5 import ScenarioConfigV5
 
         config_model = ScenarioConfigV5
+    elif schema_version == "1.6":
+        from finances_simulator.config_v6 import ScenarioConfigV6
+
+        config_model = ScenarioConfigV6
     else:
         raise ConfigurationError(
             f"Invalid scenario configuration '{path}': unsupported schema_version "
-            f"{schema_version!r}; expected '1.0', '1.1', '1.2', '1.3', '1.4', or '1.5'"
+            f"{schema_version!r}; expected '1.0', '1.1', '1.2', '1.3', '1.4', '1.5', or '1.6'"
         )
 
     try:
