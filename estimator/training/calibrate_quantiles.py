@@ -142,6 +142,14 @@ FINAL_TEST_SUITES = (
     ("incomplete_observation.yaml", 530_000),
 )
 
+# Seeds `510_000`-`530_000` have been read across several method-selection rounds. Every look costs
+# some of their independence, and no amount of care gives it back, so they are validation seeds
+# permanently and the report says so rather than letting a reader infer a lockbox from the name
+# "final test". A release lockbox is drawn from seeds no run has touched, once every gate passes on
+# validation, and is read exactly once.
+FINAL_TEST_ROLE = "validation-not-release-lockbox"
+RELEASE_LOCKBOX_SEED_FLOOR = 610_000
+
 
 def _populations(
     project_root: Path,
@@ -1050,6 +1058,30 @@ def main(argv: Sequence[str] | None = None) -> int:
                 f"{baseline_metrics.get('wape')} on the same rows"
             )
 
+    # ADR-adjacent diagnostic, deliberately not a gate. On suites where the fixed-band model holds
+    # its own tails, the comparison is between two models that both make the claim they publish. On
+    # the others the candidate is being asked to beat a model that wins on score by under-covering.
+    # Reporting the restricted view answers "how much of the failure is that?" without letting it
+    # become an exemption: dropping under-covering baselines would remove exactly the pressure the
+    # interval score exists to apply, so the gate above still counts every suite.
+    valid_baseline_suites = sorted(
+        scenario for scenario, gate in sharpness_gate.items() if gate["baseline_tails_hold"]
+    )
+    valid_baseline_only = {
+        "suites": valid_baseline_suites,
+        "excluded_suites": sorted(set(sharpness_gate) - set(valid_baseline_suites)),
+        "gates_promotion": False,
+    }
+    if valid_baseline_suites:
+        restricted = tuple(
+            item for scenario in valid_baseline_suites for item in paired_by_suite[scenario]
+        )
+        if restricted:
+            valid_baseline_only.update(_paired_statistics(restricted))
+            valid_baseline_only["would_pass_every_suite"] = all(
+                sharpness_gate[scenario]["passed"] for scenario in valid_baseline_suites
+            )
+
     zero_truth = _coverage_metrics(
         tuple(row for row in final_rows if row.sustainable_monthly_income_minor == 0),
         capacity,
@@ -1116,6 +1148,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             "calibration_customers": len(calibration_customers),
             "uncertainty_customers": len(uncertainty_customers),
             "final_test_customers": len(final_customers),
+            "final_test_role": FINAL_TEST_ROLE,
+            "release_lockbox_seed_floor": RELEASE_LOCKBOX_SEED_FLOOR,
             "shared_customers": 0,
         },
         "calibration": {
@@ -1175,6 +1209,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "requires_every_row_published": True,
             "minimum_gated_customers": MINIMUM_GATED_CUSTOMERS,
             "sharpness_noninferiority_margin": SHARPNESS_NONINFERIORITY_MARGIN,
+            "sharpness_valid_baseline_only": valid_baseline_only,
             "overall": overall_gate,
             "overall_tails": overall_tail_gate,
             "zero_truth": zero_gate,

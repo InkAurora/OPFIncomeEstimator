@@ -46,6 +46,10 @@ excluding under-covering baselines would remove exactly the pressure the interva
 apply. `baseline_lower_tail_miss_rate` and `baseline_upper_tail_miss_rate` are recorded beside the
 candidate's for the same reason.
 
+`promotion.sharpness_valid_baseline_only` reports the same paired difference restricted to suites
+whose baseline holds its own tails, and carries `gates_promotion: false`. It answers how much of the
+failure is the contested comparison without becoming an exemption for it.
+
 ### `width_allocation` — diagnostic, never a gate
 
 A suite-level mean says the candidate is worse without saying on which rows, and the two sharpness
@@ -79,7 +83,15 @@ Four populations, customer-disjoint, and the report asserts zero overlap:
 | capacity-train | `110_000`+ | fit the point model |
 | uncertainty-train | `210_000`+ | fit the residual quantile model |
 | conformal-calibration | `410_000`+ | fit the band corrections |
-| final-test | `510_000`+ | measure and gate |
+| final-test | `510_000`+ | measure and gate, as **validation** |
+| release lockbox | `610_000`+ | reserved, untouched, read once |
+
+"Final test" names when the population is read in a run, not how independent it is. Seeds
+`510_000`–`530_000` have now been read across several method-selection rounds; every look spends
+some of their independence and no amount of care gives it back. They are validation seeds
+permanently, and the report says so in `populations.final_test_role` rather than leaving a reader to
+infer a lockbox from the name. A release lockbox is drawn from `RELEASE_LOCKBOX_SEED_FLOOR` upward,
+after every gate passes on validation, and is read exactly once.
 
 Calibration never refits the capacity model. Residuals are taken around the estimate `combine_month`
 publishes, routing included, because that is the number the interval is a claim about.

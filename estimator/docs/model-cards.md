@@ -155,7 +155,8 @@ rather than months.
   candidate spends `19%` more score than the baseline on `income_diverse` and `27%` on
   `incomplete_observation`, against a `2%` margin.
 - Final-test seeds `510_000`–`530_000` have been inspected across several method-selection rounds.
-  They are validation seeds, not a release lockbox.
+  They are validation seeds permanently, recorded as `populations.final_test_role`, and a release
+  lockbox is reserved from seed `610_000` upward to be drawn once every gate passes on validation.
 - Annual quantiles are not produced. Deriving them from monthly quantiles needs a dependence
   structure across months that nobody has measured.
 - Must be refitted whenever the capacity model changes. The artifact records the capacity artifact's
