@@ -730,6 +730,16 @@ def _sharpness_failure(
     margin = round(SHARPNESS_NONINFERIORITY_MARGIN * baseline_score, 4) if baseline_score else None
     bound = paired.get("difference_upper_confidence_bound_minor")
     passed = bound is not None and margin is not None and bound <= margin
+
+    # A non-inferiority test can fail two ways, and they call for opposite responses. Either the
+    # candidate really is worse than the margin allows, or the sample cannot resolve a difference
+    # that small and nothing would pass. `margin_resolvable` separates them: it asks whether a
+    # candidate whose true difference were zero could clear the margin at this error bar. A gate
+    # that is not resolvable is a sample-size problem, not a model verdict.
+    error = paired.get("clustered_standard_error_minor")
+    resolvable = (
+        bool(2 * error <= margin) if error is not None and margin is not None else None
+    )
     gate: dict[str, object] = {
         "baseline_calibration": baseline_calibration,
         "baseline_mean_interval_score_minor": baseline_score,
@@ -746,6 +756,7 @@ def _sharpness_failure(
         "candidate_wape": metrics.get("wape"),
         "noninferiority_margin_fraction": SHARPNESS_NONINFERIORITY_MARGIN,
         "noninferiority_margin_minor": margin,
+        "margin_resolvable": resolvable,
         "paired": paired,
         "gated": gated,
         "passed": passed,
@@ -757,11 +768,12 @@ def _sharpness_failure(
             f"{label} sharpness has no paired error bar and cannot be judged "
             f"({paired.get('paired_row_count')} paired rows)"
         )
+    unresolvable = "" if resolvable else "; the margin is not resolvable at this error bar"
     return gate, (
         f"{label} sharpness: paired mean interval score difference "
         f"{paired['mean_difference_minor']} (upper bound {bound}) exceeds the predeclared margin "
         f"{margin}, {SHARPNESS_NONINFERIORITY_MARGIN:.0%} of the fixed-band baseline "
-        f"{baseline_score}"
+        f"{baseline_score}{unresolvable}"
     )
 
 

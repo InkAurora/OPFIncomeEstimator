@@ -947,6 +947,20 @@ def test_sharpness_is_judged_against_a_predeclared_margin_with_its_error_bar() -
     uncertain, failure = _sharpness(margin * 0.8, margin * 0.5, baseline_score)
     assert uncertain["passed"] is False
     assert failure is not None and "predeclared margin" in failure
+    assert inside["margin_resolvable"] is True
+
+
+def test_an_unresolvable_margin_is_named_as_a_sample_problem() -> None:
+    """Failing because nothing could pass is a different finding from failing on a worse model."""
+
+    baseline_score = 83_808.25
+    margin = SHARPNESS_NONINFERIORITY_MARGIN * baseline_score
+
+    gate, failure = _sharpness(-margin, margin * 2, baseline_score)
+
+    assert gate["margin_resolvable"] is False
+    assert gate["passed"] is False
+    assert failure is not None and "not resolvable at this error bar" in failure
 
 
 def test_the_current_income_diverse_gap_still_fails_by_a_wide_margin() -> None:
