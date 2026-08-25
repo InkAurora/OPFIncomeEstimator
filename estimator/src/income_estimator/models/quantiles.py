@@ -3,10 +3,17 @@
 The point estimate is a hurdle: a gate decides zero, an anchored regressor sizes the rest. An
 interval has to respect both parts.
 
-For a positive prediction the interval is conformal on the log residual. Out-of-fold residuals are
-collected from models that never saw the row, their empirical quantiles are frozen into this
-artifact, and prediction widens the point estimate by those offsets before back-transforming.
-Distribution-free, so nothing assumes the residuals are normal, and they are not.
+For a positive prediction the interval is conformal on the log residual. Residuals are collected
+from a frozen capacity model on a customer-disjoint calibration population, not from folds: the
+point model is never refit here, and the separation that makes the offsets honest is that no
+calibration customer appears in the population the capacity model or the quantile model was fitted
+on. Their empirical quantiles are frozen into this artifact, and prediction widens the point
+estimate by those offsets before back-transforming. Distribution-free, so nothing assumes the
+residuals are normal, and they are not.
+
+The `out_of_fold_version` and `fold_count` fields on the artifact are vestigial names from the
+k-fold scheme this replaced; `out_of_fold_version` now records which disjoint-population protocol
+produced the residuals.
 
 For a predicted zero the interval is not a widened point estimate. When the gate is confident the
 answer is `[0, 0]`, which is a claim the evaluation can falsify. When the gate is unsure the upper
@@ -193,6 +200,51 @@ def empirical_quantile(values: Sequence[float], quantile: float) -> float:
     ordered = sorted(values)
     index = math.ceil(quantile * len(ordered)) - 1
     return ordered[max(0, min(len(ordered) - 1, index))]
+
+
+class CalibrationBindingError(ValueError):
+    """A calibration artifact applied to capacity bytes it was not fitted against.
+
+    Every offset in the artifact is a claim about the residual of one particular point estimate.
+    Change the model that produces that estimate and the offsets no longer describe anything
+    measured; the interval keeps its `p10`/`p90` label and loses its meaning. Loading the two
+    artifacts independently made that failure silent, so the binding is checked at construction.
+    """
+
+
+def require_capacity_binding(
+    artifact: ConformalCalibrationArtifact,
+    *,
+    capacity_model_version: str | None,
+    capacity_artifact_sha256: str | None,
+) -> None:
+    """Fail unless the capacity model in hand is the one the calibration was fitted against.
+
+    Both halves are checked. The version catches the wrong model; the digest catches the same
+    version rewritten in place, which has already happened once in this repository.
+
+    A calibration with no capacity model at all is also a mismatch. Without it the estimate falls
+    back to the recurring-stream component, and the residuals these offsets were fitted on were
+    never taken around that number.
+    """
+
+    if capacity_model_version is None or capacity_artifact_sha256 is None:
+        raise CalibrationBindingError(
+            f"calibration {artifact.calibration_version} was fitted against capacity "
+            f"{artifact.capacity_model_version} and cannot be applied without it"
+        )
+    if capacity_model_version != artifact.capacity_model_version:
+        raise CalibrationBindingError(
+            f"calibration {artifact.calibration_version} was fitted against capacity "
+            f"{artifact.capacity_model_version}, not {capacity_model_version}"
+        )
+    if capacity_artifact_sha256 != artifact.capacity_artifact_sha256:
+        raise CalibrationBindingError(
+            f"calibration {artifact.calibration_version} was fitted against capacity "
+            f"{artifact.capacity_model_version} with sha256 "
+            f"{artifact.capacity_artifact_sha256}, but the artifact in hand hashes to "
+            f"{capacity_artifact_sha256}"
+        )
 
 
 class ConformalIntervalModel:

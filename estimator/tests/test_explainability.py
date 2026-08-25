@@ -22,7 +22,7 @@ CAPACITY_MODEL_PATH = (
     Path(__file__).parents[1] / "training" / "artifacts" / "capacity-estimator-0.6.0.json"
 )
 CALIBRATION_PATH = (
-    Path(__file__).parents[1] / "training" / "artifacts" / "quantile-calibration-0.8.0.json"
+    Path(__file__).parents[1] / "training" / "artifacts" / "quantile-calibration-0.9.0.json"
 )
 
 PRIVATE_TRUTH_FIELDS = (
@@ -165,7 +165,7 @@ def test_explanation_traces_every_decision_and_version(
     assert explanation.estimator_version == "ensemble-0.6.0"
     assert explanation.output_contract_version == "1.1"
     assert "capacity-gbdt-stumps-0.6.0" in explanation.model_versions
-    assert "conformal-intervals-0.8.0" in explanation.model_versions
+    assert "adaptive-intervals-0.9.0" in explanation.model_versions
     assert explanation.income_streams
 
     assert [item.transaction_id for item in february.included_transactions] == ["salary-02"]

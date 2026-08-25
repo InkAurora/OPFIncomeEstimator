@@ -13,14 +13,22 @@ pytest.importorskip("pyarrow")
 from finances_simulator.batch import generate_population
 from finances_simulator.config import load_scenario_config
 
+from income_estimator.models.capacity import GradientBoostedCapacityModel
 from income_estimator.models.quantiles import (
     CONFIDENCE_BAND_FLOORS,
+    CalibrationBindingError,
     ConformalCalibrationArtifact,
     ConformalIntervalModel,
     confidence_band,
     empirical_quantile,
+    require_capacity_binding,
 )
 from income_estimator.pipeline import EnsembleIncomeEstimator
+from training.calibrate_quantiles import (
+    TAIL_MISS_TOLERANCE,
+    _tail_failures,
+    _undercoverage_failure,
+)
 from training.capacity_datasets import build_capacity_dataset, split_capacity_rows
 from training.out_of_fold import (
     build_out_of_fold_predictions,
@@ -36,7 +44,8 @@ REPORT_PATH = (
     / "artifacts"
     / "quantile-calibration-0.9.0-report.json"
 )
-# ADR 0007 keeps `0.8` frozen as the fixed-band comparison the sharpness gate measures against.
+# `0.8` is frozen historical evidence. The sharpness comparator is rebuilt in-run from the same
+# calibration rows, so this file is never loaded as one; it is used here to exercise the binding.
 BASELINE_ARTIFACT_PATH = (
     Path(__file__).parents[1] / "training" / "artifacts" / "quantile-calibration-0.8.0.json"
 )
@@ -702,3 +711,105 @@ def test_without_calibration_quantiles_stay_absent_with_a_reason(
     assert month.sustainable_income_p50_minor is not None
     assert month.sustainable_income_p10_minor is None
     assert month.quantile_unavailable_reason == "UNCALIBRATED_INTERVAL"
+
+
+def test_a_calibration_refuses_capacity_bytes_it_was_not_fitted_against() -> None:
+    """The binding the artifact records is checked, not merely recorded.
+
+    `capacity-estimator-0.5.0.json` was rewritten in place at `590dc35` under an unchanged
+    `model_version`, so the digest is the half of the check that catches drift and the version
+    string is not. `conformal-intervals-0.8.0` names `f4f10e8d...`, the pre-rename bytes of what is
+    now `capacity-estimator-0.6.0.json`: the model behind it is still here, the exact pair is not
+    reproducible, and that is why `0.8` is historical evidence rather than a rollback target.
+    """
+
+    with pytest.raises(CalibrationBindingError, match="sha256"):
+        require_capacity_binding(
+            _artifact(capacity_model_version="capacity-gbdt-stumps-0.6.0"),
+            capacity_model_version="capacity-gbdt-stumps-0.6.0",
+            capacity_artifact_sha256="1" * 64,
+        )
+
+    with pytest.raises(CalibrationBindingError, match="not capacity-gbdt-stumps-0.6.0"):
+        require_capacity_binding(
+            _artifact(),
+            capacity_model_version="capacity-gbdt-stumps-0.6.0",
+            capacity_artifact_sha256="0" * 64,
+        )
+
+    require_capacity_binding(
+        _artifact(),
+        capacity_model_version="capacity-gbdt-stumps-test",
+        capacity_artifact_sha256="0" * 64,
+    )
+
+
+def test_the_estimator_refuses_a_mismatched_capacity_and_calibration_pair() -> None:
+    with pytest.raises(CalibrationBindingError):
+        EnsembleIncomeEstimator(
+            CAPACITY_MODEL_PATH,
+            calibration_path=BASELINE_ARTIFACT_PATH,
+        )
+
+
+def test_intervals_without_their_capacity_model_are_refused() -> None:
+    """Offsets are residuals of the routed estimate. Without capacity, that estimate is a different
+    number and the offsets describe nothing that was measured."""
+
+    with pytest.raises(CalibrationBindingError, match="cannot be applied without it"):
+        EnsembleIncomeEstimator(None, calibration_path=ARTIFACT_PATH)
+
+
+def test_a_capacity_model_loaded_from_disk_carries_its_digest() -> None:
+    model = GradientBoostedCapacityModel.from_path(CAPACITY_MODEL_PATH)
+
+    assert model.artifact_sha256 == hashlib.sha256(CAPACITY_MODEL_PATH.read_bytes()).hexdigest()
+    assert GradientBoostedCapacityModel(model.artifact).artifact_sha256 is None
+
+
+def test_a_zero_clustered_standard_error_is_a_measurement_not_a_missing_value() -> None:
+    """A tail no customer ever misses has a standard error of exactly zero.
+
+    The gate used to read that `0.0` as absent and substitute a row-level binomial, which both
+    widened the tolerance the segment had earned and reported the substitute under the name
+    `clustered_standard_error`. That is what put `0.00559` beside a `life_events` lower-tail miss
+    rate of `0.0` in the `0.9` report.
+    """
+
+    metrics = {
+        "count": 2_880,
+        "customer_count": 240,
+        "lower_tail_miss_rate": 0.0,
+        "lower_tail_standard_error": 0.0,
+        "upper_tail_miss_rate": 0.017014,
+        "upper_tail_standard_error": 0.002169,
+    }
+
+    gate, failures = _tail_failures("life-events", metrics, 0.1)
+
+    assert not failures
+    assert gate["lower"]["clustered_standard_error"] == 0.0
+    assert gate["lower"]["standard_error"] == 0.0
+    assert gate["lower"]["standard_error_basis"] == "customer-bootstrap"
+    # With a genuine zero the tolerance is the fixed floor, not a borrowed row-level error bar.
+    assert gate["lower"]["tolerance"] == TAIL_MISS_TOLERANCE
+    assert gate["lower"]["ceiling"] == round(0.1 + TAIL_MISS_TOLERANCE, 6)
+    assert gate["upper"]["standard_error_basis"] == "customer-bootstrap"
+
+
+def test_a_gated_segment_without_a_clustered_error_bar_is_a_failure() -> None:
+    """The row-level binomial understates customer noise, so it may not silently gate a segment."""
+
+    metrics = {
+        "count": 2_880,
+        "customer_count": 240,
+        "empirical_coverage": 0.9,
+        "clustered_standard_error": None,
+    }
+
+    gate, failure = _undercoverage_failure("published", metrics, 0.8)
+
+    assert gate["standard_error_basis"] == "row-binomial-fallback"
+    assert gate["clustered_standard_error"] is None
+    assert failure is not None
+    assert "no customer-clustered standard error is available" in failure

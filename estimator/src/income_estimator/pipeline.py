@@ -28,7 +28,10 @@ from income_estimator.models import (
 )
 from income_estimator.models.capacity import GradientBoostedCapacityModel
 from income_estimator.models.ensemble import ENSEMBLE_VERSION, combine_month
-from income_estimator.models.quantiles import ConformalIntervalModel
+from income_estimator.models.quantiles import (
+    ConformalIntervalModel,
+    require_capacity_binding,
+)
 from income_estimator.models.transaction_classifier import MODEL_FEATURE_VERSION
 from income_estimator.transaction_intelligence import (
     FEATURE_VERSION,
@@ -189,6 +192,21 @@ class EnsembleIncomeEstimator(RecurringIncomeEstimator):
             if calibration_path is not None
             else None
         )
+        # The two artifacts are loaded independently but are not independent. Intervals are offsets
+        # on the residual of the capacity-routed estimate, so a calibration paired with capacity
+        # bytes it was never fitted against publishes a `p10`/`p90` label over an unmeasured
+        # quantity. Checked here, at construction, because every later caller has already lost the
+        # paths.
+        if self.intervals is not None:
+            require_capacity_binding(
+                self.intervals.artifact,
+                capacity_model_version=(
+                    self.capacity.artifact.model_version if self.capacity is not None else None
+                ),
+                capacity_artifact_sha256=(
+                    self.capacity.artifact_sha256 if self.capacity is not None else None
+                ),
+            )
         versions: list[str] = []
         if self.capacity is not None:
             versions.append(self.capacity.artifact.model_version)

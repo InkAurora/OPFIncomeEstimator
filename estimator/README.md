@@ -314,10 +314,19 @@ clears its coverage floor while its upper tail misses `0.1372` against a ceiling
 published `p90` holds about `86%` of the time. Sharpness fails on `income_diverse` and
 `incomplete_observation`. Calibration is over customer-months rather than customers, so this is
 empirical customer-disjoint calibration with customer-clustered error bars and not a finite-sample
-guarantee. Coverage does not survive outside the calibration distribution, at `0.491` on the
-held-out noisy suite and `0.125` on high-volatility, and nothing detects that at inference time. And
+guarantee. Coverage is not expected to survive outside the calibration distribution and nothing
+detects that at inference time, but how far it falls is unmeasured for `0.9`: the `0.491` noisy and
+`0.125` high-volatility figures were measured on `conformal-intervals-0.8.0` in a run whose capacity
+binding cannot be reconstructed, and that report is void as evidence. And
 `annual_income_p10/p50/p90` stay absent, because deriving them from monthly quantiles needs a
 dependence structure across months that nobody has measured.
+
+A calibration artifact is bound to the capacity model it was fitted against, by `model_version` and
+by the SHA-256 of the exact artifact bytes, and the runtime checks both when the estimator is
+constructed. The offsets are residuals of one particular point estimate; paired with a different
+capacity model, or with none, they keep their `p10`/`p90` label over a quantity nobody measured.
+`capacity-estimator-0.5.0.json` was once rewritten in place under an unchanged `model_version`,
+which is why the digest and not the version string is the load-bearing half of that check.
 
 A predicted zero does not get a symmetric band. When the gate is confident the interval is `[0, 0]`,
 a claim the evaluation can falsify; when it is unsure the lower bound stays zero and the upper bound

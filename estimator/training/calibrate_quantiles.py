@@ -85,6 +85,36 @@ MINIMUM_GATED_CUSTOMERS = 15
 
 COVERAGE_BOOTSTRAP_DRAWS = 2_000
 
+
+def _tolerance_error(
+    clustered: object,
+    *,
+    nominal_rate: float,
+    count: int,
+) -> tuple[float, str, str | None]:
+    """Resolve the error bar a tolerance is built from, and say which one it is.
+
+    `0.0` is a measurement, not a missing value. A tail that every customer resample misses zero
+    times has a clustered standard error of exactly zero, and that is the number the tolerance
+    should be built from: the tolerance then falls back to its fixed floor instead of being widened
+    by an error bar the data does not support. Treating `0.0` as absent is what put a row-binomial
+    `0.0056` next to a `life_events` lower-tail miss rate of `0.0000` and labelled it clustered.
+
+    The row-level binomial remains only as a last resort, for a segment with too few customers to
+    resample at all. It is reported under its own name because it understates the noise by roughly
+    the square root of the rows-per-customer ratio, and a gated segment that has to reach for it is
+    a protocol failure rather than a measurement.
+    """
+
+    if clustered is not None:
+        return float(clustered), "customer-bootstrap", None
+    fallback = math.sqrt(max(1e-12, nominal_rate * (1 - nominal_rate) / max(1, count)))
+    return (
+        fallback,
+        "row-binomial-fallback",
+        "no customer-clustered standard error is available",
+    )
+
 # ADR 0006. Customer-disjoint populations: the capacity model trains on 110_000+, so nothing here
 # may reuse those seeds, and the population that fits offsets may not be the one that gates them.
 CALIBRATION_SUITES = (
@@ -156,6 +186,10 @@ def _clustered_standard_errors(
     already did: the rates are measured over the same customers, so the same seed drew the same
     resample for each. Carrying per-customer numerators and denominators instead of rebuilding the
     resampled row vector makes a draw `O(customers)` rather than `O(rows)`.
+
+    `0.0` is a result and `None` is an absence. A rate that is identical in every resample, a tail
+    no customer ever misses being the common case, has a standard error of exactly zero; only a
+    segment with fewer than two customers has none to report. Callers must not conflate the two.
     """
 
     customers = sorted(counts_by_customer)
@@ -322,9 +356,8 @@ def _undercoverage_failure(
         return {"count": 0, "gated": False, "passed": True}, None
     customers = int(metrics["customer_count"])
     coverage = float(metrics["empirical_coverage"])
-    error = metrics["clustered_standard_error"] or math.sqrt(
-        max(1e-12, nominal * (1 - nominal) / count)
-    )
+    clustered = metrics["clustered_standard_error"]
+    error, basis, degraded = _tolerance_error(clustered, nominal_rate=nominal, count=count)
     tolerance = round(max(COVERAGE_TOLERANCE, 2 * error), 6)
     gated = customers >= MINIMUM_GATED_CUSTOMERS
     passed = coverage >= nominal - tolerance
@@ -333,13 +366,17 @@ def _undercoverage_failure(
         "withheld_count": metrics.get("withheld_count"),
         "customer_count": customers,
         "empirical_coverage": coverage,
-        "clustered_standard_error": round(error, 6),
+        "clustered_standard_error": round(clustered, 6) if clustered is not None else None,
+        "standard_error": round(error, 6),
+        "standard_error_basis": basis,
         "tolerance": tolerance,
         "floor": round(nominal - tolerance, 6),
         "gated": gated,
         "passed": passed,
         "interval_score_over_mean_truth": metrics.get("interval_score_over_mean_truth"),
     }
+    if gated and degraded:
+        return gate, f"{label} is gated on {customers} customers but {degraded}"
     if gated and not passed:
         return gate, (
             f"{label} coverage {coverage:.4f} is below the floor "
@@ -376,19 +413,24 @@ def _tail_failures(
     failures: list[str] = []
     for tail in ("lower", "upper"):
         rate = float(metrics[f"{tail}_tail_miss_rate"])
-        error = metrics[f"{tail}_tail_standard_error"] or math.sqrt(
-            max(1e-12, nominal_miss * (1 - nominal_miss) / count)
+        clustered = metrics[f"{tail}_tail_standard_error"]
+        error, basis, degraded = _tolerance_error(
+            clustered, nominal_rate=nominal_miss, count=count
         )
         tolerance = round(max(TAIL_MISS_TOLERANCE, 2 * error), 6)
         ceiling = round(nominal_miss + tolerance, 6)
         passed = rate <= ceiling
         gate[tail] = {
             "miss_rate": rate,
-            "clustered_standard_error": round(error, 6),
+            "clustered_standard_error": round(clustered, 6) if clustered is not None else None,
+            "standard_error": round(error, 6),
+            "standard_error_basis": basis,
             "tolerance": tolerance,
             "ceiling": ceiling,
             "passed": passed,
         }
+        if gated and degraded:
+            failures.append(f"{label} {tail}-tail is gated on {customers} customers but {degraded}")
         if gated and not passed:
             failures.append(
                 f"{label} {tail}-tail miss rate {rate:.4f} exceeds the ceiling "
@@ -726,7 +768,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     artifact_path.write_bytes(artifact_bytes)
 
     report = {
-        "schema_version": "1.3",
+        "schema_version": "1.4",
         "artifact_schema_version": artifact.schema_version,
         "calibration_version": CALIBRATION_VERSION,
         "method": CALIBRATION_METHOD,

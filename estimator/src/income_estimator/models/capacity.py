@@ -21,6 +21,7 @@ customers supported instead of dragging every other estimate toward zero.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 from collections.abc import Mapping
@@ -89,13 +90,31 @@ class CapacityEstimatorArtifact(CapacityModel):
 class GradientBoostedCapacityModel:
     """Evaluate a frozen capacity artifact without any training dependency."""
 
-    def __init__(self, artifact: CapacityEstimatorArtifact) -> None:
+    def __init__(
+        self,
+        artifact: CapacityEstimatorArtifact,
+        *,
+        artifact_sha256: str | None = None,
+    ) -> None:
         self.artifact = artifact
+        self.artifact_sha256 = artifact_sha256
 
     @classmethod
     def from_path(cls, path: Path) -> GradientBoostedCapacityModel:
-        payload = json.loads(Path(path).read_text(encoding="utf-8"))
-        return cls(CapacityEstimatorArtifact.model_validate(payload))
+        """Load an artifact and keep the digest of the exact bytes it came from.
+
+        A calibration artifact records the capacity bytes it was fitted against. Keeping the digest
+        here is what lets the runtime check that binding instead of trusting the version string:
+        `capacity-estimator-0.5.0.json` has already been rewritten in place once under an unchanged
+        `model_version`, which a version comparison alone would not have caught.
+        """
+
+        payload_bytes = Path(path).read_bytes()
+        payload = json.loads(payload_bytes.decode("utf-8"))
+        return cls(
+            CapacityEstimatorArtifact.model_validate(payload),
+            artifact_sha256=hashlib.sha256(payload_bytes).hexdigest(),
+        )
 
     def anchor_log(self, features: Mapping[str, float | int | None]) -> float:
         """Absent or negative anchors fall back to zero, which log1p maps to zero."""

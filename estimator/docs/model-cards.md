@@ -141,9 +141,16 @@ never its shape. Error bars are measured by resampling customers rather than mon
   correlated rows per customer, so this is empirical customer-disjoint calibration with
   customer-clustered error bars, **not** a finite-sample guarantee, and must not be described as one.
 - Coverage does not extend outside the calibration distribution, and nothing detects that at
-  inference time. On the held-out stress suites it falls to `0.491` on noisy and `0.125` on
-  high-volatility. The stated `80%` is a claim about conditions resembling the three calibration
-  suites and nothing wider.
+  inference time. The stated `80%` is a claim about conditions resembling the three calibration
+  suites and nothing wider. **How far it falls outside them is unmeasured for this artifact.** The
+  `0.491` noisy and `0.125` high-volatility figures quoted elsewhere were measured on
+  `conformal-intervals-0.8.0`, in a run whose capacity binding cannot be reconstructed; see
+  `evaluation/baselines/README.md`. They are the reason to expect trouble, not a measurement of
+  `0.9`.
+- The sharpness comparison is a ratio of two unpaired means with no error bar and no declared
+  margin. `candidate_over_baseline <= 1.0` treats a `1.001` ratio as a failure and a `0.999` as a
+  pass, on a difference whose sampling noise nobody has measured. The failures it currently reports
+  are large enough not to turn on this, but the gate is not yet a test.
 - Final-test seeds `510_000`–`530_000` have been inspected across several method-selection rounds.
   They are validation seeds, not a release lockbox.
 - Annual quantiles are not produced. Deriving them from monthly quantiles needs a dependence
@@ -185,8 +192,12 @@ rows only, so they are not comparable with `0.9`'s whole-population figures.
   in that model's report.
 - Annual quantiles are not produced.
 
-**Retained for.** The fixed-band conformal model that ADR 0007's sharpness gate measures against, and
-the ADR 0006 result itself.
+**Retained for.** The ADR 0006 result itself, and nothing else. It is not the sharpness comparator:
+that model is rebuilt in-run from the same calibration rows, bound to the same capacity bytes as the
+candidate, because the comparison only means anything measured on the same final rows. It is not a
+rollback target either — the runtime now checks the binding a calibration records, `f4f10e8d...`
+matches no file here, and loading this artifact raises `CalibrationBindingError`. Until a matching
+promoted calibration exists, the rollback is no intervals.
 
 ---
 

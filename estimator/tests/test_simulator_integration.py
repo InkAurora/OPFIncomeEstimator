@@ -170,7 +170,7 @@ def test_stress_suites_are_reported_separately_with_training_provenance() -> Non
     artifacts = project_root / "estimator" / "training" / "artifacts"
     estimator = EnsembleIncomeEstimator(
         artifacts / "capacity-estimator-0.6.0.json",
-        calibration_path=artifacts / "quantile-calibration-0.8.0.json",
+        calibration_path=artifacts / "quantile-calibration-0.9.0.json",
     )
     held_out = [suite for suite in SUITES if not suite.in_training_distribution]
     assert {suite.name for suite in held_out} >= {"noisy", "high_volatility"}
