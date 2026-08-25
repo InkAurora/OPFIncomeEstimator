@@ -1,5 +1,60 @@
 # Frozen training artifacts
 
+## Quantile calibration 0.10 — width-slope recalibration, not promoted, not written here
+
+`recalibrated-width-intervals-0.10.0` is the candidate ADR 0007's diagnostic pointed to: one
+monotone power transform per tail, `corrected = scale * raw ** slope`, on the `high` and `medium`
+bands only, fitted customer-out-of-fold inside the uncertainty-training population. Its artifact is
+not committed, because it does not promote.
+
+**It solved sharpness completely.** On the validation population, the paired customer-clustered
+difference against the fixed-band model, against a predeclared margin of `2%` of that suite's own
+baseline score:
+
+| Suite | paired diff | error bar | upper bound | margin | verdict |
+| --- | --- | --- | --- | --- | --- |
+| `income_diverse` | `-12,218` | `5,780` | `-657` | `6,195` | pass |
+| `incomplete_observation` | `-13,466` | `2,461` | `-8,544` | `2,785` | pass |
+| `life_events` | `-37,412` | `53` | `-37,307` | `1,676` | pass |
+
+The low band bypassed the transform exactly, `0` of `770` rows divergent, checked by publishing every
+low-band row twice from the same artifact with the recalibrator present and removed.
+
+**And it broke coverage on `income_diverse`**, from `0.7670` to `0.6083` against a floor of `0.7500`,
+with both tails failing at `0.1809` and `0.2108`. Every width quartile under-covers: `0.406`,
+`0.549`, `0.654`, `0.825`.
+
+### Why a width-only transform cannot do this
+
+The fitted lower slope came out at exactly `1.0`, the boundary. A slope of one is a pure rescale
+with no compression at all, which is the fit reporting that within the pooled `high` and `medium`
+rows, the ordering of raw widths carried no usable signal about which rows needed more of it. Both
+scales landed near `0.4`, so what the transform actually applied was a level shrink of about `60%` —
+the opposite of the slope correction it was built to make.
+
+The reason is that the regimes overlap in raw width. At the same learned width an `income_diverse`
+row needs a wider interval and a `life_events` row needs a narrower one, and a monotone function of
+that width alone has no way to tell them apart. It shrank both, `life_events` correctly and
+`income_diverse` catastrophically.
+
+### The prescribed fallback cannot pass either
+
+The fallback was a binary fixed/adaptive selector on `data_completeness` and `confidence_band`,
+conformalized per cell. Granting it an oracle on both halves — a selector that sees each cell's
+per-suite outcome and picks the better branch, and a correction set to the exact `0.90` quantile of
+the very rows it is then scored on, neither of which any customer-out-of-fold and split-conformal
+procedure can beat — `income_diverse` still misses both tails, `0.1395` and `0.1438` against a
+ceiling of `0.1250`.
+
+The cells do not separate the regimes. `high`/`high` is `66%` `income_diverse`, `23%` `life_events`
+and `11%` `incomplete_observation`, and its worst suite still misses `0.1519` after choosing the
+better branch; `high`/`medium` misses `0.1667`, `partial`/`low` `0.3043`. A single correction per
+cell lands between a hard majority and an easy minority and serves neither.
+
+That upper bound is one-sided and structural: within a cell, one threshold moves every suite the
+same direction, so `income_diverse`'s miss cannot be brought down without pushing the cell above the
+coverage it was fitted to.
+
 ## Quantile calibration 0.9 — bandwise asymmetric conformalized quantile regression
 
 - `quantile-calibration-0.9.0.json` holds the residual quantile model, one asymmetric conformal
