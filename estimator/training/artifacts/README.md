@@ -55,6 +55,34 @@ That upper bound is one-sided and structural: within a cell, one threshold moves
 same direction, so `income_diverse`'s miss cannot be brought down without pushing the cell above the
 coverage it was fitted to.
 
+### No conditioner in the feature set is usable
+
+Every feature was then tried as the conditioning variable, cut into quartile cells crossed with the
+confidence band, first at the oracle bound and then under an honest customer split: corrections
+fitted on half the customers, scored on the other half, selector chosen on the fitting half, ten
+seeds.
+
+| Conditioner | honest worst tail, median | min | max |
+| --- | --- | --- | --- |
+| `observed_domain_count` | `0.1079` | `0.0957` | `0.1213` |
+| `investment_balance_minor` | `0.1077` | `0.0873` | `0.1308` |
+| `transaction_count_1m` | `0.1133` | `0.0994` | `0.1308` |
+| `income_median_12m_minor` | `0.1180` | `0.1063` | `0.1308` |
+| `data_completeness_score_basis_points` | `0.1398` | `0.1140` | `0.1496` |
+
+`data_completeness`, the prescribed conditioner, fails on every split. One feature,
+`observed_domain_count`, stays under the `0.1250` ceiling on all ten, and it is **not usable
+either**, for a reason that has nothing to do with its numbers: it was found by ranking sixty-eight
+features against the validation population. Building on it would be selecting a model on the data
+the gate then measures, which is the one thing the validation population cannot survive, and its
+`0.1213` worst split leaves `0.0037` of headroom to a ceiling chosen before any of this.
+
+The honest reading is that the oracle bound rejects designs and endorses none. It has now rejected
+the prescribed fallback outright, and the only conditioner that survives an honest split is
+disqualified by how it was found. A conditioner chosen inside the uncertainty-training population,
+never having seen final test, is the remaining methodologically clean route, and it is a decision
+about the plan rather than a result.
+
 ## Quantile calibration 0.9 — bandwise asymmetric conformalized quantile regression
 
 - `quantile-calibration-0.9.0.json` holds the residual quantile model, one asymmetric conformal
