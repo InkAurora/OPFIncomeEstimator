@@ -75,6 +75,90 @@ class ResidualQuantileArtifact(UncertaintyModel):
         return self
 
 
+WIDTH_RECALIBRATION_METHOD = "tail-power-width-recalibration"
+
+WIDTH_RECALIBRATED_BANDS: tuple[str, ...] = ("high", "medium")
+
+
+class WidthRecalibratorArtifact(UncertaintyModel):
+    """One monotone power transform per tail of the learned band.
+
+    `corrected = scale * raw ** slope`, on each tail's excursion from the point estimate. Measured
+    on the validation population, the learned band is miscalibrated in slope rather than level: it
+    is `7.4x` the fixed-band width in its widest quartile, which covered `0.943` against a nominal
+    `0.80`, and no wider than fixed-band in its narrowest, which missed `p90` on `0.308` of rows. A
+    constant would move both the same way and fix neither.
+
+    A `slope` below one compresses the range: the ratio `corrected / raw` is `scale * raw ** (slope
+    - 1)`, decreasing in `raw`, so narrow bands are enlarged and extreme ones pulled in. `slope = 1`
+    is a pure rescale and `slope = 0` collapses every band to one width, which is why it is bounded
+    to `[0, 1]` rather than fitted freely: outside that range the transform stops being a
+    compression and starts being an expansion of exactly the defect it exists to remove.
+
+    Each tail has its own pair. The two tails fail in opposite directions on the suite that drove
+    this, and one shared pair cannot express that.
+
+    The transform applies to the `high` and `medium` bands only. The `low` band reaches its floor
+    and both its tails on its own, at `0.7987` coverage with `0.1091` and `0.0922` misses; it is
+    the one part of the model that is already right, and it bypasses the transform exactly.
+    """
+
+    schema_version: Literal["1.0"] = "1.0"
+    method: Literal["tail-power-width-recalibration"] = WIDTH_RECALIBRATION_METHOD
+    lower_scale: float = Field(gt=0)
+    lower_slope: float = Field(ge=0, le=1)
+    upper_scale: float = Field(gt=0)
+    upper_slope: float = Field(ge=0, le=1)
+    applies_to_bands: tuple[str, ...] = WIDTH_RECALIBRATED_BANDS
+    fold_count: int = Field(ge=2)
+    training_row_count: int = Field(gt=0)
+    training_customer_count: int = Field(gt=0)
+
+    @model_validator(mode="after")
+    def validate_bands(self) -> WidthRecalibratorArtifact:
+        if not self.applies_to_bands:
+            raise ValueError("a width recalibrator that applies to no band is not a calibration")
+        unknown = set(self.applies_to_bands) - {"high", "medium", "low"}
+        if unknown:
+            raise ValueError(f"unknown confidence bands: {sorted(unknown)}")
+        return self
+
+    def applies_to(self, band: str | None) -> bool:
+        """Whether one band's learned width passes through the transform.
+
+        A caller with no band is answered as if untransformed. It cannot be placed in `high` or
+        `medium`, and silently applying a correction fitted on those two to a row whose band is
+        unknown would be a claim nothing measured.
+        """
+
+        return band is not None and band in self.applies_to_bands
+
+    def recalibrate(self, lower: float, upper: float) -> tuple[float, float]:
+        """Transform one row's learned log band, tail by tail.
+
+        Each tail is measured as its excursion from zero, so the band still brackets the point
+        estimate and a tail that had no width keeps none. Clamped to the same maximum offset the
+        quantile model itself is clamped to.
+        """
+
+        return (
+            -_power(max(0.0, -lower), self.lower_scale, self.lower_slope),
+            _power(max(0.0, upper), self.upper_scale, self.upper_slope),
+        )
+
+
+def _power(width: float, scale: float, slope: float) -> float:
+    """`scale * width ** slope`, with no width staying no width.
+
+    `0 ** 0` is `1` in IEEE arithmetic, which would turn a degenerate tail into a full-width one at
+    `slope = 0`. A tail with no excursion has nothing to recalibrate.
+    """
+
+    if width <= 0:
+        return 0.0
+    return min(MAXIMUM_LOG_OFFSET, scale * width**slope)
+
+
 class ResidualQuantileModel:
     """Predict the log-space residual band for one row."""
 
@@ -123,7 +207,10 @@ class ResidualQuantileModel:
 __all__ = [
     "MAXIMUM_LOG_OFFSET",
     "RESIDUAL_QUANTILE_METHOD",
+    "WIDTH_RECALIBRATED_BANDS",
+    "WIDTH_RECALIBRATION_METHOD",
     "ResidualQuantileArtifact",
     "ResidualQuantileModel",
     "ScaleStump",
+    "WidthRecalibratorArtifact",
 ]

@@ -55,17 +55,20 @@ from training.capacity_datasets import (
     CAPACITY_DATASET_VERSION,
     build_capacity_dataset,
 )
+from training.out_of_fold import customer_fold
 from training.uncertainty_boosting import (
+    WidthObservation,
     conformal_tail_adjustment,
     conformal_widening,
     conformity_scores,
     fit_residual_quantile_model,
+    fit_width_recalibrator,
     residual_rows,
     tail_conformity_scores,
 )
 
-CALIBRATION_VERSION = "adaptive-intervals-0.9.0"
-ARTIFACT_STEM = "quantile-calibration-0.9.0"
+CALIBRATION_VERSION = "recalibrated-width-intervals-0.10.0"
+ARTIFACT_STEM = "quantile-calibration-0.10.0"
 DEFAULT_LOWER_QUANTILE = 0.1
 DEFAULT_UPPER_QUANTILE = 0.9
 ZERO_GATE_CERTAIN_BASIS_POINTS = 1_000
@@ -91,6 +94,11 @@ MINIMUM_GATED_CUSTOMERS = 15
 # different things. Set where a sharpness regression stops being operationally uninteresting and
 # well below what any candidate so far spends.
 SHARPNESS_NONINFERIORITY_MARGIN = 0.02
+
+# Folds for the out-of-fold width recalibrator, over customers. The transform is fitted on bands the
+# quantile model produced for customers it had not seen, because a transform fitted on the model's
+# own training rows would be correcting that model's optimism about itself.
+WIDTH_RECALIBRATION_FOLDS = 5
 
 COVERAGE_BOOTSTRAP_DRAWS = 2_000
 
@@ -832,14 +840,70 @@ def main(argv: Sequence[str] | None = None) -> int:
         if shared:
             raise ValueError(f"{label} populations share {len(shared)} customers")
 
+    # One routing pass over the uncertainty population, reused by the quantile fit and by the
+    # out-of-fold pass that fits the width transform.
+    uncertainty_routed = {
+        (row.customer_id, row.reference_month): _routed(row, capacity)
+        for row in uncertainty_rows
+    }
+    uncertainty_residuals = residual_rows(
+        uncertainty_rows,
+        lambda row: uncertainty_routed[
+            (row.customer_id, row.reference_month)
+        ].sustainable_income_minor,
+    )
+
     # The quantile pair learns this row's own residual band, on customers no other stage used.
     quantile_artifact = fit_residual_quantile_model(
-        residual_rows(
-            uncertainty_rows,
-            lambda row: _routed(row, capacity).sustainable_income_minor,
-        ),
+        uncertainty_residuals,
         lower_quantile=DEFAULT_LOWER_QUANTILE,
         upper_quantile=DEFAULT_UPPER_QUANTILE,
+    )
+
+    # The width transform is fitted on bands this model produced for customers it had not trained
+    # on. One refit per fold, inside the uncertainty population only: no calibration or final-test
+    # customer is touched here, and the conformal step downstream stays untouched in method.
+    observations: list[WidthObservation] = []
+    for fold in range(WIDTH_RECALIBRATION_FOLDS):
+        training = [
+            row
+            for row in uncertainty_residuals
+            if customer_fold(row.customer_id, WIDTH_RECALIBRATION_FOLDS) != fold
+        ]
+        held_out = [
+            row
+            for row in uncertainty_residuals
+            if customer_fold(row.customer_id, WIDTH_RECALIBRATION_FOLDS) == fold
+        ]
+        if not training or not held_out:
+            continue
+        fold_model = ResidualQuantileModel(
+            fit_residual_quantile_model(
+                training,
+                lower_quantile=DEFAULT_LOWER_QUANTILE,
+                upper_quantile=DEFAULT_UPPER_QUANTILE,
+            )
+        )
+        for row in held_out:
+            raw_lower, raw_upper = fold_model.predict_bounds(row.features)
+            observations.append(
+                WidthObservation(
+                    customer_id=row.customer_id,
+                    band=confidence_band(
+                        uncertainty_routed[
+                            (row.customer_id, row.reference_month)
+                        ].confidence_score_basis_points
+                    ),
+                    raw_lower=raw_lower,
+                    raw_upper=raw_upper,
+                    log_residual=row.log_residual,
+                )
+            )
+    width_recalibrator = fit_width_recalibrator(
+        observations,
+        lower_quantile=DEFAULT_LOWER_QUANTILE,
+        upper_quantile=DEFAULT_UPPER_QUANTILE,
+        fold_count=WIDTH_RECALIBRATION_FOLDS,
     )
 
     # One routing pass over the calibration population. Every downstream quantity, the residuals,
@@ -871,9 +935,23 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     quantile_model = ResidualQuantileModel(quantile_artifact)
 
+    def published_bounds(row) -> tuple[float, float]:
+        """The band the runtime would publish for one calibration row, transform included.
+
+        The conformal correction is a claim about the bound that is actually emitted. Fitting it on
+        the untransformed band would correct a quantity nothing publishes, and the `low` band would
+        pick up a correction for a transform it never receives.
+        """
+
+        raw_lower, raw_upper = quantile_model.predict_bounds(row.features)
+        band = band_by_key[(row.customer_id, row.reference_month)]
+        if not width_recalibrator.applies_to(band):
+            return raw_lower, raw_upper
+        return width_recalibrator.recalibrate(raw_lower, raw_upper)
+
     # The joint score and its single widening stay in the artifact as the documented fallback for a
     # band too thin to fit its own pair. ADR 0007 refuses to promote on it.
-    scores = conformity_scores(calibration_residuals, quantile_model)
+    scores = conformity_scores(calibration_residuals, published_bounds)
     widening = round(
         conformal_widening(scores, DEFAULT_UPPER_QUANTILE - DEFAULT_LOWER_QUANTILE), 12
     )
@@ -881,7 +959,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     # ADR 0007. Each band corrects each tail on its own scores. The single widening was `-0.0077`:
     # high and medium supplied 92% of the mass and both over-covered, so the one constant they
     # chose shrank the low band that was already under its floor.
-    lower_scores, upper_scores = tail_conformity_scores(calibration_residuals, quantile_model)
+    lower_scores, upper_scores = tail_conformity_scores(calibration_residuals, published_bounds)
     lower_scores_by_band: dict[str, list[float]] = {}
     upper_scores_by_band: dict[str, list[float]] = {}
     for band, lower_score, upper_score in zip(residual_bands, lower_scores, upper_scores):
@@ -954,6 +1032,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             residual_quantiles=quantile_artifact if adaptive else None,
             conformal_widening=widening if adaptive else None,
             band_adjustments=band_adjustments if adaptive else {},
+            width_recalibrator=width_recalibrator if adaptive else None,
             zero_gate_certain_basis_points=ZERO_GATE_CERTAIN_BASIS_POINTS,
             calibration_row_count=len(calibration_rows),
             calibration_customer_count=len(calibration_customers),
@@ -963,6 +1042,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     intervals = ConformalIntervalModel(artifact)
     baseline_artifact = build(adaptive=False)
     baseline = ConformalIntervalModel(baseline_artifact)
+
+    # The `low` band is the one part of the model that already holds both its tails, and the
+    # transform is declared not to touch it. Declaring that is not the same as it being true, so it
+    # is checked against the artifact rather than asserted: the same artifact with the recalibrator
+    # removed must publish byte-identical bounds on every low-band row.
+    untransformed = ConformalIntervalModel(artifact.model_copy(update={"width_recalibrator": None}))
 
     failures: list[str] = []
 
@@ -1094,6 +1179,41 @@ def main(argv: Sequence[str] | None = None) -> int:
                 sharpness_gate[scenario]["passed"] for scenario in valid_baseline_suites
             )
 
+    low_band_divergences = 0
+    low_band_rows = 0
+    for row in final_rows:
+        routed = _routed(row, capacity)
+        point = routed.sustainable_income_minor
+        score = routed.confidence_score_basis_points
+        if point is None or confidence_band(score) != "low":
+            continue
+        low_band_rows += 1
+        positive = capacity.predict_positive_basis_points(row.features)
+        with_transform = intervals.interval_minor(
+            point,
+            positive_basis_points=positive,
+            confidence_basis_points=score,
+            features=row.features,
+        )
+        without_transform = untransformed.interval_minor(
+            point,
+            positive_basis_points=positive,
+            confidence_basis_points=score,
+            features=row.features,
+        )
+        if with_transform != without_transform:
+            low_band_divergences += 1
+    low_band_bypass = {
+        "rows": low_band_rows,
+        "divergent_rows": low_band_divergences,
+        "passed": low_band_divergences == 0,
+    }
+    if low_band_divergences:
+        failures.append(
+            f"the width recalibrator changes {low_band_divergences} of {low_band_rows} low-band "
+            f"intervals; the low band is declared to bypass it exactly"
+        )
+
     zero_truth = _coverage_metrics(
         tuple(row for row in final_rows if row.sustainable_monthly_income_minor == 0),
         capacity,
@@ -1170,6 +1290,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             "lower_log_offset": artifact.lower_log_offset,
             "upper_log_offset": artifact.upper_log_offset,
             "minimum_band_residuals": MINIMUM_BAND_RESIDUALS,
+            "width_recalibrator": {
+                "method": width_recalibrator.method,
+                "lower_scale": width_recalibrator.lower_scale,
+                "lower_slope": width_recalibrator.lower_slope,
+                "upper_scale": width_recalibrator.upper_scale,
+                "upper_slope": width_recalibrator.upper_slope,
+                "applies_to_bands": list(width_recalibrator.applies_to_bands),
+                "fold_count": width_recalibrator.fold_count,
+                "out_of_fold_row_count": width_recalibrator.training_row_count,
+                "out_of_fold_customer_count": width_recalibrator.training_customer_count,
+                "out_of_fold_observations": len(observations),
+            },
             "band_offsets": {
                 band: {
                     "lower_log_offset": offsets.lower_log_offset,
@@ -1222,6 +1354,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "minimum_gated_customers": MINIMUM_GATED_CUSTOMERS,
             "sharpness_noninferiority_margin": SHARPNESS_NONINFERIORITY_MARGIN,
             "sharpness_valid_baseline_only": valid_baseline_only,
+            "low_band_bypasses_recalibrator": low_band_bypass,
             "overall": overall_gate,
             "overall_tails": overall_tail_gate,
             "zero_truth": zero_gate,
@@ -1277,6 +1410,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     print(
         f"  zero-truth coverage={zero_gate.get('empirical_coverage')} rows={zero_gate.get('count')}"
+    )
+    print(
+        f"  width recalibrator lower={width_recalibrator.lower_scale:.4f}"
+        f"^{width_recalibrator.lower_slope:.4f} "
+        f"upper={width_recalibrator.upper_scale:.4f}^{width_recalibrator.upper_slope:.4f} "
+        f"on {'/'.join(width_recalibrator.applies_to_bands)}; low-band bypass "
+        f"{low_band_bypass['divergent_rows']}/{low_band_bypass['rows']} divergent"
     )
     print(f"Promotion: {report['promotion']['status']}")
     for failure in failures:

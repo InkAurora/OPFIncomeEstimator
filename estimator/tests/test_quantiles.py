@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import random
 from pathlib import Path
 
 import pytest
@@ -23,6 +24,11 @@ from income_estimator.models.quantiles import (
     empirical_quantile,
     require_capacity_binding,
 )
+from income_estimator.models.uncertainty import (
+    ResidualQuantileArtifact,
+    ResidualQuantileModel,
+    WidthRecalibratorArtifact,
+)
 from income_estimator.pipeline import EnsembleIncomeEstimator
 from training.calibrate_quantiles import (
     SHARPNESS_NONINFERIORITY_MARGIN,
@@ -39,6 +45,7 @@ from training.out_of_fold import (
     build_out_of_fold_predictions,
     customer_fold,
 )
+from training.uncertainty_boosting import WidthObservation, fit_width_recalibrator
 
 ARTIFACT_PATH = (
     Path(__file__).parents[1] / "training" / "artifacts" / "quantile-calibration-0.9.0.json"
@@ -1062,3 +1069,164 @@ def test_width_allocation_separates_rows_the_candidate_helps_from_rows_it_costs(
     assert sources["none"]["mean_difference_minor"] < 0
     assert sources["none"]["candidate_upper_tail_miss_rate"] == 1.0
     assert allocation["dimensions"]["residual_sign"]["under-estimated"]["paired_row_count"] == 24
+
+
+def _recalibrator(**overrides) -> WidthRecalibratorArtifact:
+    payload = {
+        "lower_scale": 0.5,
+        "lower_slope": 0.5,
+        "upper_scale": 0.5,
+        "upper_slope": 0.5,
+        "fold_count": 5,
+        "training_row_count": 1_000,
+        "training_customer_count": 100,
+    }
+    payload.update(overrides)
+    return WidthRecalibratorArtifact(**payload)
+
+
+def test_the_width_transform_compresses_rather_than_shifts() -> None:
+    """The measured defect is slope, not level: too wide where wide, too narrow where narrow."""
+
+    recalibrator = _recalibrator()
+    narrow = recalibrator.recalibrate(-0.04, 0.04)[1]
+    wide = recalibrator.recalibrate(-4.0, 4.0)[1]
+
+    # Monotone, so the ordering of two bands is never reversed.
+    assert narrow < wide
+    # But the ratio falls with width, which is what enlarges narrow bands relative to extreme ones.
+    assert narrow / 0.04 > wide / 4.0
+
+
+def test_the_width_transform_keeps_the_band_bracketing_the_estimate() -> None:
+    recalibrator = _recalibrator()
+
+    lower, upper = recalibrator.recalibrate(-1.5, 2.5)
+
+    assert lower <= 0 <= upper
+    # A tail with no excursion has nothing to recalibrate, at any slope.
+    assert _recalibrator(upper_slope=0.0).recalibrate(-1.0, 0.0)[1] == 0.0
+    assert recalibrator.recalibrate(0.3, 0.6)[0] == 0.0
+
+
+def test_the_low_band_bypasses_the_width_transform_exactly() -> None:
+    """The one band that already holds both its tails is the one the transform must not touch."""
+
+    recalibrator = _recalibrator()
+    assert recalibrator.applies_to("high") is True
+    assert recalibrator.applies_to("medium") is True
+    assert recalibrator.applies_to("low") is False
+    # A caller with no score cannot be placed in a band, so it is answered untransformed.
+    assert recalibrator.applies_to(None) is False
+
+    artifact = _artifact(
+        residual_quantiles=_RESIDUAL_QUANTILES,
+        conformal_widening=0.1,
+        width_recalibrator=recalibrator,
+    )
+    raw = (-1.5, 2.5)
+
+    assert artifact.recalibrate_width(*raw, dict(CONFIDENCE_BAND_FLOORS)["low"]) == raw
+    assert artifact.recalibrate_width(*raw, None) == raw
+    assert artifact.recalibrate_width(*raw, dict(CONFIDENCE_BAND_FLOORS)["high"]) != raw
+
+
+def test_an_artifact_without_a_recalibrator_reads_exactly_as_before() -> None:
+    """Every schema below 1.3 must keep its published bounds unchanged."""
+
+    artifact = _artifact(residual_quantiles=_RESIDUAL_QUANTILES, conformal_widening=0.1)
+
+    assert artifact.width_recalibrator is None
+    assert artifact.recalibrate_width(-1.5, 2.5, 9_000) == (-1.5, 2.5)
+
+
+def test_a_recalibrator_needs_the_quantiles_it_transforms() -> None:
+    with pytest.raises(ValidationError, match="width recalibrator"):
+        _artifact(width_recalibrator=_recalibrator())
+
+
+def test_the_transform_runs_before_the_conformal_correction() -> None:
+    """Order is load-bearing: a correction is a claim about the bound that is published.
+
+    Correcting first and transforming afterwards would rescale the quantity the correction had just
+    fixed, so the published upper bound must be `transform(raw) + adjustment`, never
+    `transform(raw + adjustment)`.
+    """
+
+    quantiles = _RESIDUAL_QUANTILES
+    recalibrator = _recalibrator(upper_scale=0.5, upper_slope=1.0)
+    artifact = _artifact(
+        residual_quantiles=quantiles,
+        conformal_widening=0.0,
+        band_adjustments={
+            "high": {"lower_adjustment": 0.0, "upper_adjustment": 1.0, "score_count": 100}
+        },
+        width_recalibrator=recalibrator,
+    )
+    features = {"income_mean_3m_minor": 500_000}
+    raw_upper = ResidualQuantileModel(
+        ResidualQuantileArtifact.model_validate(quantiles)
+    ).predict_bounds(features)[1]
+
+    model = ConformalIntervalModel(artifact)
+    published = model._offsets(9_000, features)[1]
+
+    assert published == pytest.approx(0.5 * raw_upper + 1.0)
+    assert published != pytest.approx(0.5 * (raw_upper + 1.0))
+
+
+def test_the_width_recalibrator_recovers_a_known_slope() -> None:
+    """The residual scale grows slowly with the learned band; the fit has to find how slowly."""
+
+    rng = random.Random(7)
+    observations = []
+    for index in range(4_000):
+        raw = math.exp(rng.uniform(-3.0, 1.0))
+        residual = rng.gauss(0.0, 0.25 * raw**0.4)
+        observations.append(
+            WidthObservation(
+                customer_id=f"c{index % 200}",
+                band="high" if index % 2 else "medium",
+                raw_lower=-raw,
+                raw_upper=raw,
+                log_residual=residual,
+            )
+        )
+
+    fitted = fit_width_recalibrator(
+        observations, lower_quantile=0.1, upper_quantile=0.9, fold_count=5
+    )
+
+    assert fitted.upper_slope == pytest.approx(0.4, abs=0.06)
+    assert fitted.lower_slope == pytest.approx(0.4, abs=0.06)
+    # 0.25 * the standard normal's 0.9 quantile, which is what the band at `raw == 1` has to reach.
+    assert fitted.upper_scale == pytest.approx(0.25 * 1.2816, rel=0.15)
+    assert fitted.training_customer_count == 200
+
+
+def test_the_recalibrator_is_fitted_only_on_the_bands_it_applies_to() -> None:
+    """Including `low` would let the band that is already right pull the two that are not."""
+
+    observations = [
+        WidthObservation(f"c{index}", "low", -1.0, 1.0, 5.0 if index % 2 else -5.0)
+        for index in range(200)
+    ] + [
+        WidthObservation(f"h{index}", "high", -1.0, 1.0, 0.1 if index % 2 else -0.1)
+        for index in range(200)
+    ]
+
+    fitted = fit_width_recalibrator(
+        observations, lower_quantile=0.1, upper_quantile=0.9, fold_count=5
+    )
+
+    assert fitted.training_row_count == 200
+    # Fitted to the high band's tenth-of-a-unit residuals, not the low band's five-unit ones.
+    assert fitted.upper_scale < 1.0
+
+    with pytest.raises(ValueError, match="no out-of-fold observations"):
+        fit_width_recalibrator(
+            [item for item in observations if item.band == "low"],
+            lower_quantile=0.1,
+            upper_quantile=0.9,
+            fold_count=5,
+        )
