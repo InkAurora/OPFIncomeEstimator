@@ -30,7 +30,8 @@ import hashlib
 import json
 import math
 import random
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from statistics import fmean, median
 
@@ -247,28 +248,40 @@ def _winkler(lower: int, upper: int, truth: int, alpha: float) -> int:
     return score
 
 
-def _paired_sharpness(rows, capacity, candidate, baseline) -> dict[str, object]:
-    """Uncertainty of `candidate - baseline` on the rows both models score.
+@dataclass(frozen=True, slots=True)
+class _PairedRow:
+    """One customer-month scored by both models, with the covariates the diagnostics segment on."""
 
-    A ratio of two independently reported means is not a comparison. The two models are evaluated
-    on the same rows, so the difference is paired, and the shared variance that dominates a Winkler
-    score, how hard each customer-month happens to be, cancels row by row. What survives is what the
-    calibration choice actually costs, and only that difference has to clear a margin.
+    customer_id: str
+    difference: int
+    candidate_width: int
+    baseline_width: int
+    candidate_covered: bool
+    baseline_covered: bool
+    candidate_missed_low: bool
+    candidate_missed_high: bool
+    confidence_band: str
+    positive_basis_points: int
+    features: Mapping[str, float | int | None]
+    point_minor: int
+    truth_minor: int
 
-    The resampling unit is the customer, for the same reason it is everywhere else here: a customer
-    supplies roughly twelve of these rows and their differences move together.
+
+def _paired_rows(rows, capacity, candidate, baseline) -> tuple[tuple[_PairedRow, ...], int]:
+    """Score both models on every row once, and keep the pairing.
+
+    A ratio of two independently reported means is not a comparison. Both models see the same rows,
+    so the difference is taken row by row and the shared variance that dominates a Winkler score,
+    how hard each customer-month happens to be, cancels. What survives is what the calibration
+    choice actually costs.
 
     A row either model withholds cannot be paired and is excluded from both sides, counted rather
     than dropped silently. This writer publishes every band, so a non-zero count here means one of
     the two artifacts is older than the complete-promotion rule.
     """
 
-    if not rows:
-        return {"paired_row_count": 0}
     alpha = 1.0 - (DEFAULT_UPPER_QUANTILE - DEFAULT_LOWER_QUANTILE)
-    differences_by_customer: dict[str, int] = {}
-    counts_by_customer: dict[str, int] = {}
-    differences: list[int] = []
+    paired: list[_PairedRow] = []
     unpaired = 0
     for row in rows:
         routed = _routed(row, capacity)
@@ -290,26 +303,52 @@ def _paired_sharpness(rows, capacity, candidate, baseline) -> dict[str, object]:
         if any(bounds is None for bounds in pair):
             unpaired += 1
             continue
+        (candidate_lower, candidate_upper), (baseline_lower, baseline_upper) = pair
         truth = row.sustainable_monthly_income_minor
-        candidate_score, baseline_score = (
-            _winkler(lower, upper, truth, alpha) for lower, upper in pair
+        paired.append(
+            _PairedRow(
+                customer_id=row.customer_id,
+                difference=(
+                    _winkler(candidate_lower, candidate_upper, truth, alpha)
+                    - _winkler(baseline_lower, baseline_upper, truth, alpha)
+                ),
+                candidate_width=candidate_upper - candidate_lower,
+                baseline_width=baseline_upper - baseline_lower,
+                candidate_covered=candidate_lower <= truth <= candidate_upper,
+                baseline_covered=baseline_lower <= truth <= baseline_upper,
+                candidate_missed_low=truth < candidate_lower,
+                candidate_missed_high=truth > candidate_upper,
+                confidence_band=confidence_band(score),
+                positive_basis_points=positive,
+                features=row.features,
+                point_minor=point,
+                truth_minor=truth,
+            )
         )
-        difference = candidate_score - baseline_score
-        differences.append(difference)
-        differences_by_customer[row.customer_id] = (
-            differences_by_customer.get(row.customer_id, 0) + difference
+    return tuple(paired), unpaired
+
+
+def _paired_statistics(paired: Sequence[_PairedRow]) -> dict[str, object]:
+    """Mean paired difference and its customer-clustered error bar.
+
+    The resampling unit is the customer, for the same reason it is everywhere else here: a customer
+    supplies roughly twelve of these rows and their differences move together.
+    """
+
+    differences_by_customer: dict[str, int] = {}
+    counts_by_customer: dict[str, int] = {}
+    for item in paired:
+        differences_by_customer[item.customer_id] = (
+            differences_by_customer.get(item.customer_id, 0) + item.difference
         )
-        counts_by_customer[row.customer_id] = counts_by_customer.get(row.customer_id, 0) + 1
-    if not differences:
-        return {"paired_row_count": 0, "unpaired_row_count": unpaired}
+        counts_by_customer[item.customer_id] = counts_by_customer.get(item.customer_id, 0) + 1
     (error,) = _clustered_standard_errors(
         {customer: (total,) for customer, total in differences_by_customer.items()},
         counts_by_customer,
     )
-    mean_difference = fmean(differences)
+    mean_difference = fmean(item.difference for item in paired)
     return {
-        "paired_row_count": len(differences),
-        "unpaired_row_count": unpaired,
+        "paired_row_count": len(paired),
         "customer_count": len(counts_by_customer),
         "mean_difference_minor": round(mean_difference, 4),
         "clustered_standard_error_minor": round(error, 4) if error is not None else None,
@@ -317,9 +356,20 @@ def _paired_sharpness(rows, capacity, candidate, baseline) -> dict[str, object]:
             round(mean_difference + 2 * error, 4) if error is not None else None
         ),
         "candidate_worse_row_share": round(
-            sum(1 for value in differences if value > 0) / len(differences), 6
+            sum(1 for item in paired if item.difference > 0) / len(paired), 6
         ),
     }
+
+
+def _paired_sharpness(rows, capacity, candidate, baseline) -> dict[str, object]:
+    """The paired difference the sharpness gate judges."""
+
+    if not rows:
+        return {"paired_row_count": 0}
+    paired, unpaired = _paired_rows(rows, capacity, candidate, baseline)
+    if not paired:
+        return {"paired_row_count": 0, "unpaired_row_count": unpaired}
+    return {**_paired_statistics(paired), "unpaired_row_count": unpaired}
 
 
 def _coverage_metrics(rows, capacity, intervals) -> dict[str, object]:
@@ -521,6 +571,118 @@ def _tail_failures(
             )
     gate["passed"] = all(gate[tail]["passed"] for tail in ("lower", "upper"))
     return gate, failures
+
+
+def _bucket(value: float | int | None, edges: Sequence[tuple[float, str]], absent: str) -> str:
+    """Name the band `value` falls in. Missing is its own bucket, never folded into the lowest."""
+
+    if value is None:
+        return absent
+    for ceiling, name in edges:
+        if value < ceiling:
+            return name
+    return edges[-1][1] if not edges else "high"
+
+
+def _strata(item: _PairedRow, width_cuts: Sequence[float]) -> dict[str, str]:
+    """The buckets one paired row falls in, on each dimension width allocation is diagnosed over.
+
+    These are the covariates already in the feature table. Whether they separate the regimes decides
+    whether a conditional selector can be fitted at all, or whether new features are needed first.
+    """
+
+    features = item.features
+    quartile = sum(1 for cut in width_cuts if item.candidate_width > cut)
+    residual = item.truth_minor - item.point_minor
+    return {
+        "confidence_band": item.confidence_band,
+        "candidate_width_quartile": f"q{quartile + 1}",
+        "hurdle_probability": _bucket(
+            item.positive_basis_points,
+            ((5_000, "unsure"), (9_000, "likely")),
+            "unknown",
+        ),
+        "source_count_12m": _bucket(
+            features.get("source_count_12m"),
+            ((1, "none"), (2, "one"), (3, "two")),
+            "unknown",
+        ),
+        "recurrence_score": _bucket(
+            features.get("recurrence_score_mean_12m_basis_points"),
+            ((3_000, "irregular"), (7_000, "mixed")),
+            "unknown",
+        ),
+        "data_completeness": _bucket(
+            features.get("data_completeness_score_basis_points"),
+            ((5_000, "sparse"), (8_000, "partial")),
+            "unknown",
+        ),
+        "months_observed": _bucket(
+            features.get("months_observed"),
+            ((6, "under-6"), (12, "6-to-11")),
+            "unknown",
+        ),
+        "residual_sign": (
+            "under-estimated" if residual > 0 else "over-estimated" if residual < 0 else "exact"
+        ),
+    }
+
+
+def _width_allocation(paired: Sequence[_PairedRow]) -> dict[str, object]:
+    """Where the candidate spends score relative to the fixed-band model, by stratum.
+
+    A suite-level mean says the candidate is worse without saying on which rows, and the two
+    sharpness failures point opposite ways: `income_diverse` needs a wider upper tail while
+    `incomplete_observation` needs materially less width overall. Widening globally would trade one
+    for the other. This is the breakdown that says whether the features already in hand separate
+    those regimes.
+
+    Each bucket carries its own customer-clustered error bar, because a stratum that looks worst may
+    just be the one with the fewest customers in it.
+    """
+
+    if not paired:
+        return {}
+    ordered_widths = sorted(item.candidate_width for item in paired)
+    width_cuts = [
+        ordered_widths[min(len(ordered_widths) - 1, int(quantile * len(ordered_widths)))]
+        for quantile in (0.25, 0.5, 0.75)
+    ]
+    grouped: dict[str, dict[str, list[_PairedRow]]] = {}
+    for item in paired:
+        for dimension, bucket in _strata(item, width_cuts).items():
+            grouped.setdefault(dimension, {}).setdefault(bucket, []).append(item)
+    return {
+        "candidate_width_quartile_cuts_minor": width_cuts,
+        "dimensions": {
+            dimension: {
+                bucket: {
+                    **_paired_statistics(items),
+                    "row_share": round(len(items) / len(paired), 6),
+                    "mean_candidate_width_minor": round(
+                        fmean(item.candidate_width for item in items), 4
+                    ),
+                    "mean_baseline_width_minor": round(
+                        fmean(item.baseline_width for item in items), 4
+                    ),
+                    "candidate_coverage": round(
+                        sum(item.candidate_covered for item in items) / len(items), 6
+                    ),
+                    "baseline_coverage": round(
+                        sum(item.baseline_covered for item in items) / len(items), 6
+                    ),
+                    "candidate_lower_tail_miss_rate": round(
+                        sum(item.candidate_missed_low for item in items) / len(items), 6
+                    ),
+                    "candidate_upper_tail_miss_rate": round(
+                        sum(item.candidate_missed_high for item in items) / len(items), 6
+                    ),
+                }
+                for bucket, items in sorted(buckets.items())
+            }
+            for dimension, buckets in sorted(grouped.items())
+        },
+    }
 
 
 def _sharpness_failure(
@@ -844,6 +1006,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     suite_gate: dict[str, dict[str, object]] = {}
     suite_metrics: dict[str, dict[str, object]] = {}
     sharpness_gate: dict[str, dict[str, object]] = {}
+    paired_by_suite: dict[str, tuple[_PairedRow, ...]] = {}
     for scenario, rows in final_by_suite.items():
         metrics = _coverage_metrics(rows, capacity, intervals)
         suite_metrics[scenario] = metrics
@@ -859,7 +1022,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         failures.extend(tail_failures)
 
         baseline_metrics = _coverage_metrics(rows, capacity, baseline)
-        paired = _paired_sharpness(rows, capacity, intervals, baseline)
+        paired_rows, unpaired = _paired_rows(rows, capacity, intervals, baseline)
+        paired_by_suite[scenario] = paired_rows
+        paired = (
+            {**_paired_statistics(paired_rows), "unpaired_row_count": unpaired}
+            if paired_rows
+            else {"paired_row_count": 0, "unpaired_row_count": unpaired}
+        )
         baseline_tails, _ = _tail_failures(f"{scenario} baseline", baseline_metrics, nominal_miss)
         sharp_gate, sharp_failure = _sharpness_failure(
             scenario,
@@ -907,6 +1076,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     artifact_bytes = (artifact.model_dump_json(indent=2) + "\n").encode()
     artifact_path.write_bytes(artifact_bytes)
 
+    pooled_paired = tuple(
+        item for scenario in sorted(paired_by_suite) for item in paired_by_suite[scenario]
+    )
+
     report = {
         "schema_version": "1.4",
         "artifact_schema_version": artifact.schema_version,
@@ -919,6 +1092,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         "population_size_per_suite": args.population_size_per_suite,
         "months": args.months,
         "artifact_sha256": hashlib.sha256(artifact_bytes).hexdigest(),
+        # Diagnostic, never a gate. Where the candidate spends score relative to the fixed-band
+        # model, by covariates already in the feature table. The two sharpness failures point
+        # opposite ways, so a single global widening cannot fix both; this is what says whether the
+        # existing features separate those regimes or whether new ones are needed first.
+        "width_allocation": {
+            "overall": _width_allocation(pooled_paired),
+            "by_suite": {
+                scenario: _width_allocation(items)
+                for scenario, items in sorted(paired_by_suite.items())
+            },
+        },
         "populations": {
             "calibration_suites": [
                 {"scenario": scenario, "seed": seed} for scenario, seed in CALIBRATION_SUITES
@@ -1029,12 +1213,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         if not gate.get("count"):
             continue
         sharp = sharpness_gate[scenario]
+        paired = sharp["paired"]
         print(
             f"  {scenario:28} coverage={gate['empirical_coverage']:.4f} "
             f"floor={gate['floor']:.4f} width={gate['mean_interval_width_minor']} "
             f"score={gate['mean_interval_score_minor']} "
-            f"vs baseline={sharp['baseline_mean_interval_score_minor']} "
-            f"ratio={sharp['candidate_over_baseline']} wape={gate['wape']}"
+            f"vs baseline={sharp['baseline_mean_interval_score_minor']} wape={gate['wape']}"
+        )
+        print(
+            f"  {'':28} sharpness paired diff="
+            f"{paired.get('mean_difference_minor')}"
+            f" +/-{paired.get('clustered_standard_error_minor')}"
+            f" bound={paired.get('difference_upper_confidence_bound_minor')}"
+            f" margin={sharp['noninferiority_margin_minor']}"
+            f" baseline_tails_hold={sharp['baseline_tails_hold']}"
         )
     print(
         f"  zero-truth coverage={zero_gate.get('empirical_coverage')} rows={zero_gate.get('count')}"

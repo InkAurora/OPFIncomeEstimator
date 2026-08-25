@@ -46,6 +46,32 @@ excluding under-covering baselines would remove exactly the pressure the interva
 apply. `baseline_lower_tail_miss_rate` and `baseline_upper_tail_miss_rate` are recorded beside the
 candidate's for the same reason.
 
+### `width_allocation` — diagnostic, never a gate
+
+A suite-level mean says the candidate is worse without saying on which rows, and the two sharpness
+failures point opposite ways: `income_diverse` needs a slightly wider upper tail while
+`incomplete_observation` needs materially less width. Widening globally trades one for the other.
+
+`report["width_allocation"]` breaks the paired per-row score difference down over the covariates
+already in the feature table, pooled and per suite, each bucket with its own customer-clustered
+error bar and its own coverage and tail miss rates:
+
+| Dimension | Buckets |
+| --- | --- |
+| `confidence_band` | `high`, `medium`, `low` |
+| `candidate_width_quartile` | `q1`–`q4`, cut on the candidate's own published widths |
+| `hurdle_probability` | `unsure`, `likely`, `high` |
+| `source_count_12m` | `none`, `one`, `two`, `high` |
+| `recurrence_score` | `irregular`, `mixed`, `high` |
+| `data_completeness` | `sparse`, `partial`, `high` |
+| `months_observed` | `under-6`, `6-to-11`, `high` |
+| `residual_sign` | `under-estimated`, `over-estimated`, `exact` |
+
+A missing covariate is its own `unknown` bucket and is never folded into the lowest. The question
+this answers is whether the existing features separate hard income-diverse rows from easy
+incomplete-observation rows well enough to fit a conditional selector, or whether new features are
+needed before that is worth attempting.
+
 Four populations, customer-disjoint, and the report asserts zero overlap:
 
 | Population | Seeds | Purpose |

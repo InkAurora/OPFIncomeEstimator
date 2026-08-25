@@ -27,10 +27,12 @@ from income_estimator.pipeline import EnsembleIncomeEstimator
 from training.calibrate_quantiles import (
     SHARPNESS_NONINFERIORITY_MARGIN,
     TAIL_MISS_TOLERANCE,
+    _paired_rows,
     _paired_sharpness,
     _sharpness_failure,
     _tail_failures,
     _undercoverage_failure,
+    _width_allocation,
 )
 from training.capacity_datasets import build_capacity_dataset, split_capacity_rows
 from training.out_of_fold import (
@@ -819,11 +821,11 @@ def test_a_gated_segment_without_a_clustered_error_bar_is_a_failure() -> None:
 
 
 class _StubRow:
-    """The three attributes `_paired_sharpness` reads. Routing is stubbed out separately."""
+    """The attributes the paired pass reads. Routing is stubbed out separately."""
 
-    def __init__(self, customer_id: str, truth: int) -> None:
+    def __init__(self, customer_id: str, truth: int, **features) -> None:
         self.customer_id = customer_id
-        self.features: dict[str, float] = {}
+        self.features: dict[str, float] = features
         self.sustainable_monthly_income_minor = truth
 
 
@@ -972,3 +974,77 @@ def test_sharpness_without_an_error_bar_is_refused_rather_than_passed() -> None:
 
     assert gate["passed"] is False
     assert failure is not None and "no paired error bar" in failure
+
+
+def test_width_allocation_segments_the_paired_difference(_stub_routing) -> None:
+    """The breakdown that decides whether existing features separate the two failing regimes.
+
+    A suite-level mean says the candidate is worse without saying on which rows, and the two
+    sharpness failures point opposite ways. Each bucket carries its own clustered error bar, so a
+    stratum that looks worst because it holds four customers is visible as such.
+    """
+
+    rows = [
+        _StubRow(
+            f"c{index % 4}",
+            1_000_000,
+            source_count_12m=index % 4,
+            recurrence_score_mean_12m_basis_points=1_000 + 2_000 * (index % 4),
+            data_completeness_score_basis_points=9_000,
+            months_observed=12,
+        )
+        for index in range(48)
+    ]
+
+    allocation = _width_allocation(
+        _paired_rows(rows, _StubCapacity(), _StubIntervals(150_000), _StubIntervals(100_000))[0]
+    )
+
+    assert set(allocation["dimensions"]) == {
+        "candidate_width_quartile",
+        "confidence_band",
+        "data_completeness",
+        "hurdle_probability",
+        "months_observed",
+        "recurrence_score",
+        "residual_sign",
+        "source_count_12m",
+    }
+    sources = allocation["dimensions"]["source_count_12m"]
+    assert set(sources) == {"none", "one", "two", "high"}
+    assert sum(bucket["row_share"] for bucket in sources.values()) == pytest.approx(1.0)
+    for bucket in sources.values():
+        assert bucket["mean_difference_minor"] == 100_000
+        assert bucket["mean_candidate_width_minor"] == 300_000
+        assert bucket["mean_baseline_width_minor"] == 200_000
+        assert bucket["candidate_coverage"] == 1.0
+        assert bucket["candidate_upper_tail_miss_rate"] == 0.0
+
+    # Every row is scored exactly, so the truth sits on the point estimate.
+    assert set(allocation["dimensions"]["residual_sign"]) == {"exact"}
+    # A missing covariate is its own bucket rather than being folded into the lowest.
+    assert set(allocation["dimensions"]["data_completeness"]) == {"high"}
+
+
+def test_width_allocation_separates_rows_the_candidate_helps_from_rows_it_costs(
+    _stub_routing,
+) -> None:
+    """The point of the breakdown: one mean can hide two regimes pulling opposite ways."""
+
+    covered = [_StubRow(f"h{index}", 1_000_000, source_count_12m=3) for index in range(24)]
+    missed = [_StubRow(f"m{index}", 3_000_000, source_count_12m=0) for index in range(24)]
+
+    allocation = _width_allocation(
+        _paired_rows(
+            covered + missed, _StubCapacity(), _StubIntervals(150_000), _StubIntervals(100_000)
+        )[0]
+    )
+    sources = allocation["dimensions"]["source_count_12m"]
+
+    # Where both models cover, the extra width is pure cost.
+    assert sources["high"]["mean_difference_minor"] > 0
+    assert sources["high"]["candidate_coverage"] == 1.0
+    # Where both miss high, the extra width buys back more penalty than it spends.
+    assert sources["none"]["mean_difference_minor"] < 0
+    assert sources["none"]["candidate_upper_tail_miss_rate"] == 1.0
+    assert allocation["dimensions"]["residual_sign"]["under-estimated"]["paired_row_count"] == 24
