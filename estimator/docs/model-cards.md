@@ -125,10 +125,12 @@ against a floor of `0.7500`. By suite: `income_diverse` `0.7670`, `incomplete_ob
 
 **Gate.** Coverage is one-sided on under-coverage, per suite and per band. Each tail is additionally
 gated on its own miss rate against `0.10`, because a joint `80%` figure is satisfied by a lower tail
-missing `0.02` and an upper missing `0.18`. Sharpness is mandatory, with no configurable ceiling: the
-mean Winkler score is compared per suite against the fixed-band conformal model on the same rows.
-Every band publishes unconditionally; the measurement decides only whether the artifact promotes,
-never its shape. Error bars are measured by resampling customers rather than months.
+missing `0.02` and an upper missing `0.18`. Sharpness is mandatory and unconditional: the Winkler
+score is compared per suite against the fixed-band conformal model on the same rows, as a one-sided
+non-inferiority test on the paired per-row difference against a margin declared in advance, `2%` of
+that suite's baseline score. Every band publishes unconditionally; the measurement decides only
+whether the artifact promotes, never its shape. Error bars are measured by resampling customers
+rather than months.
 
 **Known failure modes.**
 - `income_diverse` clears its coverage floor at `0.7670` while its upper tail misses `0.1372` against
@@ -147,10 +149,11 @@ never its shape. Error bars are measured by resampling customers rather than mon
   `conformal-intervals-0.8.0`, in a run whose capacity binding cannot be reconstructed; see
   `evaluation/baselines/README.md`. They are the reason to expect trouble, not a measurement of
   `0.9`.
-- The sharpness comparison is a ratio of two unpaired means with no error bar and no declared
-  margin. `candidate_over_baseline <= 1.0` treats a `1.001` ratio as a failure and a `0.999` as a
-  pass, on a difference whose sampling noise nobody has measured. The failures it currently reports
-  are large enough not to turn on this, but the gate is not yet a test.
+- The recorded failures were produced by the earlier sharpness form, an unpaired ratio of means with
+  no error bar and no declared margin. The gate is now a paired non-inferiority test, but the
+  numbers in the report predate it. They are large enough not to turn on the difference: the
+  candidate spends `19%` more score than the baseline on `income_diverse` and `27%` on
+  `incomplete_observation`, against a `2%` margin.
 - Final-test seeds `510_000`–`530_000` have been inspected across several method-selection rounds.
   They are validation seeds, not a release lockbox.
 - Annual quantiles are not produced. Deriving them from monthly quantiles needs a dependence

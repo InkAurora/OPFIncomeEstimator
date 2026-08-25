@@ -25,7 +25,10 @@ from income_estimator.models.quantiles import (
 )
 from income_estimator.pipeline import EnsembleIncomeEstimator
 from training.calibrate_quantiles import (
+    SHARPNESS_NONINFERIORITY_MARGIN,
     TAIL_MISS_TOLERANCE,
+    _paired_sharpness,
+    _sharpness_failure,
     _tail_failures,
     _undercoverage_failure,
 )
@@ -813,3 +816,159 @@ def test_a_gated_segment_without_a_clustered_error_bar_is_a_failure() -> None:
     assert gate["clustered_standard_error"] is None
     assert failure is not None
     assert "no customer-clustered standard error is available" in failure
+
+
+class _StubRow:
+    """The three attributes `_paired_sharpness` reads. Routing is stubbed out separately."""
+
+    def __init__(self, customer_id: str, truth: int) -> None:
+        self.customer_id = customer_id
+        self.features: dict[str, float] = {}
+        self.sustainable_monthly_income_minor = truth
+
+
+class _StubCapacity:
+    @staticmethod
+    def predict_positive_basis_points(features) -> int:
+        return 9_000
+
+
+class _StubIntervals:
+    """A fixed half-width, or no interval at all."""
+
+    def __init__(self, half_width: int | None) -> None:
+        self.half_width = half_width
+
+    def interval_minor(self, point: int, **_) -> tuple[int, int] | None:
+        if self.half_width is None:
+            return None
+        return point - self.half_width, point + self.half_width
+
+
+@pytest.fixture
+def _stub_routing(monkeypatch):
+    """Route every row to the same point estimate, so only the interval width varies."""
+
+    class _Routed:
+        sustainable_income_minor = 1_000_000
+        confidence_score_basis_points = 8_000
+
+    monkeypatch.setattr(
+        "training.calibrate_quantiles._routed", lambda row, capacity: _Routed()
+    )
+
+
+def test_sharpness_pairs_the_two_models_row_by_row(_stub_routing) -> None:
+    """The difference is taken per row, not between two separately reported means.
+
+    Every row here is covered exactly, so each Winkler score is its own width and the paired
+    difference is the extra width the candidate spends: `2 * (150_000 - 100_000)`.
+    """
+
+    rows = [_StubRow(f"c{index % 2}", 1_000_000) for index in range(24)]
+
+    paired = _paired_sharpness(
+        rows, _StubCapacity(), _StubIntervals(150_000), _StubIntervals(100_000)
+    )
+
+    assert paired["paired_row_count"] == 24
+    assert paired["unpaired_row_count"] == 0
+    assert paired["customer_count"] == 2
+    assert paired["mean_difference_minor"] == 100_000
+    assert paired["candidate_worse_row_share"] == 1.0
+    # Identical in every customer, so every resample gives the same mean and the error bar is zero.
+    assert paired["clustered_standard_error_minor"] == 0.0
+    assert paired["difference_upper_confidence_bound_minor"] == 100_000
+
+
+def test_sharpness_error_bars_widen_when_customers_disagree(_stub_routing) -> None:
+    """Customers, not months, are resampled: one customer's rows move together."""
+
+    same = [_StubRow("c0", 1_000_000) for _ in range(12)]
+    same += [_StubRow("c1", 1_000_000) for _ in range(12)]
+    split = [_StubRow("c0", 1_000_000) for _ in range(12)]
+    split += [_StubRow("c1", 4_000_000) for _ in range(12)]
+
+    candidate, baseline = _StubIntervals(150_000), _StubIntervals(100_000)
+    agreeing = _paired_sharpness(same, _StubCapacity(), candidate, baseline)
+    disagreeing = _paired_sharpness(split, _StubCapacity(), candidate, baseline)
+
+    assert agreeing["clustered_standard_error_minor"] == 0.0
+    assert disagreeing["clustered_standard_error_minor"] > 0.0
+    assert (
+        disagreeing["difference_upper_confidence_bound_minor"]
+        > disagreeing["mean_difference_minor"]
+    )
+
+
+def test_a_row_either_model_withholds_is_counted_not_dropped(_stub_routing) -> None:
+    rows = [_StubRow("c0", 1_000_000) for _ in range(6)]
+
+    paired = _paired_sharpness(
+        rows, _StubCapacity(), _StubIntervals(150_000), _StubIntervals(None)
+    )
+
+    assert paired["paired_row_count"] == 0
+    assert paired["unpaired_row_count"] == 6
+
+
+def _sharpness(mean_difference: float, error: float, baseline_score: float):
+    paired = {
+        "paired_row_count": 2_880,
+        "mean_difference_minor": mean_difference,
+        "clustered_standard_error_minor": error,
+        "difference_upper_confidence_bound_minor": mean_difference + 2 * error,
+    }
+    return _sharpness_failure(
+        "income_diverse.yaml",
+        {"mean_interval_score_minor": baseline_score + mean_difference},
+        {"mean_interval_score_minor": baseline_score},
+        paired,
+        {"passed": False},
+        baseline_calibration="fixed-band-baseline",
+        gated=True,
+    )
+
+
+def test_sharpness_is_judged_against_a_predeclared_margin_with_its_error_bar() -> None:
+    """A ratio just over `1.0` is noise, not a regression, and must not read as one."""
+
+    baseline_score = 309_763.29
+    margin = SHARPNESS_NONINFERIORITY_MARGIN * baseline_score
+
+    inside, no_failure = _sharpness(margin * 0.2, margin * 0.1, baseline_score)
+    assert inside["passed"] is True
+    assert no_failure is None
+    assert inside["candidate_over_baseline"] > 1.0
+
+    # The point estimate sits under the margin, but the error bar does not clear it.
+    uncertain, failure = _sharpness(margin * 0.8, margin * 0.5, baseline_score)
+    assert uncertain["passed"] is False
+    assert failure is not None and "predeclared margin" in failure
+
+
+def test_the_current_income_diverse_gap_still_fails_by_a_wide_margin() -> None:
+    """The `0.9` failures are kept. `income_diverse` spends 19% more score than the baseline."""
+
+    gate, failure = _sharpness(369_897.45 - 309_763.29, 2_000.0, 309_763.29)
+
+    assert gate["passed"] is False
+    assert failure is not None
+    assert gate["noninferiority_margin_minor"] == round(0.02 * 309_763.29, 4)
+    # Contested, and recorded as such rather than excluded: the baseline it loses to under-covers.
+    assert gate["baseline_tails_hold"] is False
+
+
+def test_sharpness_without_an_error_bar_is_refused_rather_than_passed() -> None:
+    gate, failure = _sharpness_failure(
+        "life_events.yaml",
+        {"mean_interval_score_minor": 76_285.47},
+        {"mean_interval_score_minor": 83_808.25},
+        {"paired_row_count": 12, "difference_upper_confidence_bound_minor": None},
+        {"passed": True},
+        baseline_calibration="fixed-band-baseline",
+        gated=True,
+    )
+
+    assert gate["passed"] is False
+    assert failure is not None and "no paired error bar" in failure

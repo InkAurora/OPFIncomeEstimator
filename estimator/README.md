@@ -305,9 +305,17 @@ above.
 The coverage gate is one-sided. Under-coverage understates risk and fails; exceeding nominal does
 not, because on a suite whose point estimate is often exact no interval width can bring coverage
 down to nominal. Each tail is gated separately against `0.10`, because a joint `80%` figure is
-satisfied by a lower tail missing `0.02` and an upper missing `0.18`. Sharpness is mandatory and has
-no configurable ceiling: the Winkler score is compared per suite against the fixed-band conformal
-model on the same rows, which is what stops a one-sided gate from being satisfied by widening.
+satisfied by a lower tail missing `0.02` and an upper missing `0.18`. Sharpness is mandatory: the
+Winkler score is compared per suite against the fixed-band conformal model on the same rows, which
+is what stops a one-sided gate from being satisfied by widening.
+
+That comparison is a one-sided non-inferiority test on the paired difference. Both models score the
+same rows, so the difference is taken row by row and its error bar comes from resampling customers;
+the candidate passes when the upper end of that difference stays below a margin declared in advance,
+`2%` of the suite's own baseline score. A ratio just over `1.0` is noise and no longer reads as a
+regression, and a difference with no error bar is refused rather than passed. The gate stays
+unconditional even where the baseline itself under-covers, which is recorded per suite as
+`baseline_tails_hold`.
 
 `0.9` does not promote, and the findings are recorded rather than smoothed over. `income_diverse`
 clears its coverage floor while its upper tail misses `0.1372` against a ceiling of `0.1250`, so its

@@ -83,6 +83,14 @@ MINIMUM_BAND_RESIDUALS = 100
 # that is the unit the population draw uses.
 MINIMUM_GATED_CUSTOMERS = 15
 
+# Predeclared, and declared here rather than derived from a run, because a margin chosen after
+# seeing the difference is not a margin. A candidate may cost this much more Winkler score per row
+# than the fixed-band model before the sharpness gate calls it worse, as a fraction of that suite's
+# own baseline score: suite scores differ by roughly 4x, so an absolute figure would mean four
+# different things. Set where a sharpness regression stops being operationally uninteresting and
+# well below what any candidate so far spends.
+SHARPNESS_NONINFERIORITY_MARGIN = 0.02
+
 COVERAGE_BOOTSTRAP_DRAWS = 2_000
 
 
@@ -237,6 +245,81 @@ def _winkler(lower: int, upper: int, truth: int, alpha: float) -> int:
     elif truth > upper:
         score += round(2 * (truth - upper) / alpha)
     return score
+
+
+def _paired_sharpness(rows, capacity, candidate, baseline) -> dict[str, object]:
+    """Uncertainty of `candidate - baseline` on the rows both models score.
+
+    A ratio of two independently reported means is not a comparison. The two models are evaluated
+    on the same rows, so the difference is paired, and the shared variance that dominates a Winkler
+    score, how hard each customer-month happens to be, cancels row by row. What survives is what the
+    calibration choice actually costs, and only that difference has to clear a margin.
+
+    The resampling unit is the customer, for the same reason it is everywhere else here: a customer
+    supplies roughly twelve of these rows and their differences move together.
+
+    A row either model withholds cannot be paired and is excluded from both sides, counted rather
+    than dropped silently. This writer publishes every band, so a non-zero count here means one of
+    the two artifacts is older than the complete-promotion rule.
+    """
+
+    if not rows:
+        return {"paired_row_count": 0}
+    alpha = 1.0 - (DEFAULT_UPPER_QUANTILE - DEFAULT_LOWER_QUANTILE)
+    differences_by_customer: dict[str, int] = {}
+    counts_by_customer: dict[str, int] = {}
+    differences: list[int] = []
+    unpaired = 0
+    for row in rows:
+        routed = _routed(row, capacity)
+        point = routed.sustainable_income_minor
+        if point is None:
+            unpaired += 1
+            continue
+        positive = capacity.predict_positive_basis_points(row.features)
+        score = routed.confidence_score_basis_points
+        pair = [
+            model.interval_minor(
+                point,
+                positive_basis_points=positive,
+                confidence_basis_points=score,
+                features=row.features,
+            )
+            for model in (candidate, baseline)
+        ]
+        if any(bounds is None for bounds in pair):
+            unpaired += 1
+            continue
+        truth = row.sustainable_monthly_income_minor
+        candidate_score, baseline_score = (
+            _winkler(lower, upper, truth, alpha) for lower, upper in pair
+        )
+        difference = candidate_score - baseline_score
+        differences.append(difference)
+        differences_by_customer[row.customer_id] = (
+            differences_by_customer.get(row.customer_id, 0) + difference
+        )
+        counts_by_customer[row.customer_id] = counts_by_customer.get(row.customer_id, 0) + 1
+    if not differences:
+        return {"paired_row_count": 0, "unpaired_row_count": unpaired}
+    (error,) = _clustered_standard_errors(
+        {customer: (total,) for customer, total in differences_by_customer.items()},
+        counts_by_customer,
+    )
+    mean_difference = fmean(differences)
+    return {
+        "paired_row_count": len(differences),
+        "unpaired_row_count": unpaired,
+        "customer_count": len(counts_by_customer),
+        "mean_difference_minor": round(mean_difference, 4),
+        "clustered_standard_error_minor": round(error, 4) if error is not None else None,
+        "difference_upper_confidence_bound_minor": (
+            round(mean_difference + 2 * error, 4) if error is not None else None
+        ),
+        "candidate_worse_row_share": round(
+            sum(1 for value in differences if value > 0) / len(differences), 6
+        ),
+    }
 
 
 def _coverage_metrics(rows, capacity, intervals) -> dict[str, object]:
@@ -438,6 +521,78 @@ def _tail_failures(
             )
     gate["passed"] = all(gate[tail]["passed"] for tail in ("lower", "upper"))
     return gate, failures
+
+
+def _sharpness_failure(
+    label: str,
+    metrics: dict[str, object],
+    baseline_metrics: dict[str, object],
+    paired: dict[str, object],
+    baseline_tails: dict[str, object],
+    *,
+    baseline_calibration: str,
+    gated: bool,
+) -> tuple[dict[str, object], str | None]:
+    """Judge sharpness as a one-sided non-inferiority test on the paired difference.
+
+    The old form compared two independently reported means and failed anything above a ratio of
+    `1.0`. That treats `1.001` as a regression and `0.999` as an improvement, on a difference whose
+    sampling noise was never measured.
+
+    Non-inferiority instead asks whether the whole plausible range of the paired difference sits
+    below a margin fixed in advance. A candidate passes by being no more than
+    `SHARPNESS_NONINFERIORITY_MARGIN` of the baseline score worse per row, error bar included, and a
+    difference with no error bar is refused rather than waved through.
+
+    The gate stays unconditional. `baseline_tails_hold` records whether the baseline holds its own
+    tail claims on this suite, because a baseline that under-covers wins on Winkler score by
+    declining to buy width it owes. That is worth seeing, and it is not an exemption: excluding
+    under-covering baselines would remove exactly the pressure the interval score exists to apply.
+    """
+
+    candidate_score = metrics.get("mean_interval_score_minor")
+    baseline_score = baseline_metrics.get("mean_interval_score_minor")
+    ratio = (
+        round(candidate_score / baseline_score, 6)
+        if candidate_score is not None and baseline_score
+        else None
+    )
+    margin = round(SHARPNESS_NONINFERIORITY_MARGIN * baseline_score, 4) if baseline_score else None
+    bound = paired.get("difference_upper_confidence_bound_minor")
+    passed = bound is not None and margin is not None and bound <= margin
+    gate: dict[str, object] = {
+        "baseline_calibration": baseline_calibration,
+        "baseline_mean_interval_score_minor": baseline_score,
+        "candidate_mean_interval_score_minor": candidate_score,
+        "candidate_over_baseline": ratio,
+        "baseline_mean_interval_width_minor": baseline_metrics.get("mean_interval_width_minor"),
+        "candidate_mean_interval_width_minor": metrics.get("mean_interval_width_minor"),
+        "baseline_empirical_coverage": baseline_metrics.get("empirical_coverage"),
+        "candidate_empirical_coverage": metrics.get("empirical_coverage"),
+        "baseline_lower_tail_miss_rate": baseline_metrics.get("lower_tail_miss_rate"),
+        "baseline_upper_tail_miss_rate": baseline_metrics.get("upper_tail_miss_rate"),
+        "baseline_tails_hold": bool(baseline_tails.get("passed")),
+        "baseline_wape": baseline_metrics.get("wape"),
+        "candidate_wape": metrics.get("wape"),
+        "noninferiority_margin_fraction": SHARPNESS_NONINFERIORITY_MARGIN,
+        "noninferiority_margin_minor": margin,
+        "paired": paired,
+        "gated": gated,
+        "passed": passed,
+    }
+    if not gated or passed:
+        return gate, None
+    if bound is None:
+        return gate, (
+            f"{label} sharpness has no paired error bar and cannot be judged "
+            f"({paired.get('paired_row_count')} paired rows)"
+        )
+    return gate, (
+        f"{label} sharpness: paired mean interval score difference "
+        f"{paired['mean_difference_minor']} (upper bound {bound}) exceeds the predeclared margin "
+        f"{margin}, {SHARPNESS_NONINFERIORITY_MARGIN:.0%} of the fixed-band baseline "
+        f"{baseline_score}"
+    )
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -704,35 +859,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         failures.extend(tail_failures)
 
         baseline_metrics = _coverage_metrics(rows, capacity, baseline)
-        candidate_score = metrics.get("mean_interval_score_minor")
-        baseline_score = baseline_metrics.get("mean_interval_score_minor")
-        ratio = (
-            round(candidate_score / baseline_score, 6)
-            if candidate_score is not None and baseline_score
-            else None
+        paired = _paired_sharpness(rows, capacity, intervals, baseline)
+        baseline_tails, _ = _tail_failures(f"{scenario} baseline", baseline_metrics, nominal_miss)
+        sharp_gate, sharp_failure = _sharpness_failure(
+            scenario,
+            metrics,
+            baseline_metrics,
+            paired,
+            baseline_tails,
+            baseline_calibration=baseline_artifact.calibration_version,
+            gated=bool(gate.get("gated")),
         )
-        sharp_passed = ratio is not None and ratio <= 1.0
-        sharpness_gate[scenario] = {
-            "baseline_calibration": baseline_artifact.calibration_version,
-            "baseline_mean_interval_score_minor": baseline_score,
-            "candidate_mean_interval_score_minor": candidate_score,
-            "candidate_over_baseline": ratio,
-            "baseline_mean_interval_width_minor": baseline_metrics.get(
-                "mean_interval_width_minor"
-            ),
-            "candidate_mean_interval_width_minor": metrics.get("mean_interval_width_minor"),
-            "baseline_empirical_coverage": baseline_metrics.get("empirical_coverage"),
-            "candidate_empirical_coverage": metrics.get("empirical_coverage"),
-            "baseline_wape": baseline_metrics.get("wape"),
-            "candidate_wape": metrics.get("wape"),
-            "gated": bool(gate.get("gated")),
-            "passed": sharp_passed,
-        }
-        if gate.get("gated") and not sharp_passed:
-            failures.append(
-                f"{scenario} interval score {candidate_score} is worse than the fixed-band "
-                f"baseline {baseline_score} (ratio {ratio})"
-            )
+        sharpness_gate[scenario] = sharp_gate
+        if sharp_failure:
+            failures.append(sharp_failure)
         # The interval never moves the point estimate, so a WAPE difference here would mean the two
         # models were measured on different rows.
         if metrics.get("wape") != baseline_metrics.get("wape"):
@@ -850,6 +990,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "requires_every_band_published": True,
             "requires_every_row_published": True,
             "minimum_gated_customers": MINIMUM_GATED_CUSTOMERS,
+            "sharpness_noninferiority_margin": SHARPNESS_NONINFERIORITY_MARGIN,
             "overall": overall_gate,
             "overall_tails": overall_tail_gate,
             "zero_truth": zero_gate,

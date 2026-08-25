@@ -22,9 +22,29 @@ corrects each tail at its own finite-sample `0.90` quantile, which is what makes
 Promotion means complete promotion. The artifact publishes every band unconditionally; the final
 test decides only whether the artifact promotes. Zero withheld rows and all three bands are
 required, both tails are gated on their own miss rate, and a band too thin to fit its own pair falls
-back to the joint widening and cannot promote. Sharpness is mandatory and has no configurable
-ceiling: the candidate's Winkler score is measured against the fixed-band conformal model on the
-same final rows, so coverage bought by widening cannot pass a one-sided coverage gate.
+back to the joint widening and cannot promote. Sharpness is mandatory: the candidate's Winkler score
+is measured against the fixed-band conformal model on the same final rows, so coverage bought by
+widening cannot pass a one-sided coverage gate.
+
+Sharpness is a one-sided non-inferiority test on the **paired** difference. Both models score the
+same rows, so the difference is taken row by row and the shared variance that dominates a Winkler
+score, how hard each customer-month happens to be, cancels. Its error bar comes from resampling
+customers, as everywhere else here. The candidate passes when the upper end of that difference sits
+below a margin fixed in advance: `SHARPNESS_NONINFERIORITY_MARGIN`, `2%` of that suite's own
+baseline score. Suite scores differ by roughly `4x`, so an absolute margin would mean four different
+things.
+
+The earlier form compared two independently reported means and failed anything above a ratio of
+`1.0`, which calls `1.001` a regression and `0.999` an improvement on a difference whose sampling
+noise nobody had measured. A difference with no error bar is now refused rather than passed.
+
+The gate stays unconditional, and the report records why that matters. `baseline_tails_hold` says
+whether the fixed-band model holds its own `p10`/`p90` claims on each suite; on `income_diverse` it
+does not, so the candidate is being asked to beat a model that under-covers and wins on score by
+declining to buy width it owes. That is recorded as a diagnostic, not turned into an exemption:
+excluding under-covering baselines would remove exactly the pressure the interval score exists to
+apply. `baseline_lower_tail_miss_rate` and `baseline_upper_tail_miss_rate` are recorded beside the
+candidate's for the same reason.
 
 Four populations, customer-disjoint, and the report asserts zero overlap:
 
