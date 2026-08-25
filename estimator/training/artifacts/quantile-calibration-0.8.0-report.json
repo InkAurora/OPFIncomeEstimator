@@ -1,0 +1,328 @@
+{
+  "artifact_sha256": "00acac54b8be9f7fffc62ce63c948d530e89bb2a68d520551554b0c47ce7a8db",
+  "calibration": {
+    "band_offsets": {
+      "high": {
+        "lower_log_offset": -0.004057325335,
+        "residual_count": 4322,
+        "upper_log_offset": 0.083448984547
+      },
+      "low": {
+        "lower_log_offset": -0.379100950908,
+        "residual_count": 691,
+        "upper_log_offset": 0.306378423654
+      },
+      "medium": {
+        "lower_log_offset": -0.060162709827,
+        "residual_count": 3003,
+        "upper_log_offset": 0.152606069635
+      }
+    },
+    "bands_using_global_fallback": {},
+    "conformal_widening": -0.007700078082,
+    "conformity_score_count": 8016,
+    "lower_log_offset": -0.052409165663,
+    "minimum_band_residuals": 100,
+    "positive_residual_count": 8016,
+    "published_bands": [
+      "high",
+      "medium"
+    ],
+    "residual_quantile_training_customers": 709,
+    "residual_quantile_training_rows": 8028,
+    "residual_quantile_trees": [
+      200,
+      200
+    ],
+    "residual_quantile_version": "residual-quantiles-pinball-0.9.0",
+    "row_count": 8640,
+    "upper_log_offset": 0.12233880653
+  },
+  "calibration_version": "conformal-intervals-0.8.0",
+  "capacity_artifact_sha256": "f4f10e8d9930902d3eda26e7b5b64c37ccd75a0d1a518043dd64f0fac6ab7a08",
+  "capacity_model_version": "capacity-gbdt-stumps-0.5.0",
+  "dataset_version": "synthetic-customer-months-1.0.0",
+  "final_test": {
+    "by_confidence_band": {
+      "high": {
+        "clustered_standard_error": 0.006566,
+        "count": 4335,
+        "customer_count": 667,
+        "empirical_coverage": 0.914648,
+        "interval_score_over_mean_truth": 0.338228,
+        "mean_absolute_error_minor": 17577.0111,
+        "mean_interval_score_minor": 194669.6697,
+        "mean_interval_width_minor": 177393.9696,
+        "median_interval_width_minor": 107667.0,
+        "wape": 0.03053911,
+        "withheld_count": 0
+      },
+      "low": {
+        "clustered_standard_error": 0.025516,
+        "count": 770,
+        "customer_count": 311,
+        "empirical_coverage": 0.702597,
+        "interval_score_over_mean_truth": 0.990466,
+        "mean_absolute_error_minor": 65614.8896,
+        "mean_interval_score_minor": 401927.0948,
+        "mean_interval_width_minor": 256050.6143,
+        "median_interval_width_minor": 198553.0,
+        "wape": 0.1616943,
+        "withheld_count": 0
+      },
+      "medium": {
+        "clustered_standard_error": 0.006587,
+        "count": 3535,
+        "customer_count": 720,
+        "empirical_coverage": 0.913154,
+        "interval_score_over_mean_truth": 0.418746,
+        "mean_absolute_error_minor": 19614.9842,
+        "mean_interval_score_minor": 179971.3641,
+        "mean_interval_width_minor": 146202.8436,
+        "median_interval_width_minor": 107667.0,
+        "wape": 0.04563893,
+        "withheld_count": 0
+      }
+    },
+    "by_suite": {
+      "income_diverse.yaml": {
+        "clustered_standard_error": 0.01113,
+        "count": 2486,
+        "customer_count": 240,
+        "empirical_coverage": 0.778761,
+        "interval_score_over_mean_truth": 0.843505,
+        "mean_absolute_error_minor": 44490.9988,
+        "mean_interval_score_minor": 362215.8576,
+        "mean_interval_width_minor": 291518.6653,
+        "median_interval_width_minor": 168008.5,
+        "wape": 0.10360782,
+        "withheld_count": 394
+      },
+      "incomplete_observation.yaml": {
+        "clustered_standard_error": 0.004601,
+        "count": 2504,
+        "customer_count": 240,
+        "empirical_coverage": 0.96885,
+        "interval_score_over_mean_truth": 0.239435,
+        "mean_absolute_error_minor": 1576.7288,
+        "mean_interval_score_minor": 143660.7021,
+        "mean_interval_width_minor": 137173.3339,
+        "median_interval_width_minor": 107667.0,
+        "wape": 0.00262788,
+        "withheld_count": 376
+      },
+      "life_events.yaml": {
+        "clustered_standard_error": 0.002169,
+        "count": 2880,
+        "customer_count": 240,
+        "empirical_coverage": 0.982986,
+        "interval_score_over_mean_truth": 0.15224,
+        "mean_absolute_error_minor": 10757.8333,
+        "mean_interval_score_minor": 76353.0451,
+        "mean_interval_width_minor": 75566.8333,
+        "median_interval_width_minor": 74967.0,
+        "wape": 0.02145007,
+        "withheld_count": 0
+      }
+    },
+    "nominal_coverage": 0.8,
+    "overall_published": {
+      "clustered_standard_error": 0.005058,
+      "count": 7870,
+      "customer_count": 720,
+      "empirical_coverage": 0.913977,
+      "interval_score_over_mean_truth": 0.368702,
+      "mean_absolute_error_minor": 18492.4158,
+      "mean_interval_score_minor": 188067.5718,
+      "mean_interval_width_minor": 163383.7243,
+      "median_interval_width_minor": 107667.0,
+      "wape": 0.0362539,
+      "withheld_count": 770
+    },
+    "published_rows": 7870,
+    "row_count": 8640,
+    "zero_truth": {
+      "clustered_standard_error": 0.0,
+      "count": 585,
+      "customer_count": 250,
+      "empirical_coverage": 1.0,
+      "interval_score_over_mean_truth": null,
+      "mean_absolute_error_minor": 0.0,
+      "mean_interval_score_minor": 0.0598,
+      "mean_interval_width_minor": 0.0598,
+      "median_interval_width_minor": 0.0,
+      "wape": null,
+      "withheld_count": 15
+    }
+  },
+  "method": "split-conformal-log-residual",
+  "months": 12,
+  "population_size_per_suite": 240,
+  "populations": {
+    "calibration_customers": 720,
+    "calibration_suites": [
+      {
+        "scenario": "income_diverse.yaml",
+        "seed": 410000
+      },
+      {
+        "scenario": "life_events.yaml",
+        "seed": 420000
+      },
+      {
+        "scenario": "incomplete_observation.yaml",
+        "seed": 430000
+      }
+    ],
+    "final_test_customers": 720,
+    "final_test_suites": [
+      {
+        "scenario": "income_diverse.yaml",
+        "seed": 510000
+      },
+      {
+        "scenario": "life_events.yaml",
+        "seed": 520000
+      },
+      {
+        "scenario": "incomplete_observation.yaml",
+        "seed": 530000
+      }
+    ],
+    "shared_customers": 0,
+    "uncertainty_customers": 720,
+    "uncertainty_suites": [
+      {
+        "scenario": "income_diverse.yaml",
+        "seed": 210000
+      },
+      {
+        "scenario": "life_events.yaml",
+        "seed": 220000
+      },
+      {
+        "scenario": "incomplete_observation.yaml",
+        "seed": 230000
+      }
+    ]
+  },
+  "promotion": {
+    "by_confidence_band": {
+      "high": {
+        "clustered_standard_error": 0.006566,
+        "count": 4335,
+        "customer_count": 667,
+        "empirical_coverage": 0.914648,
+        "floor": 0.75,
+        "gated": true,
+        "interval_score_over_mean_truth": 0.338228,
+        "passed": true,
+        "tolerance": 0.05,
+        "withheld_count": 0
+      },
+      "low": {
+        "clustered_standard_error": 0.025516,
+        "count": 770,
+        "customer_count": 311,
+        "empirical_coverage": 0.702597,
+        "floor": 0.748968,
+        "gated": true,
+        "interval_score_over_mean_truth": 0.990466,
+        "passed": false,
+        "tolerance": 0.051032,
+        "withheld_count": 0
+      },
+      "medium": {
+        "clustered_standard_error": 0.006587,
+        "count": 3535,
+        "customer_count": 720,
+        "empirical_coverage": 0.913154,
+        "floor": 0.75,
+        "gated": true,
+        "interval_score_over_mean_truth": 0.418746,
+        "passed": true,
+        "tolerance": 0.05,
+        "withheld_count": 0
+      }
+    },
+    "by_suite": {
+      "income_diverse.yaml": {
+        "clustered_standard_error": 0.01113,
+        "count": 2486,
+        "customer_count": 240,
+        "empirical_coverage": 0.778761,
+        "floor": 0.75,
+        "gated": true,
+        "interval_score_over_mean_truth": 0.843505,
+        "mean_interval_score_minor": 362215.8576,
+        "passed": true,
+        "tolerance": 0.05,
+        "wape": 0.10360782,
+        "withheld_count": 394
+      },
+      "incomplete_observation.yaml": {
+        "clustered_standard_error": 0.004601,
+        "count": 2504,
+        "customer_count": 240,
+        "empirical_coverage": 0.96885,
+        "floor": 0.75,
+        "gated": true,
+        "interval_score_over_mean_truth": 0.239435,
+        "mean_interval_score_minor": 143660.7021,
+        "passed": true,
+        "tolerance": 0.05,
+        "wape": 0.00262788,
+        "withheld_count": 376
+      },
+      "life_events.yaml": {
+        "clustered_standard_error": 0.002169,
+        "count": 2880,
+        "customer_count": 240,
+        "empirical_coverage": 0.982986,
+        "floor": 0.75,
+        "gated": true,
+        "interval_score_over_mean_truth": 0.15224,
+        "mean_interval_score_minor": 76353.0451,
+        "passed": true,
+        "tolerance": 0.05,
+        "wape": 0.02145007,
+        "withheld_count": 0
+      }
+    },
+    "coverage_tolerance": 0.05,
+    "failures": [],
+    "gate": "one-sided-undercoverage",
+    "interval_score_ceiling": null,
+    "limited_promotion_reason": "ADR 0007. Two of three bands publish and roughly 9% of supported months receive no interval, so this artifact is a research result and a frozen sharpness baseline, not a product-complete release. Its PROMOTED status was granted by a gate that allowed a failing band to withhold itself and still count, which ADR 0007 removes.",
+    "minimum_gated_customers": 15,
+    "overall": {
+      "clustered_standard_error": 0.005058,
+      "count": 7870,
+      "customer_count": 720,
+      "empirical_coverage": 0.913977,
+      "floor": 0.75,
+      "gated": true,
+      "interval_score_over_mean_truth": 0.368702,
+      "passed": true,
+      "tolerance": 0.05,
+      "withheld_count": 770
+    },
+    "product_complete": false,
+    "status": "LIMITED_PROMOTION",
+    "superseded_by": "adaptive-intervals-0.9.0",
+    "zero_truth": {
+      "clustered_standard_error": 0.016538,
+      "count": 585,
+      "customer_count": 250,
+      "empirical_coverage": 1.0,
+      "floor": 0.75,
+      "gated": true,
+      "interval_score_over_mean_truth": null,
+      "passed": true,
+      "tolerance": 0.05,
+      "withheld_count": 15
+    }
+  },
+  "protocol": "adr-0006-frozen-capacity-routed-estimate",
+  "schema_version": "1.2"
+}

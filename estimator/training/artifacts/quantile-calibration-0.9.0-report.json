@@ -1,0 +1,590 @@
+{
+  "artifact_schema_version": "1.2",
+  "artifact_sha256": "38cd8881c85bb11dc425ad1c3a25b610bf7a3b7f43cf4ea02c0a34c800d7ed58",
+  "calibration": {
+    "band_adjustments": {
+      "high": {
+        "lower_adjustment": -0.000584355606,
+        "score_count": 4322,
+        "upper_adjustment": -0.007700078082
+      },
+      "low": {
+        "lower_adjustment": 0.123643700896,
+        "score_count": 691,
+        "upper_adjustment": 0.007915744002
+      },
+      "medium": {
+        "lower_adjustment": -0.017602239762,
+        "score_count": 3003,
+        "upper_adjustment": -0.011601868932
+      }
+    },
+    "band_offsets": {
+      "high": {
+        "lower_log_offset": -0.004057325335,
+        "residual_count": 4322,
+        "upper_log_offset": 0.083448984547
+      },
+      "low": {
+        "lower_log_offset": -0.379100950908,
+        "residual_count": 691,
+        "upper_log_offset": 0.306378423654
+      },
+      "medium": {
+        "lower_log_offset": -0.060162709827,
+        "residual_count": 3003,
+        "upper_log_offset": 0.152606069635
+      }
+    },
+    "bands_using_global_fallback": {},
+    "bands_using_joint_widening_fallback": {},
+    "conformal_widening": -0.007700078082,
+    "conformity_score_count": 8016,
+    "lower_log_offset": -0.052409165663,
+    "lower_tail_coverage": 0.9,
+    "minimum_band_residuals": 100,
+    "positive_residual_count": 8016,
+    "published_bands": [
+      "high",
+      "medium",
+      "low"
+    ],
+    "residual_quantile_training_customers": 709,
+    "residual_quantile_training_rows": 8028,
+    "residual_quantile_trees": [
+      200,
+      200
+    ],
+    "residual_quantile_version": "residual-quantiles-pinball-0.9.0",
+    "row_count": 8640,
+    "upper_log_offset": 0.12233880653,
+    "upper_tail_coverage": 0.9
+  },
+  "calibration_version": "adaptive-intervals-0.9.0",
+  "capacity_artifact_sha256": "4ee9c3a6df62025754e47bafdf8a181250dd99e4840acef2d01a8b899f8b8e6a",
+  "capacity_model_version": "capacity-gbdt-stumps-0.6.0",
+  "dataset_version": "synthetic-customer-months-1.0.0",
+  "final_test": {
+    "by_confidence_band": {
+      "high": {
+        "clustered_standard_error": 0.006492,
+        "count": 4335,
+        "customer_count": 667,
+        "empirical_coverage": 0.917416,
+        "interval_score_over_mean_truth": 0.34242,
+        "lower_tail_miss_rate": 0.021915,
+        "lower_tail_standard_error": 0.003083,
+        "mean_absolute_error_minor": 17577.0111,
+        "mean_interval_score_minor": 197082.4579,
+        "mean_interval_width_minor": 180268.3126,
+        "median_interval_width_minor": 111564.0,
+        "no_point_estimate_count": 0,
+        "upper_tail_miss_rate": 0.060669,
+        "upper_tail_standard_error": 0.00563,
+        "wape": 0.03053911,
+        "withheld_count": 0
+      },
+      "low": {
+        "clustered_standard_error": 0.021031,
+        "count": 770,
+        "customer_count": 311,
+        "empirical_coverage": 0.798701,
+        "interval_score_over_mean_truth": 1.010942,
+        "lower_tail_miss_rate": 0.109091,
+        "lower_tail_standard_error": 0.018998,
+        "mean_absolute_error_minor": 65614.8896,
+        "mean_interval_score_minor": 410235.9649,
+        "mean_interval_width_minor": 303096.7312,
+        "median_interval_width_minor": 248288.0,
+        "no_point_estimate_count": 0,
+        "upper_tail_miss_rate": 0.092208,
+        "upper_tail_standard_error": 0.013008,
+        "wape": 0.1616943,
+        "withheld_count": 0
+      },
+      "medium": {
+        "clustered_standard_error": 0.006707,
+        "count": 3535,
+        "customer_count": 720,
+        "empirical_coverage": 0.910325,
+        "interval_score_over_mean_truth": 0.410376,
+        "lower_tail_miss_rate": 0.03819,
+        "lower_tail_standard_error": 0.004441,
+        "mean_absolute_error_minor": 19614.9842,
+        "mean_interval_score_minor": 176374.155,
+        "mean_interval_width_minor": 140945.1762,
+        "median_interval_width_minor": 100649.0,
+        "no_point_estimate_count": 0,
+        "upper_tail_miss_rate": 0.051485,
+        "upper_tail_standard_error": 0.004951,
+        "wape": 0.04563893,
+        "withheld_count": 0
+      }
+    },
+    "by_suite": {
+      "income_diverse.yaml": {
+        "clustered_standard_error": 0.011637,
+        "count": 2880,
+        "customer_count": 240,
+        "empirical_coverage": 0.767014,
+        "interval_score_over_mean_truth": 0.922826,
+        "lower_tail_miss_rate": 0.095833,
+        "lower_tail_standard_error": 0.009956,
+        "mean_absolute_error_minor": 51028.4365,
+        "mean_interval_score_minor": 369897.4549,
+        "mean_interval_width_minor": 286951.7674,
+        "median_interval_width_minor": 175769.5,
+        "no_point_estimate_count": 0,
+        "upper_tail_miss_rate": 0.137153,
+        "upper_tail_standard_error": 0.009488,
+        "wape": 0.12730648,
+        "withheld_count": 0
+      },
+      "incomplete_observation.yaml": {
+        "clustered_standard_error": 0.00535,
+        "count": 2880,
+        "customer_count": 240,
+        "empirical_coverage": 0.961806,
+        "interval_score_over_mean_truth": 0.294392,
+        "lower_tail_miss_rate": 0.013194,
+        "lower_tail_standard_error": 0.002231,
+        "mean_absolute_error_minor": 6289.6944,
+        "mean_interval_score_minor": 176635.4021,
+        "mean_interval_width_minor": 162927.034,
+        "median_interval_width_minor": 118815.0,
+        "no_point_estimate_count": 0,
+        "upper_tail_miss_rate": 0.025,
+        "upper_tail_standard_error": 0.004138,
+        "wape": 0.01048282,
+        "withheld_count": 0
+      },
+      "life_events.yaml": {
+        "clustered_standard_error": 0.002169,
+        "count": 2880,
+        "customer_count": 240,
+        "empirical_coverage": 0.982986,
+        "interval_score_over_mean_truth": 0.152106,
+        "lower_tail_miss_rate": 0.0,
+        "lower_tail_standard_error": 0.0,
+        "mean_absolute_error_minor": 10757.8333,
+        "mean_interval_score_minor": 76285.4715,
+        "mean_interval_width_minor": 75499.2597,
+        "median_interval_width_minor": 73785.0,
+        "no_point_estimate_count": 0,
+        "upper_tail_miss_rate": 0.017014,
+        "upper_tail_standard_error": 0.002169,
+        "wape": 0.02145007,
+        "withheld_count": 0
+      }
+    },
+    "nominal_coverage": 0.8,
+    "nominal_tail_miss_rate": 0.1,
+    "overall_published": {
+      "clustered_standard_error": 0.005507,
+      "count": 8640,
+      "customer_count": 720,
+      "empirical_coverage": 0.903935,
+      "interval_score_over_mean_truth": 0.41456,
+      "lower_tail_miss_rate": 0.036343,
+      "lower_tail_standard_error": 0.003795,
+      "mean_absolute_error_minor": 22691.9881,
+      "mean_interval_score_minor": 207606.1095,
+      "mean_interval_width_minor": 175126.0204,
+      "median_interval_width_minor": 110796.0,
+      "no_point_estimate_count": 0,
+      "upper_tail_miss_rate": 0.059722,
+      "upper_tail_standard_error": 0.003946,
+      "wape": 0.04531267,
+      "withheld_count": 0
+    },
+    "published_rows": 8640,
+    "row_count": 8640,
+    "zero_truth": {
+      "clustered_standard_error": 0.001581,
+      "count": 600,
+      "customer_count": 250,
+      "empirical_coverage": 0.998333,
+      "interval_score_over_mean_truth": null,
+      "lower_tail_miss_rate": 0.001667,
+      "lower_tail_standard_error": 0.001581,
+      "mean_absolute_error_minor": 9939.8333,
+      "mean_interval_score_minor": 18544.405,
+      "mean_interval_width_minor": 15793.855,
+      "median_interval_width_minor": 0.0,
+      "no_point_estimate_count": 0,
+      "upper_tail_miss_rate": 0.0,
+      "upper_tail_standard_error": 0.0,
+      "wape": null,
+      "withheld_count": 0
+    }
+  },
+  "method": "split-conformal-log-residual",
+  "months": 12,
+  "population_size_per_suite": 240,
+  "populations": {
+    "calibration_customers": 720,
+    "calibration_suites": [
+      {
+        "scenario": "income_diverse.yaml",
+        "seed": 410000
+      },
+      {
+        "scenario": "life_events.yaml",
+        "seed": 420000
+      },
+      {
+        "scenario": "incomplete_observation.yaml",
+        "seed": 430000
+      }
+    ],
+    "final_test_customers": 720,
+    "final_test_suites": [
+      {
+        "scenario": "income_diverse.yaml",
+        "seed": 510000
+      },
+      {
+        "scenario": "life_events.yaml",
+        "seed": 520000
+      },
+      {
+        "scenario": "incomplete_observation.yaml",
+        "seed": 530000
+      }
+    ],
+    "shared_customers": 0,
+    "uncertainty_customers": 720,
+    "uncertainty_suites": [
+      {
+        "scenario": "income_diverse.yaml",
+        "seed": 210000
+      },
+      {
+        "scenario": "life_events.yaml",
+        "seed": 220000
+      },
+      {
+        "scenario": "incomplete_observation.yaml",
+        "seed": 230000
+      }
+    ]
+  },
+  "promotion": {
+    "by_confidence_band": {
+      "high": {
+        "clustered_standard_error": 0.006492,
+        "count": 4335,
+        "customer_count": 667,
+        "empirical_coverage": 0.917416,
+        "floor": 0.75,
+        "gated": true,
+        "interval_score_over_mean_truth": 0.34242,
+        "passed": true,
+        "tolerance": 0.05,
+        "withheld_count": 0
+      },
+      "low": {
+        "clustered_standard_error": 0.021031,
+        "count": 770,
+        "customer_count": 311,
+        "empirical_coverage": 0.798701,
+        "floor": 0.75,
+        "gated": true,
+        "interval_score_over_mean_truth": 1.010942,
+        "passed": true,
+        "tolerance": 0.05,
+        "withheld_count": 0
+      },
+      "medium": {
+        "clustered_standard_error": 0.006707,
+        "count": 3535,
+        "customer_count": 720,
+        "empirical_coverage": 0.910325,
+        "floor": 0.75,
+        "gated": true,
+        "interval_score_over_mean_truth": 0.410376,
+        "passed": true,
+        "tolerance": 0.05,
+        "withheld_count": 0
+      }
+    },
+    "by_confidence_band_tails": {
+      "high": {
+        "count": 4335,
+        "customer_count": 667,
+        "gated": true,
+        "lower": {
+          "ceiling": 0.125,
+          "clustered_standard_error": 0.003083,
+          "miss_rate": 0.021915,
+          "passed": true,
+          "tolerance": 0.025
+        },
+        "nominal_miss_rate": 0.1,
+        "passed": true,
+        "upper": {
+          "ceiling": 0.125,
+          "clustered_standard_error": 0.00563,
+          "miss_rate": 0.060669,
+          "passed": true,
+          "tolerance": 0.025
+        }
+      },
+      "low": {
+        "count": 770,
+        "customer_count": 311,
+        "gated": true,
+        "lower": {
+          "ceiling": 0.137996,
+          "clustered_standard_error": 0.018998,
+          "miss_rate": 0.109091,
+          "passed": true,
+          "tolerance": 0.037996
+        },
+        "nominal_miss_rate": 0.1,
+        "passed": true,
+        "upper": {
+          "ceiling": 0.126016,
+          "clustered_standard_error": 0.013008,
+          "miss_rate": 0.092208,
+          "passed": true,
+          "tolerance": 0.026016
+        }
+      },
+      "medium": {
+        "count": 3535,
+        "customer_count": 720,
+        "gated": true,
+        "lower": {
+          "ceiling": 0.125,
+          "clustered_standard_error": 0.004441,
+          "miss_rate": 0.03819,
+          "passed": true,
+          "tolerance": 0.025
+        },
+        "nominal_miss_rate": 0.1,
+        "passed": true,
+        "upper": {
+          "ceiling": 0.125,
+          "clustered_standard_error": 0.004951,
+          "miss_rate": 0.051485,
+          "passed": true,
+          "tolerance": 0.025
+        }
+      }
+    },
+    "by_suite": {
+      "income_diverse.yaml": {
+        "clustered_standard_error": 0.011637,
+        "count": 2880,
+        "customer_count": 240,
+        "empirical_coverage": 0.767014,
+        "floor": 0.75,
+        "gated": true,
+        "interval_score_over_mean_truth": 0.922826,
+        "mean_interval_score_minor": 369897.4549,
+        "mean_interval_width_minor": 286951.7674,
+        "passed": true,
+        "tails": {
+          "count": 2880,
+          "customer_count": 240,
+          "gated": true,
+          "lower": {
+            "ceiling": 0.125,
+            "clustered_standard_error": 0.009956,
+            "miss_rate": 0.095833,
+            "passed": true,
+            "tolerance": 0.025
+          },
+          "nominal_miss_rate": 0.1,
+          "passed": false,
+          "upper": {
+            "ceiling": 0.125,
+            "clustered_standard_error": 0.009488,
+            "miss_rate": 0.137153,
+            "passed": false,
+            "tolerance": 0.025
+          }
+        },
+        "tolerance": 0.05,
+        "wape": 0.12730648,
+        "withheld_count": 0
+      },
+      "incomplete_observation.yaml": {
+        "clustered_standard_error": 0.00535,
+        "count": 2880,
+        "customer_count": 240,
+        "empirical_coverage": 0.961806,
+        "floor": 0.75,
+        "gated": true,
+        "interval_score_over_mean_truth": 0.294392,
+        "mean_interval_score_minor": 176635.4021,
+        "mean_interval_width_minor": 162927.034,
+        "passed": true,
+        "tails": {
+          "count": 2880,
+          "customer_count": 240,
+          "gated": true,
+          "lower": {
+            "ceiling": 0.125,
+            "clustered_standard_error": 0.002231,
+            "miss_rate": 0.013194,
+            "passed": true,
+            "tolerance": 0.025
+          },
+          "nominal_miss_rate": 0.1,
+          "passed": true,
+          "upper": {
+            "ceiling": 0.125,
+            "clustered_standard_error": 0.004138,
+            "miss_rate": 0.025,
+            "passed": true,
+            "tolerance": 0.025
+          }
+        },
+        "tolerance": 0.05,
+        "wape": 0.01048282,
+        "withheld_count": 0
+      },
+      "life_events.yaml": {
+        "clustered_standard_error": 0.002169,
+        "count": 2880,
+        "customer_count": 240,
+        "empirical_coverage": 0.982986,
+        "floor": 0.75,
+        "gated": true,
+        "interval_score_over_mean_truth": 0.152106,
+        "mean_interval_score_minor": 76285.4715,
+        "mean_interval_width_minor": 75499.2597,
+        "passed": true,
+        "tails": {
+          "count": 2880,
+          "customer_count": 240,
+          "gated": true,
+          "lower": {
+            "ceiling": 0.125,
+            "clustered_standard_error": 0.00559,
+            "miss_rate": 0.0,
+            "passed": true,
+            "tolerance": 0.025
+          },
+          "nominal_miss_rate": 0.1,
+          "passed": true,
+          "upper": {
+            "ceiling": 0.125,
+            "clustered_standard_error": 0.002169,
+            "miss_rate": 0.017014,
+            "passed": true,
+            "tolerance": 0.025
+          }
+        },
+        "tolerance": 0.05,
+        "wape": 0.02145007,
+        "withheld_count": 0
+      }
+    },
+    "coverage_tolerance": 0.05,
+    "failures": [
+      "income_diverse.yaml upper-tail miss rate 0.1372 exceeds the ceiling 0.1250 on 240 customers",
+      "income_diverse.yaml interval score 369897.4549 is worse than the fixed-band baseline 309763.2948 (ratio 1.194129)",
+      "incomplete_observation.yaml interval score 176635.4021 is worse than the fixed-band baseline 139246.2437 (ratio 1.268511)"
+    ],
+    "gate": "one-sided-undercoverage-and-per-tail-miss",
+    "minimum_gated_customers": 15,
+    "overall": {
+      "clustered_standard_error": 0.005507,
+      "count": 8640,
+      "customer_count": 720,
+      "empirical_coverage": 0.903935,
+      "floor": 0.75,
+      "gated": true,
+      "interval_score_over_mean_truth": 0.41456,
+      "passed": true,
+      "tolerance": 0.05,
+      "withheld_count": 0
+    },
+    "overall_tails": {
+      "count": 8640,
+      "customer_count": 720,
+      "gated": true,
+      "lower": {
+        "ceiling": 0.125,
+        "clustered_standard_error": 0.003795,
+        "miss_rate": 0.036343,
+        "passed": true,
+        "tolerance": 0.025
+      },
+      "nominal_miss_rate": 0.1,
+      "passed": true,
+      "upper": {
+        "ceiling": 0.125,
+        "clustered_standard_error": 0.003946,
+        "miss_rate": 0.059722,
+        "passed": true,
+        "tolerance": 0.025
+      }
+    },
+    "requires_every_band_published": true,
+    "requires_every_row_published": true,
+    "sharpness": {
+      "income_diverse.yaml": {
+        "baseline_calibration": "adaptive-intervals-0.9.0-fixed-band-baseline",
+        "baseline_empirical_coverage": 0.531944,
+        "baseline_mean_interval_score_minor": 309763.2948,
+        "baseline_mean_interval_width_minor": 71769.524,
+        "baseline_wape": 0.12730648,
+        "candidate_empirical_coverage": 0.767014,
+        "candidate_mean_interval_score_minor": 369897.4549,
+        "candidate_mean_interval_width_minor": 286951.7674,
+        "candidate_over_baseline": 1.194129,
+        "candidate_wape": 0.12730648,
+        "gated": true,
+        "passed": false
+      },
+      "incomplete_observation.yaml": {
+        "baseline_calibration": "adaptive-intervals-0.9.0-fixed-band-baseline",
+        "baseline_empirical_coverage": 0.984375,
+        "baseline_mean_interval_score_minor": 139246.2437,
+        "baseline_mean_interval_width_minor": 134664.0285,
+        "baseline_wape": 0.01048282,
+        "candidate_empirical_coverage": 0.961806,
+        "candidate_mean_interval_score_minor": 176635.4021,
+        "candidate_mean_interval_width_minor": 162927.034,
+        "candidate_over_baseline": 1.268511,
+        "candidate_wape": 0.01048282,
+        "gated": true,
+        "passed": false
+      },
+      "life_events.yaml": {
+        "baseline_calibration": "adaptive-intervals-0.9.0-fixed-band-baseline",
+        "baseline_empirical_coverage": 0.916667,
+        "baseline_mean_interval_score_minor": 83808.25,
+        "baseline_mean_interval_width_minor": 63638.25,
+        "baseline_wape": 0.02145007,
+        "candidate_empirical_coverage": 0.982986,
+        "candidate_mean_interval_score_minor": 76285.4715,
+        "candidate_mean_interval_width_minor": 75499.2597,
+        "candidate_over_baseline": 0.910238,
+        "candidate_wape": 0.02145007,
+        "gated": true,
+        "passed": true
+      }
+    },
+    "status": "NOT_PROMOTED",
+    "tail_miss_tolerance": 0.025,
+    "zero_truth": {
+      "clustered_standard_error": 0.001581,
+      "count": 600,
+      "customer_count": 250,
+      "empirical_coverage": 0.998333,
+      "floor": 0.75,
+      "gated": true,
+      "interval_score_over_mean_truth": null,
+      "passed": true,
+      "tolerance": 0.05,
+      "withheld_count": 0
+    }
+  },
+  "protocol": "adr-0007-complete-adaptive-promotion",
+  "schema_version": "1.3"
+}

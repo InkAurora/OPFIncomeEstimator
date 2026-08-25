@@ -1,0 +1,4340 @@
+{
+  "schema_version": "1.1",
+  "model_version": "capacity-gbdt-stumps-0.6.0",
+  "feature_version": "customer-month-features-1.2.0",
+  "feature_schema_fingerprint": "e54e70affc30a6fad10282e62463a936",
+  "target": "log1p_sustainable_monthly_income_minor",
+  "anchor_feature_name": "income_mean_3m_minor",
+  "feature_names": [
+    "credits_1m_minor",
+    "credits_3m_minor",
+    "credits_6m_minor",
+    "credits_12m_minor",
+    "debits_1m_minor",
+    "debits_3m_minor",
+    "debits_6m_minor",
+    "debits_12m_minor",
+    "probable_income_1m_minor",
+    "probable_income_3m_minor",
+    "probable_income_6m_minor",
+    "probable_income_12m_minor",
+    "probable_income_mean_3m_minor",
+    "probable_income_mean_6m_minor",
+    "probable_income_mean_12m_minor",
+    "probable_income_median_3m_minor",
+    "probable_income_median_6m_minor",
+    "probable_income_median_12m_minor",
+    "income_1m_minor",
+    "income_3m_minor",
+    "income_6m_minor",
+    "income_12m_minor",
+    "imputed_income_12m_minor",
+    "excluded_own_transfer_12m_minor",
+    "excluded_loan_disbursement_12m_minor",
+    "excluded_investment_redemption_12m_minor",
+    "excluded_refund_12m_minor",
+    "income_mean_3m_minor",
+    "income_mean_6m_minor",
+    "income_mean_12m_minor",
+    "income_median_3m_minor",
+    "income_median_6m_minor",
+    "income_median_12m_minor",
+    "income_std_3m_minor",
+    "income_std_6m_minor",
+    "income_std_12m_minor",
+    "income_variance_3m",
+    "income_variance_6m",
+    "income_variance_12m",
+    "income_cv_6m",
+    "income_cv_12m",
+    "zero_income_months_6m",
+    "zero_income_months_12m",
+    "income_p25_12m_minor",
+    "income_p50_12m_minor",
+    "income_p75_12m_minor",
+    "income_min_12m_minor",
+    "income_max_12m_minor",
+    "source_count_12m",
+    "recurring_source_count_12m",
+    "ecosystem_source_count_12m",
+    "active_source_count_3m",
+    "source_income_12m_minor",
+    "largest_source_share_12m",
+    "source_concentration_hhi_12m",
+    "recurrence_score_mean_12m_basis_points",
+    "recurrence_score_max_12m_basis_points",
+    "source_amount_cv_mean_12m",
+    "source_monthly_capacity_minor",
+    "largest_source_monthly_capacity_minor",
+    "source_frequency_confidence_mean_basis_points",
+    "source_observation_count_12m",
+    "source_age_months_max",
+    "has_no_detected_source",
+    "months_since_last_source_activity",
+    "window_months",
+    "months_observed",
+    "months_since_first_observation",
+    "accounts_declared",
+    "accounts_observed",
+    "institutions_observed",
+    "active_accounts_3m",
+    "effective_consent_coverage_basis_points",
+    "minimum_account_coverage_basis_points",
+    "observed_domain_count",
+    "data_completeness_score_basis_points",
+    "transaction_count_1m",
+    "transaction_count_3m",
+    "transaction_count_12m",
+    "credit_count_1m",
+    "credit_count_3m",
+    "credit_count_12m",
+    "debit_count_3m",
+    "debit_count_12m",
+    "distinct_credit_counterparties_3m",
+    "distinct_credit_counterparties_12m",
+    "days_since_last_credit",
+    "days_since_last_transaction",
+    "available_balance_minor",
+    "balance_accounts_observed",
+    "balance_staleness_days",
+    "observed_loan_count",
+    "loan_disbursement_12m_minor",
+    "months_since_last_loan_disbursement",
+    "investment_contribution_12m_minor",
+    "investment_redemption_12m_minor",
+    "net_investment_contributions_12m_minor",
+    "investment_transaction_count_12m",
+    "card_spend_3m_minor",
+    "credit_utilization_ratio",
+    "installment_commitment_minor",
+    "monthly_debt_payment_minor",
+    "outstanding_debt_minor",
+    "investment_balance_minor"
+  ],
+  "base_score": 0.222496907435,
+  "learning_rate": 0.3,
+  "trees": [
+    {
+      "feature_name": "active_source_count_3m",
+      "threshold": 0.5,
+      "missing_left": true,
+      "left_value": 12.583745429162,
+      "right_value": -0.146995964305
+    },
+    {
+      "feature_name": "months_since_last_source_activity",
+      "threshold": 2.5,
+      "missing_left": false,
+      "left_value": -0.102904980109,
+      "right_value": 8.865820643273
+    },
+    {
+      "feature_name": "active_source_count_3m",
+      "threshold": 0.5,
+      "missing_left": true,
+      "left_value": 6.246373635034,
+      "right_value": -0.072038950058
+    },
+    {
+      "feature_name": "months_since_last_source_activity",
+      "threshold": 2.5,
+      "missing_left": false,
+      "left_value": -0.050431090117,
+      "right_value": 4.400854151955
+    },
+    {
+      "feature_name": "months_since_last_source_activity",
+      "threshold": 2.5,
+      "missing_left": false,
+      "left_value": -0.035304440839,
+      "right_value": 3.100601788878
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 233333.0,
+      "missing_left": true,
+      "left_value": 0.705358368402,
+      "right_value": -0.088822287377
+    },
+    {
+      "feature_name": "active_source_count_3m",
+      "threshold": 0.5,
+      "missing_left": true,
+      "left_value": 1.976113560591,
+      "right_value": -0.022488797229
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 233333.0,
+      "missing_left": true,
+      "left_value": 0.440392248824,
+      "right_value": -0.055435547151
+    },
+    {
+      "feature_name": "active_source_count_3m",
+      "threshold": 0.5,
+      "missing_left": true,
+      "left_value": 1.262145935082,
+      "right_value": -0.014359045324
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 233333.0,
+      "missing_left": true,
+      "left_value": 0.274188431717,
+      "right_value": -0.034501298452
+    },
+    {
+      "feature_name": "months_since_last_source_activity",
+      "threshold": 2.5,
+      "missing_left": false,
+      "left_value": -0.009193696923,
+      "right_value": 0.808228963073
+    },
+    {
+      "feature_name": "income_variance_3m",
+      "threshold": 74018388888.88889,
+      "missing_left": true,
+      "left_value": -0.031587467324,
+      "right_value": 0.215722438211
+    },
+    {
+      "feature_name": "source_amount_cv_mean_12m",
+      "threshold": 0.06735829,
+      "missing_left": true,
+      "left_value": 0.040557474788,
+      "right_value": -0.134248061365
+    },
+    {
+      "feature_name": "transaction_count_3m",
+      "threshold": 22.0,
+      "missing_left": true,
+      "left_value": 0.117870998856,
+      "right_value": -0.037052556448
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 432546.0,
+      "missing_left": true,
+      "left_value": 0.12019717628,
+      "right_value": -0.035847679838
+    },
+    {
+      "feature_name": "zero_income_months_6m",
+      "threshold": 3.5,
+      "missing_left": true,
+      "left_value": 0.013681379404,
+      "right_value": -0.338638416679
+    },
+    {
+      "feature_name": "active_source_count_3m",
+      "threshold": 0.5,
+      "missing_left": true,
+      "left_value": 0.546892795885,
+      "right_value": -0.006363601562
+    },
+    {
+      "feature_name": "income_cv_12m",
+      "threshold": 1.0,
+      "missing_left": true,
+      "left_value": 0.013240205202,
+      "right_value": -0.211895469976
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 328754.0,
+      "missing_left": true,
+      "left_value": 0.12410792542,
+      "right_value": -0.023627568238
+    },
+    {
+      "feature_name": "outstanding_debt_minor",
+      "threshold": 530667.0,
+      "missing_left": false,
+      "left_value": -0.07910016723,
+      "right_value": 0.031151577687
+    },
+    {
+      "feature_name": "income_variance_3m",
+      "threshold": 74018388888.88889,
+      "missing_left": true,
+      "left_value": -0.018489111094,
+      "right_value": 0.125389318383
+    },
+    {
+      "feature_name": "income_variance_6m",
+      "threshold": 142303645833.33334,
+      "missing_left": true,
+      "left_value": 0.01075450242,
+      "right_value": -0.204662497964
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 79797.0,
+      "missing_left": true,
+      "left_value": 0.270783355286,
+      "right_value": -0.006401567298
+    },
+    {
+      "feature_name": "largest_source_monthly_capacity_minor",
+      "threshold": 229245.0,
+      "missing_left": false,
+      "left_value": -0.163240774869,
+      "right_value": 0.011508573345
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 432546.0,
+      "missing_left": true,
+      "left_value": 0.077648882824,
+      "right_value": -0.023222130509
+    },
+    {
+      "feature_name": "income_cv_12m",
+      "threshold": 1.0,
+      "missing_left": false,
+      "left_value": 0.016867132615,
+      "right_value": -0.096800571524
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 21.5,
+      "missing_left": false,
+      "left_value": -0.052404908668,
+      "right_value": 0.024616973501
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 583333.0,
+      "missing_left": true,
+      "left_value": 0.032170125989,
+      "right_value": -0.039581191713
+    },
+    {
+      "feature_name": "income_cv_12m",
+      "threshold": 1.0,
+      "missing_left": true,
+      "left_value": 0.008630632318,
+      "right_value": -0.138667423286
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 83997.0,
+      "missing_left": true,
+      "left_value": 0.225847924788,
+      "right_value": -0.005347321834
+    },
+    {
+      "feature_name": "outstanding_debt_minor",
+      "threshold": 322000.0,
+      "missing_left": false,
+      "left_value": -0.114223495776,
+      "right_value": 0.009485179613
+    },
+    {
+      "feature_name": "income_variance_3m",
+      "threshold": 74018388888.88889,
+      "missing_left": true,
+      "left_value": -0.012498623467,
+      "right_value": 0.084690126242
+    },
+    {
+      "feature_name": "recurrence_score_max_12m_basis_points",
+      "threshold": 9703.0,
+      "missing_left": false,
+      "left_value": -0.025643056399,
+      "right_value": 0.033801991183
+    },
+    {
+      "feature_name": "income_variance_6m",
+      "threshold": 90000000000.0,
+      "missing_left": true,
+      "left_value": 0.009690974587,
+      "right_value": -0.097634837794
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 328754.0,
+      "missing_left": true,
+      "left_value": 0.067564670585,
+      "right_value": -0.012880360895
+    },
+    {
+      "feature_name": "largest_source_monthly_capacity_minor",
+      "threshold": 229245.0,
+      "missing_left": false,
+      "left_value": -0.119580382821,
+      "right_value": 0.008420743798
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 295830.0,
+      "missing_left": true,
+      "left_value": 0.059580679193,
+      "right_value": -0.011361484231
+    },
+    {
+      "feature_name": "available_balance_minor",
+      "threshold": 400496.5,
+      "missing_left": true,
+      "left_value": -0.052302499903,
+      "right_value": 0.015075106627
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 432546.0,
+      "missing_left": true,
+      "left_value": 0.044636508385,
+      "right_value": -0.013353969942
+    },
+    {
+      "feature_name": "largest_source_monthly_capacity_minor",
+      "threshold": 367401.0,
+      "missing_left": false,
+      "left_value": -0.067845996041,
+      "right_value": 0.010309187803
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 83997.0,
+      "missing_left": true,
+      "left_value": 0.151450368132,
+      "right_value": -0.003583433637
+    },
+    {
+      "feature_name": "income_cv_12m",
+      "threshold": 1.0,
+      "missing_left": true,
+      "left_value": 0.005990934031,
+      "right_value": -0.096136618884
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 568333.0,
+      "missing_left": true,
+      "left_value": 0.022678107188,
+      "right_value": -0.024019691914
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 22.5,
+      "missing_left": false,
+      "left_value": -0.027992914511,
+      "right_value": 0.018805440604
+    },
+    {
+      "feature_name": "investment_transaction_count_12m",
+      "threshold": 2.5,
+      "missing_left": false,
+      "left_value": -0.060076228822,
+      "right_value": 0.00785457661
+    },
+    {
+      "feature_name": "source_monthly_capacity_minor",
+      "threshold": 631280.0,
+      "missing_left": false,
+      "left_value": -0.009439442343,
+      "right_value": 0.04515198903
+    },
+    {
+      "feature_name": "investment_transaction_count_12m",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.005388380111,
+      "right_value": -0.087671830524
+    },
+    {
+      "feature_name": "card_spend_3m_minor",
+      "threshold": 108500.5,
+      "missing_left": true,
+      "left_value": 0.012232739243,
+      "right_value": -0.031349246334
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 497187.5,
+      "missing_left": true,
+      "left_value": 0.037070045536,
+      "right_value": -0.013278455241
+    },
+    {
+      "feature_name": "largest_source_monthly_capacity_minor",
+      "threshold": 229245.0,
+      "missing_left": false,
+      "left_value": -0.074603240678,
+      "right_value": 0.005251092571
+    },
+    {
+      "feature_name": "credits_3m_minor",
+      "threshold": 820000.0,
+      "missing_left": true,
+      "left_value": 0.039869987511,
+      "right_value": -0.00895705687
+    },
+    {
+      "feature_name": "income_cv_12m",
+      "threshold": 1.0,
+      "missing_left": false,
+      "left_value": 0.008358289068,
+      "right_value": -0.047993317803
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 568333.0,
+      "missing_left": true,
+      "left_value": 0.017518712653,
+      "right_value": -0.018560530738
+    },
+    {
+      "feature_name": "source_amount_cv_mean_12m",
+      "threshold": 0.22908685,
+      "missing_left": true,
+      "left_value": 0.005814243234,
+      "right_value": -0.053031490497
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 83997.0,
+      "missing_left": true,
+      "left_value": 0.111635016807,
+      "right_value": -0.002643181421
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 1050000.0,
+      "missing_left": true,
+      "left_value": 0.001367221562,
+      "right_value": -0.198605416538
+    },
+    {
+      "feature_name": "investment_transaction_count_12m",
+      "threshold": 2.5,
+      "missing_left": false,
+      "left_value": -0.044686126896,
+      "right_value": 0.005833755156
+    },
+    {
+      "feature_name": "credits_3m_minor",
+      "threshold": 820000.0,
+      "missing_left": true,
+      "left_value": 0.033367309694,
+      "right_value": -0.007500883583
+    },
+    {
+      "feature_name": "income_cv_12m",
+      "threshold": 1.0,
+      "missing_left": false,
+      "left_value": 0.00693772059,
+      "right_value": -0.039854590456
+    },
+    {
+      "feature_name": "source_monthly_capacity_minor",
+      "threshold": 631280.0,
+      "missing_left": false,
+      "left_value": -0.006797465621,
+      "right_value": 0.03250185646
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 568333.0,
+      "missing_left": true,
+      "left_value": 0.014607299915,
+      "right_value": -0.015474192624
+    },
+    {
+      "feature_name": "largest_source_monthly_capacity_minor",
+      "threshold": 229245.0,
+      "missing_left": false,
+      "left_value": -0.057234669982,
+      "right_value": 0.004028529581
+    },
+    {
+      "feature_name": "credits_3m_minor",
+      "threshold": 820000.0,
+      "missing_left": true,
+      "left_value": 0.030208221514,
+      "right_value": -0.006786568028
+    },
+    {
+      "feature_name": "income_cv_12m",
+      "threshold": 1.0,
+      "missing_left": false,
+      "left_value": 0.00563608934,
+      "right_value": -0.032363791032
+    },
+    {
+      "feature_name": "investment_transaction_count_12m",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.003312442329,
+      "right_value": -0.053930902046
+    },
+    {
+      "feature_name": "days_since_last_transaction",
+      "threshold": 3.5,
+      "missing_left": true,
+      "left_value": -0.026050721924,
+      "right_value": 0.006286637402
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 497187.5,
+      "missing_left": true,
+      "left_value": 0.023652968658,
+      "right_value": -0.008474283659
+    },
+    {
+      "feature_name": "largest_source_monthly_capacity_minor",
+      "threshold": 175550.0,
+      "missing_left": false,
+      "left_value": -0.066396497506,
+      "right_value": 0.00228078589
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 181500.0,
+      "missing_left": true,
+      "left_value": 0.055675975332,
+      "right_value": -0.00323042998
+    },
+    {
+      "feature_name": "available_balance_minor",
+      "threshold": 704595.5,
+      "missing_left": true,
+      "left_value": -0.021065872119,
+      "right_value": 0.007299040876
+    },
+    {
+      "feature_name": "income_variance_12m",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.014626341831,
+      "right_value": 0.011954774639
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.026036931723,
+      "right_value": 0.005742207553
+    },
+    {
+      "feature_name": "data_completeness_score_basis_points",
+      "threshold": 6354.0,
+      "missing_left": true,
+      "left_value": 0.029817182647,
+      "right_value": -0.004271793188
+    },
+    {
+      "feature_name": "source_monthly_capacity_minor",
+      "threshold": 631280.0,
+      "missing_left": false,
+      "left_value": -0.005184792205,
+      "right_value": 0.024812203386
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 853570.0,
+      "missing_left": true,
+      "left_value": 0.002055133411,
+      "right_value": -0.058777627065
+    },
+    {
+      "feature_name": "credit_utilization_ratio",
+      "threshold": 0.126,
+      "missing_left": true,
+      "left_value": 0.005587800724,
+      "right_value": -0.02007677102
+    },
+    {
+      "feature_name": "income_cv_12m",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.012289604426,
+      "right_value": 0.010042435697
+    },
+    {
+      "feature_name": "available_balance_minor",
+      "threshold": -3248475.5,
+      "missing_left": true,
+      "left_value": -0.061022593339,
+      "right_value": 0.001789452488
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 172425.0,
+      "missing_left": true,
+      "left_value": 0.046274193763,
+      "right_value": -0.002685265542
+    },
+    {
+      "feature_name": "largest_source_monthly_capacity_minor",
+      "threshold": 175550.0,
+      "missing_left": false,
+      "left_value": -0.05860809903,
+      "right_value": 0.002014359128
+    },
+    {
+      "feature_name": "credits_3m_minor",
+      "threshold": 820000.0,
+      "missing_left": true,
+      "left_value": 0.021711081703,
+      "right_value": -0.004878561469
+    },
+    {
+      "feature_name": "investment_transaction_count_12m",
+      "threshold": 2.5,
+      "missing_left": false,
+      "left_value": -0.028327839011,
+      "right_value": 0.00370243589
+    },
+    {
+      "feature_name": "transaction_count_1m",
+      "threshold": 33.5,
+      "missing_left": true,
+      "left_value": -0.002081121126,
+      "right_value": 0.046024461961
+    },
+    {
+      "feature_name": "card_spend_3m_minor",
+      "threshold": 203000.0,
+      "missing_left": false,
+      "left_value": -0.020299390509,
+      "right_value": 0.00517480765
+    },
+    {
+      "feature_name": "income_p75_12m_minor",
+      "threshold": 402950.0,
+      "missing_left": true,
+      "left_value": -0.024540637775,
+      "right_value": 0.003469008326
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 497187.5,
+      "missing_left": true,
+      "left_value": 0.018026213659,
+      "right_value": -0.006455977659
+    },
+    {
+      "feature_name": "income_min_12m_minor",
+      "threshold": 600000.0,
+      "missing_left": true,
+      "left_value": -0.002615276688,
+      "right_value": 0.03419999038
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 181500.0,
+      "missing_left": true,
+      "left_value": 0.039147709034,
+      "right_value": -0.002266352711
+    },
+    {
+      "feature_name": "income_median_6m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.040722744638,
+      "right_value": 0.002570534741
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 83997.0,
+      "missing_left": true,
+      "left_value": 0.059345677481,
+      "right_value": -0.001402819964
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 435273.0,
+      "missing_left": true,
+      "left_value": -0.031928672671,
+      "right_value": 0.003164938897
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 568333.0,
+      "missing_left": true,
+      "left_value": 0.009057684939,
+      "right_value": -0.009591468406
+    },
+    {
+      "feature_name": "ecosystem_source_count_12m",
+      "threshold": 0.5,
+      "missing_left": true,
+      "left_value": -0.001170357499,
+      "right_value": 0.06853982505
+    },
+    {
+      "feature_name": "days_since_last_transaction",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.015169064373,
+      "right_value": 0.005392403773
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 497187.5,
+      "missing_left": true,
+      "left_value": 0.014312554628,
+      "right_value": -0.00512155437
+    },
+    {
+      "feature_name": "source_monthly_capacity_minor",
+      "threshold": 329561.5,
+      "missing_left": true,
+      "left_value": -0.026028064913,
+      "right_value": 0.003117450186
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 181500.0,
+      "missing_left": true,
+      "left_value": 0.03719577329,
+      "right_value": -0.002154570673
+    },
+    {
+      "feature_name": "largest_source_monthly_capacity_minor",
+      "threshold": 175550.0,
+      "missing_left": false,
+      "left_value": -0.04729633968,
+      "right_value": 0.001628231828
+    },
+    {
+      "feature_name": "credit_count_12m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.018937656347,
+      "right_value": 0.003348087204
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 181500.0,
+      "missing_left": true,
+      "left_value": 0.033698229418,
+      "right_value": -0.001953780076
+    },
+    {
+      "feature_name": "income_median_6m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.036176935733,
+      "right_value": 0.00228145713
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 853570.0,
+      "missing_left": true,
+      "left_value": 0.001509876258,
+      "right_value": -0.04324780093
+    },
+    {
+      "feature_name": "income_min_12m_minor",
+      "threshold": 600000.0,
+      "missing_left": true,
+      "left_value": -0.002149780251,
+      "right_value": 0.028072331171
+    },
+    {
+      "feature_name": "card_spend_3m_minor",
+      "threshold": 108500.5,
+      "missing_left": true,
+      "left_value": 0.005043012846,
+      "right_value": -0.012920016024
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 497187.5,
+      "missing_left": true,
+      "left_value": 0.014094742384,
+      "right_value": -0.00504787356
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 435273.0,
+      "missing_left": true,
+      "left_value": -0.024422432501,
+      "right_value": 0.002418046659
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 172425.0,
+      "missing_left": true,
+      "left_value": 0.033562048831,
+      "right_value": -0.001945664824
+    },
+    {
+      "feature_name": "source_amount_cv_mean_12m",
+      "threshold": 0.22908685,
+      "missing_left": false,
+      "left_value": 0.002689545252,
+      "right_value": -0.022423542625
+    },
+    {
+      "feature_name": "transaction_count_1m",
+      "threshold": 33.5,
+      "missing_left": true,
+      "left_value": -0.001631342999,
+      "right_value": 0.036108729883
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.01514208226,
+      "right_value": 0.003341884088
+    },
+    {
+      "feature_name": "source_frequency_confidence_mean_basis_points",
+      "threshold": 4891.0,
+      "missing_left": false,
+      "left_value": 0.008416792001,
+      "right_value": -0.006458944731
+    },
+    {
+      "feature_name": "days_since_last_transaction",
+      "threshold": 1.5,
+      "missing_left": true,
+      "left_value": -0.063028961688,
+      "right_value": 0.000872369937
+    },
+    {
+      "feature_name": "credit_count_12m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.016586695483,
+      "right_value": 0.002929964655
+    },
+    {
+      "feature_name": "credits_3m_minor",
+      "threshold": 421006.5,
+      "missing_left": true,
+      "left_value": 0.043843479299,
+      "right_value": -0.001160187043
+    },
+    {
+      "feature_name": "largest_source_monthly_capacity_minor",
+      "threshold": 175550.0,
+      "missing_left": false,
+      "left_value": -0.040803871824,
+      "right_value": 0.001403235162
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 568333.0,
+      "missing_left": true,
+      "left_value": 0.006955235459,
+      "right_value": -0.007370004733
+    },
+    {
+      "feature_name": "probable_income_6m_minor",
+      "threshold": 295508.0,
+      "missing_left": true,
+      "left_value": -0.047456736128,
+      "right_value": 0.001137864491
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 172425.0,
+      "missing_left": true,
+      "left_value": 0.031574474572,
+      "right_value": -0.001832695973
+    },
+    {
+      "feature_name": "income_median_6m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.030015506744,
+      "right_value": 0.001891520785
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 83997.0,
+      "missing_left": true,
+      "left_value": 0.046045554661,
+      "right_value": -0.001090550695
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 526011.0,
+      "missing_left": true,
+      "left_value": -0.01357784262,
+      "right_value": 0.003930909831
+    },
+    {
+      "feature_name": "source_frequency_confidence_mean_basis_points",
+      "threshold": 4878.0,
+      "missing_left": false,
+      "left_value": 0.008515719835,
+      "right_value": -0.005560336504
+    },
+    {
+      "feature_name": "credit_utilization_ratio",
+      "threshold": 0.147,
+      "missing_left": true,
+      "left_value": 0.003193664496,
+      "right_value": -0.014026621742
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 600000.0,
+      "missing_left": true,
+      "left_value": -0.001965885994,
+      "right_value": 0.025638026649
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 383167.0,
+      "missing_left": true,
+      "left_value": 0.014614861833,
+      "right_value": -0.003477621797
+    },
+    {
+      "feature_name": "credit_count_1m",
+      "threshold": 2.5,
+      "missing_left": true,
+      "left_value": -0.004094362174,
+      "right_value": 0.01142991016
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.014723632262,
+      "right_value": 0.00324936424
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 9.5,
+      "missing_left": true,
+      "left_value": 0.026416239699,
+      "right_value": -0.001775243866
+    },
+    {
+      "feature_name": "probable_income_6m_minor",
+      "threshold": 295508.0,
+      "missing_left": true,
+      "left_value": -0.041587814878,
+      "right_value": 0.000999875957
+    },
+    {
+      "feature_name": "income_3m_minor",
+      "threshold": 451245.0,
+      "missing_left": true,
+      "left_value": 0.02923769692,
+      "right_value": -0.00175226668
+    },
+    {
+      "feature_name": "largest_source_monthly_capacity_minor",
+      "threshold": 175550.0,
+      "missing_left": false,
+      "left_value": -0.037079203478,
+      "right_value": 0.001275598194
+    },
+    {
+      "feature_name": "card_spend_3m_minor",
+      "threshold": 203000.0,
+      "missing_left": false,
+      "left_value": -0.012475645384,
+      "right_value": 0.00317809398
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 172425.0,
+      "missing_left": true,
+      "left_value": 0.02717445683,
+      "right_value": -0.001575790968
+    },
+    {
+      "feature_name": "probable_income_mean_12m_minor",
+      "threshold": 95653.0,
+      "missing_left": true,
+      "left_value": -0.043363780274,
+      "right_value": 0.001025398114
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 568333.0,
+      "missing_left": true,
+      "left_value": 0.006057643243,
+      "right_value": -0.006419636095
+    },
+    {
+      "feature_name": "income_mean_12m_minor",
+      "threshold": 306521.5,
+      "missing_left": true,
+      "left_value": -0.017096696304,
+      "right_value": 0.002407615155
+    },
+    {
+      "feature_name": "income_3m_minor",
+      "threshold": 451245.0,
+      "missing_left": true,
+      "left_value": 0.027073629653,
+      "right_value": -0.001623376612
+    },
+    {
+      "feature_name": "investment_transaction_count_12m",
+      "threshold": 5.5,
+      "missing_left": false,
+      "left_value": -0.00985489148,
+      "right_value": 0.004002705911
+    },
+    {
+      "feature_name": "income_min_12m_minor",
+      "threshold": 600000.0,
+      "missing_left": true,
+      "left_value": -0.001734005126,
+      "right_value": 0.022675401842
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 568333.0,
+      "missing_left": true,
+      "left_value": 0.00581051884,
+      "right_value": -0.006151869891
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 435273.0,
+      "missing_left": true,
+      "left_value": -0.019955772472,
+      "right_value": 0.00197670729
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 237078.0,
+      "missing_left": true,
+      "left_value": 0.005801916371,
+      "right_value": -0.006338129544
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 383167.0,
+      "missing_left": true,
+      "left_value": 0.0124920488,
+      "right_value": -0.002973991449
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 416159.0,
+      "missing_left": true,
+      "left_value": -0.011795905833,
+      "right_value": 0.003403991222
+    },
+    {
+      "feature_name": "credit_count_3m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.010074733512,
+      "right_value": 0.003449362565
+    },
+    {
+      "feature_name": "income_median_3m_minor",
+      "threshold": 372628.0,
+      "missing_left": true,
+      "left_value": 0.012871441484,
+      "right_value": -0.003088699534
+    },
+    {
+      "feature_name": "income_mean_12m_minor",
+      "threshold": 306521.5,
+      "missing_left": true,
+      "left_value": -0.015338930887,
+      "right_value": 0.00216168795
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 172425.0,
+      "missing_left": true,
+      "left_value": 0.026096177499,
+      "right_value": -0.001512403615
+    },
+    {
+      "feature_name": "probable_income_median_6m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.023395415559,
+      "right_value": 0.001489806109
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 79797.0,
+      "missing_left": true,
+      "left_value": 0.038335988672,
+      "right_value": -0.000906775081
+    },
+    {
+      "feature_name": "probable_income_6m_minor",
+      "threshold": 295508.0,
+      "missing_left": true,
+      "left_value": -0.039521228986,
+      "right_value": 0.000950361226
+    },
+    {
+      "feature_name": "credits_12m_minor",
+      "threshold": 1080000.0,
+      "missing_left": true,
+      "left_value": 0.014509793146,
+      "right_value": -0.002490247581
+    },
+    {
+      "feature_name": "ecosystem_source_count_12m",
+      "threshold": 0.5,
+      "missing_left": true,
+      "left_value": -0.000729740244,
+      "right_value": 0.042719700788
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 583333.0,
+      "missing_left": true,
+      "left_value": 0.005059209004,
+      "right_value": -0.006218932199
+    },
+    {
+      "feature_name": "credit_count_1m",
+      "threshold": 2.5,
+      "missing_left": true,
+      "left_value": -0.0033685706,
+      "right_value": 0.009405431764
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.013913365571,
+      "right_value": 0.003070730281
+    },
+    {
+      "feature_name": "days_since_last_transaction",
+      "threshold": 1.5,
+      "missing_left": true,
+      "left_value": -0.050552452936,
+      "right_value": 0.000699759636
+    },
+    {
+      "feature_name": "income_variance_6m",
+      "threshold": 169383201388.8889,
+      "missing_left": true,
+      "left_value": -0.000751671446,
+      "right_value": 0.041655314923
+    },
+    {
+      "feature_name": "credit_count_3m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.009708719747,
+      "right_value": 0.003325075301
+    },
+    {
+      "feature_name": "credits_3m_minor",
+      "threshold": 421006.5,
+      "missing_left": true,
+      "left_value": 0.034594479181,
+      "right_value": -0.000913144813
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 435273.0,
+      "missing_left": true,
+      "left_value": -0.017846284244,
+      "right_value": 0.001769082921
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 383167.0,
+      "missing_left": true,
+      "left_value": 0.012029302365,
+      "right_value": -0.00286287887
+    },
+    {
+      "feature_name": "source_amount_cv_mean_12m",
+      "threshold": 0.17062811,
+      "missing_left": false,
+      "left_value": 0.002343784544,
+      "right_value": -0.014397113504
+    },
+    {
+      "feature_name": "transaction_count_1m",
+      "threshold": 33.5,
+      "missing_left": true,
+      "left_value": -0.001146873816,
+      "right_value": 0.025391436089
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 1050000.0,
+      "missing_left": true,
+      "left_value": 0.000444874705,
+      "right_value": -0.064581488775
+    },
+    {
+      "feature_name": "days_since_last_transaction",
+      "threshold": 3.5,
+      "missing_left": true,
+      "left_value": -0.010701517255,
+      "right_value": 0.002581594081
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 497187.5,
+      "missing_left": true,
+      "left_value": 0.009109635562,
+      "right_value": -0.003264613066
+    },
+    {
+      "feature_name": "income_p75_12m_minor",
+      "threshold": 682244.0,
+      "missing_left": true,
+      "left_value": -0.001519872636,
+      "right_value": 0.021085779901
+    },
+    {
+      "feature_name": "card_spend_3m_minor",
+      "threshold": 131000.5,
+      "missing_left": true,
+      "left_value": 0.003236119535,
+      "right_value": -0.00889286701
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 237078.0,
+      "missing_left": true,
+      "left_value": 0.004997437785,
+      "right_value": -0.005458778561
+    },
+    {
+      "feature_name": "income_variance_3m",
+      "threshold": 0.0,
+      "missing_left": false,
+      "left_value": -0.007458849409,
+      "right_value": 0.004331505886
+    },
+    {
+      "feature_name": "credit_count_1m",
+      "threshold": 2.5,
+      "missing_left": true,
+      "left_value": -0.003191428016,
+      "right_value": 0.008904502624
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.011909616356,
+      "right_value": 0.002627219778
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 10.5,
+      "missing_left": true,
+      "left_value": 0.016597544578,
+      "right_value": -0.001813847612
+    },
+    {
+      "feature_name": "probable_income_6m_minor",
+      "threshold": 295508.0,
+      "missing_left": true,
+      "left_value": -0.033670025474,
+      "right_value": 0.000808774833
+    },
+    {
+      "feature_name": "probable_income_3m_minor",
+      "threshold": 428682.5,
+      "missing_left": true,
+      "left_value": 0.024605860133,
+      "right_value": -0.001475170185
+    },
+    {
+      "feature_name": "largest_source_monthly_capacity_minor",
+      "threshold": 175550.0,
+      "missing_left": true,
+      "left_value": -0.026082180898,
+      "right_value": 0.001128469811
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 172425.0,
+      "missing_left": true,
+      "left_value": 0.022749573445,
+      "right_value": -0.001319103489
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 416159.0,
+      "missing_left": true,
+      "left_value": -0.009859631048,
+      "right_value": 0.002845402868
+    },
+    {
+      "feature_name": "income_variance_6m",
+      "threshold": 169383201388.8889,
+      "missing_left": true,
+      "left_value": -0.000704230072,
+      "right_value": 0.039143199492
+    },
+    {
+      "feature_name": "income_median_6m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.020863150462,
+      "right_value": 0.001317386573
+    },
+    {
+      "feature_name": "income_median_3m_minor",
+      "threshold": 372628.0,
+      "missing_left": true,
+      "left_value": 0.011469698441,
+      "right_value": -0.002751337199
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.010827201523,
+      "right_value": 0.002389150134
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.013409198422,
+      "right_value": -0.002153600758
+    },
+    {
+      "feature_name": "installment_commitment_minor",
+      "threshold": 10500.0,
+      "missing_left": true,
+      "left_value": 0.002026729417,
+      "right_value": -0.012707716024
+    },
+    {
+      "feature_name": "credits_12m_minor",
+      "threshold": 1080000.0,
+      "missing_left": true,
+      "left_value": 0.012762816533,
+      "right_value": -0.002189633915
+    },
+    {
+      "feature_name": "credit_count_3m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.009957849344,
+      "right_value": 0.003410332032
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 70827.0,
+      "missing_left": false,
+      "left_value": 0.032155068296,
+      "right_value": -0.000801445963
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.010727798088,
+      "right_value": 0.002368384532
+    },
+    {
+      "feature_name": "income_std_12m_minor",
+      "threshold": 212730.0,
+      "missing_left": true,
+      "left_value": -0.002415980448,
+      "right_value": 0.010665238257
+    },
+    {
+      "feature_name": "probable_income_3m_minor",
+      "threshold": 428682.5,
+      "missing_left": true,
+      "left_value": 0.019989176077,
+      "right_value": -0.001196219766
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.018559302488,
+      "right_value": 0.001606885382
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 435273.0,
+      "missing_left": true,
+      "left_value": -0.0157961844,
+      "right_value": 0.00156440842
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 181500.0,
+      "missing_left": true,
+      "left_value": 0.022114527733,
+      "right_value": -0.001281713762
+    },
+    {
+      "feature_name": "credit_count_3m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.008515115016,
+      "right_value": 0.002916630096
+    },
+    {
+      "feature_name": "credits_12m_minor",
+      "threshold": 1080000.0,
+      "missing_left": true,
+      "left_value": 0.012422777064,
+      "right_value": -0.002130920818
+    },
+    {
+      "feature_name": "probable_income_6m_minor",
+      "threshold": 295508.0,
+      "missing_left": true,
+      "left_value": -0.032736258883,
+      "right_value": 0.000786549169
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 497187.5,
+      "missing_left": true,
+      "left_value": 0.008475024112,
+      "right_value": -0.003036052533
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 416159.0,
+      "missing_left": true,
+      "left_value": -0.009127142479,
+      "right_value": 0.002632902485
+    },
+    {
+      "feature_name": "credits_3m_minor",
+      "threshold": 421006.5,
+      "missing_left": true,
+      "left_value": 0.031105344988,
+      "right_value": -0.000821810891
+    },
+    {
+      "feature_name": "income_variance_6m",
+      "threshold": 169383201388.8889,
+      "missing_left": true,
+      "left_value": -0.000658485905,
+      "right_value": 0.0366688913
+    },
+    {
+      "feature_name": "credit_count_3m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.008464989136,
+      "right_value": 0.002902082914
+    },
+    {
+      "feature_name": "source_frequency_confidence_mean_basis_points",
+      "threshold": 4891.0,
+      "missing_left": false,
+      "left_value": 0.005530901143,
+      "right_value": -0.004242048574
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.0102030595,
+      "right_value": 0.002252057485
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.013356035121,
+      "right_value": -0.002144644013
+    },
+    {
+      "feature_name": "installment_commitment_minor",
+      "threshold": 10500.0,
+      "missing_left": true,
+      "left_value": 0.001901937502,
+      "right_value": -0.011923170555
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 395318.5,
+      "missing_left": true,
+      "left_value": 0.010138723075,
+      "right_value": -0.002484341527
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.014502872098,
+      "right_value": 0.001932700718
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 334000.0,
+      "missing_left": true,
+      "left_value": 0.003976011399,
+      "right_value": -0.006041099023
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 568333.0,
+      "missing_left": true,
+      "left_value": 0.00505714485,
+      "right_value": -0.00535662286
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 600000.0,
+      "missing_left": true,
+      "left_value": -0.001428851738,
+      "right_value": 0.018634640286
+    },
+    {
+      "feature_name": "credit_utilization_ratio",
+      "threshold": 0.147,
+      "missing_left": true,
+      "left_value": 0.002355694894,
+      "right_value": -0.010343383388
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 193077.0,
+      "missing_left": true,
+      "left_value": 0.01878974232,
+      "right_value": -0.0011919643
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 277156.0,
+      "missing_left": true,
+      "left_value": -0.011598439941,
+      "right_value": 0.002160080053
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 395318.5,
+      "missing_left": true,
+      "left_value": 0.009700002638,
+      "right_value": -0.00237669285
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.013740613769,
+      "right_value": 0.001831218024
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 237078.0,
+      "missing_left": true,
+      "left_value": 0.004503685806,
+      "right_value": -0.004919652775
+    },
+    {
+      "feature_name": "income_variance_3m",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.005537894055,
+      "right_value": 0.004636786939
+    },
+    {
+      "feature_name": "credits_12m_minor",
+      "threshold": 1080000.0,
+      "missing_left": true,
+      "left_value": 0.011469677395,
+      "right_value": -0.001967864153
+    },
+    {
+      "feature_name": "credit_count_12m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.012259202731,
+      "right_value": 0.002168569741
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 416159.0,
+      "missing_left": true,
+      "left_value": -0.008908443734,
+      "right_value": 0.002570162861
+    },
+    {
+      "feature_name": "credits_3m_minor",
+      "threshold": 1080000.0,
+      "missing_left": true,
+      "left_value": 0.008750160733,
+      "right_value": -0.002977603887
+    },
+    {
+      "feature_name": "credit_count_12m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.010729741682,
+      "right_value": 0.001897566754
+    },
+    {
+      "feature_name": "credits_12m_minor",
+      "threshold": 1080000.0,
+      "missing_left": true,
+      "left_value": 0.011781480938,
+      "right_value": -0.002021726924
+    },
+    {
+      "feature_name": "investment_transaction_count_12m",
+      "threshold": 2.5,
+      "missing_left": false,
+      "left_value": -0.012665729642,
+      "right_value": 0.001656368138
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 568333.0,
+      "missing_left": true,
+      "left_value": 0.004409895994,
+      "right_value": -0.004671387421
+    },
+    {
+      "feature_name": "income_mean_12m_minor",
+      "threshold": 306521.5,
+      "missing_left": true,
+      "left_value": -0.012899789287,
+      "right_value": 0.001817424892
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 237078.0,
+      "missing_left": true,
+      "left_value": 0.004632049102,
+      "right_value": -0.005061027087
+    },
+    {
+      "feature_name": "probable_income_3m_minor",
+      "threshold": 428682.5,
+      "missing_left": true,
+      "left_value": 0.019134363194,
+      "right_value": -0.001146636759
+    },
+    {
+      "feature_name": "probable_income_mean_12m_minor",
+      "threshold": 95653.0,
+      "missing_left": true,
+      "left_value": -0.032244333557,
+      "right_value": 0.000762761361
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 222970.0,
+      "missing_left": true,
+      "left_value": 0.029717499344,
+      "right_value": -0.00070925429
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 435273.0,
+      "missing_left": true,
+      "left_value": -0.0150528155,
+      "right_value": 0.00149120649
+    },
+    {
+      "feature_name": "income_median_3m_minor",
+      "threshold": 372628.0,
+      "missing_left": true,
+      "left_value": 0.009444526875,
+      "right_value": -0.002266208183
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.013743778237,
+      "right_value": 0.001831259193
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 183423.5,
+      "missing_left": true,
+      "left_value": 0.018867423191,
+      "right_value": -0.001197512258
+    },
+    {
+      "feature_name": "credits_1m_minor",
+      "threshold": 740000.0,
+      "missing_left": true,
+      "left_value": -0.002164471184,
+      "right_value": 0.009769407607
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.00956039731,
+      "right_value": 0.002109863851
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.012358520421,
+      "right_value": -0.001984691049
+    },
+    {
+      "feature_name": "days_since_last_transaction",
+      "threshold": 1.5,
+      "missing_left": true,
+      "left_value": -0.037834673608,
+      "right_value": 0.000524105543
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.00951889111,
+      "right_value": 0.002097903717
+    },
+    {
+      "feature_name": "credit_count_1m",
+      "threshold": 2.5,
+      "missing_left": true,
+      "left_value": -0.002925942348,
+      "right_value": 0.008159262014
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 568333.0,
+      "missing_left": true,
+      "left_value": 0.004431578294,
+      "right_value": -0.004694887964
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.015548265864,
+      "right_value": 0.001344129217
+    },
+    {
+      "feature_name": "income_variance_12m",
+      "threshold": 78227747933.8843,
+      "missing_left": true,
+      "left_value": -0.001462121451,
+      "right_value": 0.014944807756
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.009685022459,
+      "right_value": 0.00213628476
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.0116509224,
+      "right_value": -0.001871762215
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 1050000.0,
+      "missing_left": true,
+      "left_value": 0.000366152342,
+      "right_value": -0.053269169188
+    },
+    {
+      "feature_name": "income_p75_12m_minor",
+      "threshold": 600000.0,
+      "missing_left": true,
+      "left_value": -0.001695453255,
+      "right_value": 0.011469369017
+    },
+    {
+      "feature_name": "probable_income_3m_minor",
+      "threshold": 1046998.0,
+      "missing_left": true,
+      "left_value": 0.00688396061,
+      "right_value": -0.002867360791
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 416159.0,
+      "missing_left": true,
+      "left_value": -0.008628396331,
+      "right_value": 0.002488778687
+    },
+    {
+      "feature_name": "net_investment_contributions_12m_minor",
+      "threshold": 220000.0,
+      "missing_left": false,
+      "left_value": -0.004664181897,
+      "right_value": 0.00435942484
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 395318.5,
+      "missing_left": true,
+      "left_value": 0.009311192283,
+      "right_value": -0.002282398898
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.012746343298,
+      "right_value": 0.001698110611
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 193077.0,
+      "missing_left": true,
+      "left_value": 0.018962143347,
+      "right_value": -0.001203645822
+    },
+    {
+      "feature_name": "income_p75_12m_minor",
+      "threshold": 359878.5,
+      "missing_left": true,
+      "left_value": -0.014020392672,
+      "right_value": 0.001385881506
+    },
+    {
+      "feature_name": "income_variance_6m",
+      "threshold": 169383201388.8889,
+      "missing_left": true,
+      "left_value": -0.000604491535,
+      "right_value": 0.033588527204
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 568333.0,
+      "missing_left": true,
+      "left_value": 0.004247206648,
+      "right_value": -0.004495006283
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 237078.0,
+      "missing_left": true,
+      "left_value": 0.004386010257,
+      "right_value": -0.004788387216
+    },
+    {
+      "feature_name": "credits_6m_minor",
+      "threshold": 2628358.0,
+      "missing_left": true,
+      "left_value": -0.004865335272,
+      "right_value": 0.004165288824
+    },
+    {
+      "feature_name": "source_frequency_confidence_mean_basis_points",
+      "threshold": 4891.0,
+      "missing_left": false,
+      "left_value": 0.004971759285,
+      "right_value": -0.0038148641
+    },
+    {
+      "feature_name": "credit_count_12m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.010271775079,
+      "right_value": 0.001817098434
+    },
+    {
+      "feature_name": "credits_12m_minor",
+      "threshold": 1080000.0,
+      "missing_left": true,
+      "left_value": 0.011522278258,
+      "right_value": -0.001976869993
+    },
+    {
+      "feature_name": "income_median_6m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.017024750782,
+      "right_value": 0.001073749839
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 193077.0,
+      "missing_left": true,
+      "left_value": 0.01886284775,
+      "right_value": -0.001197302833
+    },
+    {
+      "feature_name": "credit_count_12m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.01037907707,
+      "right_value": 0.00183624392
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.011830373349,
+      "right_value": 0.001576041772
+    },
+    {
+      "feature_name": "credits_3m_minor",
+      "threshold": 1080000.0,
+      "missing_left": true,
+      "left_value": 0.008396951878,
+      "right_value": -0.002857531725
+    },
+    {
+      "feature_name": "credit_utilization_ratio",
+      "threshold": 0.147,
+      "missing_left": true,
+      "left_value": 0.002035610239,
+      "right_value": -0.008941996594
+    },
+    {
+      "feature_name": "probable_income_3m_minor",
+      "threshold": 428682.5,
+      "missing_left": true,
+      "left_value": 0.017410040137,
+      "right_value": -0.001043207021
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.012146699956,
+      "right_value": 0.001618892084
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 383167.0,
+      "missing_left": true,
+      "left_value": 0.009220852575,
+      "right_value": -0.00219508313
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 416159.0,
+      "missing_left": true,
+      "left_value": -0.008506089611,
+      "right_value": 0.00245473741
+    },
+    {
+      "feature_name": "income_variance_3m",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.004922696746,
+      "right_value": 0.004121762756
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.00948479069,
+      "right_value": 0.002092029412
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.012211742173,
+      "right_value": -0.001961883536
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 334000.0,
+      "missing_left": true,
+      "left_value": 0.003546940755,
+      "right_value": -0.005387916121
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 568333.0,
+      "missing_left": true,
+      "left_value": 0.003988400726,
+      "right_value": -0.004223942454
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 416159.0,
+      "missing_left": true,
+      "left_value": -0.008363612284,
+      "right_value": 0.002413326596
+    },
+    {
+      "feature_name": "income_variance_6m",
+      "threshold": 169383201388.8889,
+      "missing_left": true,
+      "left_value": -0.000554679521,
+      "right_value": 0.030819857035
+    },
+    {
+      "feature_name": "zero_income_months_6m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": 0.000260770951,
+      "right_value": -0.070343570181
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 79797.0,
+      "missing_left": true,
+      "left_value": 0.027510490046,
+      "right_value": -0.000653097531
+    },
+    {
+      "feature_name": "income_mean_12m_minor",
+      "threshold": 100687.0,
+      "missing_left": true,
+      "left_value": -0.029836706354,
+      "right_value": 0.000704807326
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 183423.5,
+      "missing_left": true,
+      "left_value": 0.016450220282,
+      "right_value": -0.001045623345
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.014888020384,
+      "right_value": 0.001287051968
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.00906796164,
+      "right_value": 0.001998957051
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.011235714442,
+      "right_value": -0.001805854371
+    },
+    {
+      "feature_name": "income_variance_12m",
+      "threshold": 78227747933.8843,
+      "missing_left": true,
+      "left_value": -0.001305539928,
+      "right_value": 0.013352274083
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.009332573134,
+      "right_value": 0.002059153286
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.010792929854,
+      "right_value": -0.001733535591
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.008864421606,
+      "right_value": 0.001955871588
+    },
+    {
+      "feature_name": "largest_source_share_12m",
+      "threshold": 0.58371604,
+      "missing_left": false,
+      "left_value": 0.023756933873,
+      "right_value": -0.000852531005
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.010301815045,
+      "right_value": -0.001653226315
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.009518831712,
+      "right_value": 0.002101252403
+    },
+    {
+      "feature_name": "debits_3m_minor",
+      "threshold": 2561721.5,
+      "missing_left": true,
+      "left_value": -0.000764127996,
+      "right_value": 0.021881357211
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.010076364863,
+      "right_value": -0.001616668696
+    },
+    {
+      "feature_name": "net_investment_contributions_12m_minor",
+      "threshold": 220000.0,
+      "missing_left": false,
+      "left_value": -0.004384497545,
+      "right_value": 0.004102348688
+    },
+    {
+      "feature_name": "probable_income_3m_minor",
+      "threshold": 1046998.0,
+      "missing_left": true,
+      "left_value": 0.006421857135,
+      "right_value": -0.002671693649
+    },
+    {
+      "feature_name": "credit_count_3m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.007319266203,
+      "right_value": 0.00250743313
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 416159.0,
+      "missing_left": true,
+      "left_value": -0.007522318431,
+      "right_value": 0.002171040609
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 395318.5,
+      "missing_left": true,
+      "left_value": 0.009005452283,
+      "right_value": -0.002206756963
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.011548197113,
+      "right_value": 0.001538930787
+    },
+    {
+      "feature_name": "probable_income_3m_minor",
+      "threshold": 428682.5,
+      "missing_left": true,
+      "left_value": 0.01822043844,
+      "right_value": -0.001091566752
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 435273.0,
+      "missing_left": true,
+      "left_value": -0.01282461168,
+      "right_value": 0.001270655866
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 383167.0,
+      "missing_left": true,
+      "left_value": 0.008469656849,
+      "right_value": -0.002016204193
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 277156.0,
+      "missing_left": true,
+      "left_value": -0.009592330977,
+      "right_value": 0.001785804856
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 222970.0,
+      "missing_left": true,
+      "left_value": 0.026812272344,
+      "right_value": -0.000638965301
+    },
+    {
+      "feature_name": "income_6m_minor",
+      "threshold": 311061.0,
+      "missing_left": true,
+      "left_value": -0.028166386426,
+      "right_value": 0.000677396996
+    },
+    {
+      "feature_name": "recurrence_score_max_12m_basis_points",
+      "threshold": 8000.0,
+      "missing_left": false,
+      "left_value": 0.006993923912,
+      "right_value": -0.002265145518
+    },
+    {
+      "feature_name": "credit_count_12m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.009730178094,
+      "right_value": 0.001720664343
+    },
+    {
+      "feature_name": "credits_12m_minor",
+      "threshold": 1080000.0,
+      "missing_left": true,
+      "left_value": 0.010159381234,
+      "right_value": -0.001743487259
+    },
+    {
+      "feature_name": "credit_utilization_ratio",
+      "threshold": 0.541335,
+      "missing_left": true,
+      "left_value": 0.000568300484,
+      "right_value": -0.028431979621
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 70827.0,
+      "missing_left": false,
+      "left_value": 0.025547941526,
+      "right_value": -0.000638203521
+    },
+    {
+      "feature_name": "source_observation_count_12m",
+      "threshold": 1.5,
+      "missing_left": true,
+      "left_value": -0.011841011512,
+      "right_value": 0.001420161432
+    },
+    {
+      "feature_name": "excluded_own_transfer_12m_minor",
+      "threshold": 50000.0,
+      "missing_left": true,
+      "left_value": 0.011667756854,
+      "right_value": -0.001453384401
+    },
+    {
+      "feature_name": "credit_count_12m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.009717612394,
+      "right_value": 0.001719001314
+    },
+    {
+      "feature_name": "credits_12m_minor",
+      "threshold": 1080000.0,
+      "missing_left": true,
+      "left_value": 0.00989493923,
+      "right_value": -0.001697731396
+    },
+    {
+      "feature_name": "income_variance_3m",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.004346003037,
+      "right_value": 0.003639659252
+    },
+    {
+      "feature_name": "card_spend_3m_minor",
+      "threshold": 131000.5,
+      "missing_left": true,
+      "left_value": 0.002468817628,
+      "right_value": -0.006784181749
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.008695135474,
+      "right_value": 0.001917880972
+    },
+    {
+      "feature_name": "credits_1m_minor",
+      "threshold": 740000.0,
+      "missing_left": true,
+      "left_value": -0.002013573929,
+      "right_value": 0.00908296277
+    },
+    {
+      "feature_name": "probable_income_3m_minor",
+      "threshold": 428682.5,
+      "missing_left": true,
+      "left_value": 0.016347812211,
+      "right_value": -0.000979039226
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.011595262519,
+      "right_value": 0.001545776448
+    },
+    {
+      "feature_name": "income_median_3m_minor",
+      "threshold": 372628.0,
+      "missing_left": true,
+      "left_value": 0.008233732019,
+      "right_value": -0.001975294244
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 416159.0,
+      "missing_left": true,
+      "left_value": -0.007571314688,
+      "right_value": 0.00218517609
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 536667.0,
+      "missing_left": true,
+      "left_value": 0.003666059806,
+      "right_value": -0.004462451775
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 237078.0,
+      "missing_left": true,
+      "left_value": 0.004039849074,
+      "right_value": -0.004412599582
+    },
+    {
+      "feature_name": "income_p75_12m_minor",
+      "threshold": 600000.0,
+      "missing_left": true,
+      "left_value": -0.00156918863,
+      "right_value": 0.010633738834
+    },
+    {
+      "feature_name": "installment_commitment_minor",
+      "threshold": 25500.0,
+      "missing_left": true,
+      "left_value": 0.001576628468,
+      "right_value": -0.010500476524
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 568333.0,
+      "missing_left": true,
+      "left_value": 0.003998883435,
+      "right_value": -0.004235465724
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 334000.0,
+      "missing_left": true,
+      "left_value": 0.00326265904,
+      "right_value": -0.004956858339
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.013212056237,
+      "right_value": 0.00114245756
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 183423.5,
+      "missing_left": true,
+      "left_value": 0.016264187956,
+      "right_value": -0.001032636359
+    },
+    {
+      "feature_name": "largest_source_monthly_capacity_minor",
+      "threshold": 175550.0,
+      "missing_left": false,
+      "left_value": -0.022616267894,
+      "right_value": 0.000777891374
+    },
+    {
+      "feature_name": "source_observation_count_12m",
+      "threshold": 1.5,
+      "missing_left": true,
+      "left_value": -0.011084797139,
+      "right_value": 0.001328060368
+    },
+    {
+      "feature_name": "credits_3m_minor",
+      "threshold": 1080000.0,
+      "missing_left": true,
+      "left_value": 0.006734232485,
+      "right_value": -0.002292645104
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.010953722403,
+      "right_value": 0.001458664137
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 193077.0,
+      "missing_left": true,
+      "left_value": 0.016651977497,
+      "right_value": -0.001057405121
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 550000.0,
+      "missing_left": true,
+      "left_value": -0.005944333847,
+      "right_value": 0.002533418374
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 583333.0,
+      "missing_left": true,
+      "left_value": 0.003749800975,
+      "right_value": -0.004613122399
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.010587534812,
+      "right_value": 0.001410457422
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 222970.0,
+      "missing_left": true,
+      "left_value": 0.025625251699,
+      "right_value": -0.000611005716
+    },
+    {
+      "feature_name": "probable_income_mean_12m_minor",
+      "threshold": 95653.0,
+      "missing_left": true,
+      "left_value": -0.025196135132,
+      "right_value": 0.000596567623
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 383167.0,
+      "missing_left": true,
+      "left_value": 0.007997311376,
+      "right_value": -0.001904415082
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 416159.0,
+      "missing_left": true,
+      "left_value": -0.007816766913,
+      "right_value": 0.002255352132
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 79797.0,
+      "missing_left": true,
+      "left_value": 0.025004772997,
+      "right_value": -0.000591476034
+    },
+    {
+      "feature_name": "zero_income_months_6m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": 0.000241524338,
+      "right_value": -0.065222743629
+    },
+    {
+      "feature_name": "income_variance_6m",
+      "threshold": 169383201388.8889,
+      "missing_left": true,
+      "left_value": -0.000537750015,
+      "right_value": 0.029742914993
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 1050000.0,
+      "missing_left": true,
+      "left_value": 0.000322626604,
+      "right_value": -0.047015180137
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 9.5,
+      "missing_left": true,
+      "left_value": 0.014659671723,
+      "right_value": -0.000988222208
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.008430828767,
+      "right_value": 0.001858283606
+    },
+    {
+      "feature_name": "credits_1m_minor",
+      "threshold": 740000.0,
+      "missing_left": true,
+      "left_value": -0.00193734425,
+      "right_value": 0.00873497511
+    },
+    {
+      "feature_name": "days_since_last_transaction",
+      "threshold": 1.5,
+      "missing_left": true,
+      "left_value": -0.033598919497,
+      "right_value": 0.000464364991
+    },
+    {
+      "feature_name": "credit_count_12m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.008645356553,
+      "right_value": 0.001526576648
+    },
+    {
+      "feature_name": "excluded_own_transfer_12m_minor",
+      "threshold": 50000.0,
+      "missing_left": true,
+      "left_value": 0.011547450218,
+      "right_value": -0.001440078019
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 383167.0,
+      "missing_left": true,
+      "left_value": 0.007421636575,
+      "right_value": -0.001767514141
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.010861921715,
+      "right_value": 0.001446856402
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 193077.0,
+      "missing_left": true,
+      "left_value": 0.014753667226,
+      "right_value": -0.000936690685
+    },
+    {
+      "feature_name": "income_median_6m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.01589466182,
+      "right_value": 0.001002387412
+    },
+    {
+      "feature_name": "income_variance_6m",
+      "threshold": 169383201388.8889,
+      "missing_left": true,
+      "left_value": -0.000512980344,
+      "right_value": 0.028485145347
+    },
+    {
+      "feature_name": "largest_source_share_12m",
+      "threshold": 0.58371604,
+      "missing_left": false,
+      "left_value": 0.019036549375,
+      "right_value": -0.000681988872
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.008292863135,
+      "right_value": 0.001831358
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.011048046048,
+      "right_value": -0.001773428944
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.00819145021,
+      "right_value": 0.001808233454
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.010165602876,
+      "right_value": -0.001632197848
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.007929980656,
+      "right_value": 0.001750143555
+    },
+    {
+      "feature_name": "largest_source_share_12m",
+      "threshold": 0.58371604,
+      "missing_left": false,
+      "left_value": 0.020692305091,
+      "right_value": -0.000742289558
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.009570528568,
+      "right_value": -0.001535739544
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.008566354032,
+      "right_value": 0.001891136823
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.009241893807,
+      "right_value": -0.001483722954
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.007993211285,
+      "right_value": 0.001764129068
+    },
+    {
+      "feature_name": "largest_source_share_12m",
+      "threshold": 0.58371604,
+      "missing_left": false,
+      "left_value": 0.019588172701,
+      "right_value": -0.000702650689
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 536667.0,
+      "missing_left": true,
+      "left_value": 0.003247728298,
+      "right_value": -0.003950676322
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 550000.0,
+      "missing_left": true,
+      "left_value": -0.006073469529,
+      "right_value": 0.002589282575
+    },
+    {
+      "feature_name": "income_variance_3m",
+      "threshold": 10356483200.0,
+      "missing_left": false,
+      "left_value": 0.002741165459,
+      "right_value": -0.005448325391
+    },
+    {
+      "feature_name": "credits_3m_minor",
+      "threshold": 1080000.0,
+      "missing_left": true,
+      "left_value": 0.007051795189,
+      "right_value": -0.002398959655
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.009425538611,
+      "right_value": -0.001513460075
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.007734916233,
+      "right_value": 0.001706984671
+    },
+    {
+      "feature_name": "credit_count_12m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.008874376166,
+      "right_value": 0.001569658075
+    },
+    {
+      "feature_name": "transaction_count_12m",
+      "threshold": 29.5,
+      "missing_left": true,
+      "left_value": 0.008060335849,
+      "right_value": -0.002017212933
+    },
+    {
+      "feature_name": "income_12m_minor",
+      "threshold": 4800000.0,
+      "missing_left": true,
+      "left_value": -0.002065150721,
+      "right_value": 0.006539108125
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 568333.0,
+      "missing_left": true,
+      "left_value": 0.003585483483,
+      "right_value": -0.003796660707
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 237078.0,
+      "missing_left": true,
+      "left_value": 0.003634026806,
+      "right_value": -0.003968794077
+    },
+    {
+      "feature_name": "income_p75_12m_minor",
+      "threshold": 600000.0,
+      "missing_left": true,
+      "left_value": -0.001464923589,
+      "right_value": 0.009928595053
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.012773344342,
+      "right_value": 0.001105288701
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 183423.5,
+      "missing_left": true,
+      "left_value": 0.01550026119,
+      "right_value": -0.000983619155
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 435273.0,
+      "missing_left": true,
+      "left_value": -0.011853489667,
+      "right_value": 0.001174379436
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 583333.0,
+      "missing_left": true,
+      "left_value": 0.003518951918,
+      "right_value": -0.004329332401
+    },
+    {
+      "feature_name": "net_investment_contributions_12m_minor",
+      "threshold": 220000.0,
+      "missing_left": false,
+      "left_value": -0.003775898622,
+      "right_value": 0.003530200542
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.008695036361,
+      "right_value": -0.001396633744
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.007974493167,
+      "right_value": 0.001759425105
+    },
+    {
+      "feature_name": "largest_source_share_12m",
+      "threshold": 0.58371604,
+      "missing_left": false,
+      "left_value": 0.01891464855,
+      "right_value": -0.00067882376
+    },
+    {
+      "feature_name": "income_3m_minor",
+      "threshold": 2108219.5,
+      "missing_left": true,
+      "left_value": 0.000951360165,
+      "right_value": -0.013196968795
+    },
+    {
+      "feature_name": "income_variance_3m",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.003875118699,
+      "right_value": 0.003244783669
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 416159.0,
+      "missing_left": true,
+      "left_value": -0.007308492475,
+      "right_value": 0.002108784427
+    },
+    {
+      "feature_name": "probable_income_3m_minor",
+      "threshold": 428682.5,
+      "missing_left": true,
+      "left_value": 0.015811267851,
+      "right_value": -0.000947304151
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.010246151843,
+      "right_value": 0.001365708364
+    },
+    {
+      "feature_name": "probable_income_3m_minor",
+      "threshold": 1046998.0,
+      "missing_left": true,
+      "left_value": 0.0062724479,
+      "right_value": -0.002611031551
+    },
+    {
+      "feature_name": "credit_count_12m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.008984927254,
+      "right_value": 0.001589224486
+    },
+    {
+      "feature_name": "credits_12m_minor",
+      "threshold": 1080000.0,
+      "missing_left": true,
+      "left_value": 0.008997274546,
+      "right_value": -0.001543834788
+    },
+    {
+      "feature_name": "credit_count_12m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.008591034647,
+      "right_value": 0.001519616841
+    },
+    {
+      "feature_name": "transaction_count_12m",
+      "threshold": 29.5,
+      "missing_left": true,
+      "left_value": 0.007466140175,
+      "right_value": -0.001868466671
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 237078.0,
+      "missing_left": true,
+      "left_value": 0.003430909068,
+      "right_value": -0.003747111655
+    },
+    {
+      "feature_name": "credits_12m_minor",
+      "threshold": 2580476.5,
+      "missing_left": true,
+      "left_value": -0.004593830085,
+      "right_value": 0.002951786133
+    },
+    {
+      "feature_name": "recurrence_score_max_12m_basis_points",
+      "threshold": 8000.0,
+      "missing_left": false,
+      "left_value": 0.006254282589,
+      "right_value": -0.002024940135
+    },
+    {
+      "feature_name": "income_variance_3m",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.003923165399,
+      "right_value": 0.003285429624
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 416159.0,
+      "missing_left": true,
+      "left_value": -0.007182724641,
+      "right_value": 0.00207269707
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 383167.0,
+      "missing_left": true,
+      "left_value": 0.00763179339,
+      "right_value": -0.001816862958
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.010318574328,
+      "right_value": 0.00137490993
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 183423.5,
+      "missing_left": true,
+      "left_value": 0.014270230358,
+      "right_value": -0.000905703634
+    },
+    {
+      "feature_name": "income_mean_12m_minor",
+      "threshold": 306521.5,
+      "missing_left": true,
+      "left_value": -0.009582129134,
+      "right_value": 0.001350815686
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 395318.5,
+      "missing_left": true,
+      "left_value": 0.007329362762,
+      "right_value": -0.001796162079
+    },
+    {
+      "feature_name": "card_spend_3m_minor",
+      "threshold": 131000.5,
+      "missing_left": true,
+      "left_value": 0.002178536074,
+      "right_value": -0.005986254181
+    },
+    {
+      "feature_name": "income_p75_12m_minor",
+      "threshold": 600000.0,
+      "missing_left": true,
+      "left_value": -0.001307012044,
+      "right_value": 0.0088570471
+    },
+    {
+      "feature_name": "probable_income_3m_minor",
+      "threshold": 1782589.5,
+      "missing_left": true,
+      "left_value": 0.001180319228,
+      "right_value": -0.010549503133
+    },
+    {
+      "feature_name": "income_variance_3m",
+      "threshold": 10356483200.0,
+      "missing_left": false,
+      "left_value": 0.002428635921,
+      "right_value": -0.004828789005
+    },
+    {
+      "feature_name": "income_cv_12m",
+      "threshold": 0.57735027,
+      "missing_left": true,
+      "left_value": -0.001348992241,
+      "right_value": 0.009807534429
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.012401157512,
+      "right_value": 0.00107277864
+    },
+    {
+      "feature_name": "credits_3m_minor",
+      "threshold": 1080000.0,
+      "missing_left": true,
+      "left_value": 0.005972631434,
+      "right_value": -0.002032528369
+    },
+    {
+      "feature_name": "credits_1m_minor",
+      "threshold": 740000.0,
+      "missing_left": true,
+      "left_value": -0.001687147274,
+      "right_value": 0.007611988841
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.009332965386,
+      "right_value": 0.001243687436
+    },
+    {
+      "feature_name": "income_median_3m_minor",
+      "threshold": 372628.0,
+      "missing_left": true,
+      "left_value": 0.007508460921,
+      "right_value": -0.001801691948
+    },
+    {
+      "feature_name": "income_variance_3m",
+      "threshold": 80000000000.0,
+      "missing_left": true,
+      "left_value": 0.001171972005,
+      "right_value": -0.010538324187
+    },
+    {
+      "feature_name": "credits_12m_minor",
+      "threshold": 1821092.0,
+      "missing_left": true,
+      "left_value": -0.006459195845,
+      "right_value": 0.001861391339
+    },
+    {
+      "feature_name": "excluded_own_transfer_12m_minor",
+      "threshold": 50000.0,
+      "missing_left": true,
+      "left_value": 0.010332855019,
+      "right_value": -0.001287369516
+    },
+    {
+      "feature_name": "income_cv_12m",
+      "threshold": 0.57735027,
+      "missing_left": true,
+      "left_value": -0.001252001527,
+      "right_value": 0.009105528083
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 416159.0,
+      "missing_left": true,
+      "left_value": -0.006890146067,
+      "right_value": 0.001988767264
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 395318.5,
+      "missing_left": true,
+      "left_value": 0.007038825969,
+      "right_value": -0.001724722369
+    },
+    {
+      "feature_name": "income_p50_12m_minor",
+      "threshold": 360256.0,
+      "missing_left": true,
+      "left_value": -0.008237880251,
+      "right_value": 0.001533784601
+    },
+    {
+      "feature_name": "income_variance_6m",
+      "threshold": 169383201388.8889,
+      "missing_left": true,
+      "left_value": -0.000469084401,
+      "right_value": 0.026071765015
+    },
+    {
+      "feature_name": "zero_income_months_6m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": 0.000219201461,
+      "right_value": -0.059101617536
+    },
+    {
+      "feature_name": "credits_3m_minor",
+      "threshold": 421006.5,
+      "missing_left": true,
+      "left_value": 0.02156974274,
+      "right_value": -0.000571622205
+    },
+    {
+      "feature_name": "source_observation_count_12m",
+      "threshold": 1.5,
+      "missing_left": true,
+      "left_value": -0.010208466261,
+      "right_value": 0.001223560438
+    },
+    {
+      "feature_name": "credits_12m_minor",
+      "threshold": 1080000.0,
+      "missing_left": true,
+      "left_value": 0.008609106188,
+      "right_value": -0.001477820776
+    },
+    {
+      "feature_name": "credit_count_12m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.0086449322,
+      "right_value": 0.001528723526
+    },
+    {
+      "feature_name": "credits_12m_minor",
+      "threshold": 1080000.0,
+      "missing_left": true,
+      "left_value": 0.008306244594,
+      "right_value": -0.001425528224
+    },
+    {
+      "feature_name": "income_mean_12m_minor",
+      "threshold": 100687.0,
+      "missing_left": true,
+      "left_value": -0.022836647609,
+      "right_value": 0.000539850262
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 222970.0,
+      "missing_left": true,
+      "left_value": 0.022288582704,
+      "right_value": -0.000532152978
+    },
+    {
+      "feature_name": "investment_transaction_count_12m",
+      "threshold": 2.5,
+      "missing_left": false,
+      "left_value": -0.009794095353,
+      "right_value": 0.001281065075
+    },
+    {
+      "feature_name": "largest_source_monthly_capacity_minor",
+      "threshold": 175550.0,
+      "missing_left": true,
+      "left_value": -0.016163743244,
+      "right_value": 0.000698954935
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 183423.5,
+      "missing_left": true,
+      "left_value": 0.01394721018,
+      "right_value": -0.000885860697
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.009537480202,
+      "right_value": 0.001270668774
+    },
+    {
+      "feature_name": "probable_income_3m_minor",
+      "threshold": 1046998.0,
+      "missing_left": true,
+      "left_value": 0.005665541988,
+      "right_value": -0.002358905838
+    },
+    {
+      "feature_name": "source_observation_count_12m",
+      "threshold": 1.5,
+      "missing_left": true,
+      "left_value": -0.009786537024,
+      "right_value": 0.001173324697
+    },
+    {
+      "feature_name": "excluded_own_transfer_12m_minor",
+      "threshold": 50000.0,
+      "missing_left": true,
+      "left_value": 0.009607948471,
+      "right_value": -0.00119711063
+    },
+    {
+      "feature_name": "credit_count_12m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.008037472367,
+      "right_value": 0.001421567768
+    },
+    {
+      "feature_name": "credits_12m_minor",
+      "threshold": 1080000.0,
+      "missing_left": true,
+      "left_value": 0.008435797999,
+      "right_value": -0.001447528505
+    },
+    {
+      "feature_name": "income_variance_3m",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.003625314833,
+      "right_value": 0.003035947144
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 237078.0,
+      "missing_left": true,
+      "left_value": 0.003513263908,
+      "right_value": -0.003837165378
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 416159.0,
+      "missing_left": true,
+      "left_value": -0.006508743995,
+      "right_value": 0.001878134744
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 583333.0,
+      "missing_left": true,
+      "left_value": 0.003288137639,
+      "right_value": -0.004045547315
+    },
+    {
+      "feature_name": "net_investment_contributions_12m_minor",
+      "threshold": 220000.0,
+      "missing_left": false,
+      "left_value": -0.003561976664,
+      "right_value": 0.003330089529
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.00825450069,
+      "right_value": -0.001325918004
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.008174327508,
+      "right_value": 0.001803453685
+    },
+    {
+      "feature_name": "source_frequency_confidence_mean_basis_points",
+      "threshold": 6911.0,
+      "missing_left": false,
+      "left_value": 0.002574287716,
+      "right_value": -0.004331153177
+    },
+    {
+      "feature_name": "credits_6m_minor",
+      "threshold": 2628358.0,
+      "missing_left": true,
+      "left_value": -0.003800429015,
+      "right_value": 0.00325220703
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 533333.0,
+      "missing_left": true,
+      "left_value": 0.003883405549,
+      "right_value": -0.003012681387
+    },
+    {
+      "feature_name": "income_variance_3m",
+      "threshold": 80000000000.0,
+      "missing_left": true,
+      "left_value": 0.001119105589,
+      "right_value": -0.010064839758
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 550000.0,
+      "missing_left": true,
+      "left_value": -0.005342859824,
+      "right_value": 0.002276106393
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.008662575845,
+      "right_value": -0.001391897793
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.007558819179,
+      "right_value": 0.001667380316
+    },
+    {
+      "feature_name": "largest_source_share_12m",
+      "threshold": 0.58371604,
+      "missing_left": false,
+      "left_value": 0.018314517408,
+      "right_value": -0.000657481807
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 583333.0,
+      "missing_left": true,
+      "left_value": 0.003130263572,
+      "right_value": -0.003849247384
+    },
+    {
+      "feature_name": "income_min_12m_minor",
+      "threshold": 600000.0,
+      "missing_left": true,
+      "left_value": -0.000917279135,
+      "right_value": 0.012003464309
+    },
+    {
+      "feature_name": "card_spend_3m_minor",
+      "threshold": 203000.0,
+      "missing_left": false,
+      "left_value": -0.006811072548,
+      "right_value": 0.00173717653
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 422100.0,
+      "missing_left": true,
+      "left_value": 0.002240756126,
+      "right_value": -0.004780107622
+    },
+    {
+      "feature_name": "income_median_3m_minor",
+      "threshold": 560454.0,
+      "missing_left": true,
+      "left_value": 0.003421774802,
+      "right_value": -0.003392912306
+    },
+    {
+      "feature_name": "income_12m_minor",
+      "threshold": 4800000.0,
+      "missing_left": true,
+      "left_value": -0.002026385992,
+      "right_value": 0.006416274307
+    },
+    {
+      "feature_name": "installment_commitment_minor",
+      "threshold": 189000.0,
+      "missing_left": true,
+      "left_value": 0.000270820533,
+      "right_value": -0.040422281587
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 70827.0,
+      "missing_left": false,
+      "left_value": 0.021531344617,
+      "right_value": -0.000538592745
+    },
+    {
+      "feature_name": "installment_commitment_minor",
+      "threshold": 100833.5,
+      "missing_left": true,
+      "left_value": 0.000828510427,
+      "right_value": -0.014354438808
+    },
+    {
+      "feature_name": "income_3m_minor",
+      "threshold": 451245.0,
+      "missing_left": true,
+      "left_value": 0.013612196011,
+      "right_value": -0.000816190856
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.009866982317,
+      "right_value": 0.001314624571
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 383167.0,
+      "missing_left": true,
+      "left_value": 0.006690806795,
+      "right_value": -0.001593137193
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 416159.0,
+      "missing_left": true,
+      "left_value": -0.006597178476,
+      "right_value": 0.001903583256
+    },
+    {
+      "feature_name": "income_cv_12m",
+      "threshold": 0.57735027,
+      "missing_left": true,
+      "left_value": -0.001230277,
+      "right_value": 0.008944527729
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.008214198585,
+      "right_value": -0.001319014841
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.007872926347,
+      "right_value": 0.001737283699
+    },
+    {
+      "feature_name": "income_p50_12m_minor",
+      "threshold": 360256.0,
+      "missing_left": true,
+      "left_value": -0.007599691188,
+      "right_value": 0.001414641825
+    },
+    {
+      "feature_name": "income_median_3m_minor",
+      "threshold": 372628.0,
+      "missing_left": true,
+      "left_value": 0.006782582498,
+      "right_value": -0.001627597958
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.009319915102,
+      "right_value": 0.001241741912
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 183423.5,
+      "missing_left": true,
+      "left_value": 0.012942731878,
+      "right_value": -0.000821514557
+    },
+    {
+      "feature_name": "income_mean_12m_minor",
+      "threshold": 100687.0,
+      "missing_left": true,
+      "left_value": -0.02154944872,
+      "right_value": 0.000509786027
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 222970.0,
+      "missing_left": true,
+      "left_value": 0.021353455733,
+      "right_value": -0.000509553815
+    },
+    {
+      "feature_name": "income_6m_minor",
+      "threshold": 311061.0,
+      "missing_left": true,
+      "left_value": -0.021423495589,
+      "right_value": 0.000514801333
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.008017367641,
+      "right_value": -0.001288527831
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.007306907088,
+      "right_value": 0.001611588819
+    },
+    {
+      "feature_name": "largest_source_share_12m",
+      "threshold": 0.58371604,
+      "missing_left": false,
+      "left_value": 0.018336450381,
+      "right_value": -0.000658390899
+    },
+    {
+      "feature_name": "probable_income_3m_minor",
+      "threshold": 2002808.5,
+      "missing_left": true,
+      "left_value": 0.000865503406,
+      "right_value": -0.012008409906
+    },
+    {
+      "feature_name": "credits_1m_minor",
+      "threshold": 740000.0,
+      "missing_left": true,
+      "left_value": -0.001604568645,
+      "right_value": 0.007239130327
+    },
+    {
+      "feature_name": "income_3m_minor",
+      "threshold": 451245.0,
+      "missing_left": true,
+      "left_value": 0.012982086663,
+      "right_value": -0.000777319229
+    },
+    {
+      "feature_name": "largest_source_monthly_capacity_minor",
+      "threshold": 175550.0,
+      "missing_left": false,
+      "left_value": -0.018407149916,
+      "right_value": 0.00063369741
+    },
+    {
+      "feature_name": "months_since_last_source_activity",
+      "threshold": 2.5,
+      "missing_left": false,
+      "left_value": 0.000331613305,
+      "right_value": -0.028421664089
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 83997.0,
+      "missing_left": true,
+      "left_value": 0.022613139487,
+      "right_value": -0.000536338053
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.006544465959,
+      "right_value": 0.001443534547
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.008711125267,
+      "right_value": -0.001399448345
+    },
+    {
+      "feature_name": "income_p75_12m_minor",
+      "threshold": 600000.0,
+      "missing_left": true,
+      "left_value": -0.001193562624,
+      "right_value": 0.008089905878
+    },
+    {
+      "feature_name": "probable_income_3m_minor",
+      "threshold": 1782589.5,
+      "missing_left": true,
+      "left_value": 0.001128813878,
+      "right_value": -0.010087828641
+    },
+    {
+      "feature_name": "largest_source_share_12m",
+      "threshold": 0.58371604,
+      "missing_left": false,
+      "left_value": 0.016914786409,
+      "right_value": -0.000607086614
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.00719155527,
+      "right_value": 0.00158727857
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 11.5,
+      "missing_left": true,
+      "left_value": 0.008252407602,
+      "right_value": -0.001325135316
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 13.5,
+      "missing_left": false,
+      "left_value": -0.006816915799,
+      "right_value": 0.001504357525
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.010774927419,
+      "right_value": 0.000931975061
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 328754.0,
+      "missing_left": true,
+      "left_value": 0.007580867319,
+      "right_value": -0.001445339785
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.008637576247,
+      "right_value": 0.001150770023
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 193077.0,
+      "missing_left": true,
+      "left_value": 0.012860702888,
+      "right_value": -0.00081632052
+    },
+    {
+      "feature_name": "income_mean_12m_minor",
+      "threshold": 366800.5,
+      "missing_left": true,
+      "left_value": -0.007458005447,
+      "right_value": 0.001388646612
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 361259.0,
+      "missing_left": true,
+      "left_value": 0.006835920975,
+      "right_value": -0.001640110501
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 435273.0,
+      "missing_left": true,
+      "left_value": -0.010182363047,
+      "right_value": 0.001008500124
+    },
+    {
+      "feature_name": "days_since_last_credit",
+      "threshold": 9.5,
+      "missing_left": true,
+      "left_value": 0.012003235639,
+      "right_value": -0.000807134516
+    },
+    {
+      "feature_name": "source_frequency_confidence_mean_basis_points",
+      "threshold": 6911.0,
+      "missing_left": false,
+      "left_value": 0.002377509028,
+      "right_value": -0.003998735045
+    },
+    {
+      "feature_name": "credits_12m_minor",
+      "threshold": 2580476.5,
+      "missing_left": true,
+      "left_value": -0.004048006634,
+      "right_value": 0.002601236295
+    },
+    {
+      "feature_name": "income_variance_3m",
+      "threshold": 80000000000.0,
+      "missing_left": true,
+      "left_value": 0.001089653727,
+      "right_value": -0.009798848207
+    },
+    {
+      "feature_name": "income_median_3m_minor",
+      "threshold": 535923.0,
+      "missing_left": true,
+      "left_value": 0.004037425856,
+      "right_value": -0.002629348445
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 550000.0,
+      "missing_left": true,
+      "left_value": -0.005220034564,
+      "right_value": 0.00222418387
+    },
+    {
+      "feature_name": "income_max_12m_minor",
+      "threshold": 222970.0,
+      "missing_left": true,
+      "left_value": 0.020390750432,
+      "right_value": -0.000486077668
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.008763931677,
+      "right_value": 0.001168531368
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 361259.0,
+      "missing_left": true,
+      "left_value": 0.006651510528,
+      "right_value": -0.001595564463
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 416159.0,
+      "missing_left": true,
+      "left_value": -0.005958885311,
+      "right_value": 0.00171992852
+    },
+    {
+      "feature_name": "income_cv_12m",
+      "threshold": 0.57735027,
+      "missing_left": true,
+      "left_value": -0.001233571861,
+      "right_value": 0.008971038658
+    },
+    {
+      "feature_name": "zero_income_months_6m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": 0.000185916844,
+      "right_value": -0.050298705048
+    },
+    {
+      "feature_name": "income_variance_6m",
+      "threshold": 169383201388.8889,
+      "missing_left": true,
+      "left_value": -0.000426129953,
+      "right_value": 0.023558934478
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 1050000.0,
+      "missing_left": true,
+      "left_value": 0.000273044077,
+      "right_value": -0.039805602461
+    },
+    {
+      "feature_name": "transaction_count_12m",
+      "threshold": 29.5,
+      "missing_left": true,
+      "left_value": 0.006095215704,
+      "right_value": -0.001528090468
+    },
+    {
+      "feature_name": "credit_count_12m",
+      "threshold": 4.5,
+      "missing_left": true,
+      "left_value": -0.008102860561,
+      "right_value": 0.001431392909
+    },
+    {
+      "feature_name": "credits_12m_minor",
+      "threshold": 1080000.0,
+      "missing_left": true,
+      "left_value": 0.007328826651,
+      "right_value": -0.001258841289
+    },
+    {
+      "feature_name": "source_observation_count_12m",
+      "threshold": 1.5,
+      "missing_left": true,
+      "left_value": -0.009680700846,
+      "right_value": 0.001160080092
+    },
+    {
+      "feature_name": "excluded_own_transfer_12m_minor",
+      "threshold": 50000.0,
+      "missing_left": true,
+      "left_value": 0.008958655977,
+      "right_value": -0.001116636535
+    },
+    {
+      "feature_name": "credits_12m_minor",
+      "threshold": 1821092.0,
+      "missing_left": true,
+      "left_value": -0.005869271877,
+      "right_value": 0.001691599582
+    },
+    {
+      "feature_name": "probable_income_3m_minor",
+      "threshold": 1046998.0,
+      "missing_left": true,
+      "left_value": 0.004859403775,
+      "right_value": -0.002023258577
+    },
+    {
+      "feature_name": "probable_income_mean_3m_minor",
+      "threshold": 221667.0,
+      "missing_left": true,
+      "left_value": -0.008710077116,
+      "right_value": 0.001160303603
+    },
+    {
+      "feature_name": "probable_income_3m_minor",
+      "threshold": 428682.5,
+      "missing_left": true,
+      "left_value": 0.013042960346,
+      "right_value": -0.000781672805
+    },
+    {
+      "feature_name": "probable_income_6m_minor",
+      "threshold": 615573.0,
+      "missing_left": true,
+      "left_value": -0.00840193333,
+      "right_value": 0.001184344041
+    },
+    {
+      "feature_name": "recurrence_score_max_12m_basis_points",
+      "threshold": 8000.0,
+      "missing_left": false,
+      "left_value": 0.005297843363,
+      "right_value": -0.001715444927
+    },
+    {
+      "feature_name": "income_6m_minor",
+      "threshold": 2249500.0,
+      "missing_left": true,
+      "left_value": -0.003732098474,
+      "right_value": 0.002722701911
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 583333.0,
+      "missing_left": true,
+      "left_value": 0.002776730646,
+      "right_value": -0.003415929094
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 237078.0,
+      "missing_left": true,
+      "left_value": 0.003142445089,
+      "right_value": -0.003432373383
+    },
+    {
+      "feature_name": "income_p25_12m_minor",
+      "threshold": 416159.0,
+      "missing_left": true,
+      "left_value": -0.005802144762,
+      "right_value": 0.001674149405
+    },
+    {
+      "feature_name": "income_variance_3m",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.00362626636,
+      "right_value": 0.00303601173
+    },
+    {
+      "feature_name": "transaction_count_12m",
+      "threshold": 29.5,
+      "missing_left": true,
+      "left_value": 0.006265774215,
+      "right_value": -0.001568065778
+    },
+    {
+      "feature_name": "net_investment_contributions_12m_minor",
+      "threshold": 220000.0,
+      "missing_left": false,
+      "left_value": -0.0031933833,
+      "right_value": 0.002986028524
+    }
+  ],
+  "gate_base_score": 2.644321423189,
+  "gate_learning_rate": 0.3,
+  "gate_threshold_basis_points": 4000,
+  "gate_trees": [
+    {
+      "feature_name": "credits_1m_minor",
+      "threshold": 40000.0,
+      "missing_left": true,
+      "left_value": -8.038089221724,
+      "right_value": 0.892985464999
+    },
+    {
+      "feature_name": "source_frequency_confidence_mean_basis_points",
+      "threshold": 9737.0,
+      "missing_left": false,
+      "left_value": 1.181169653745,
+      "right_value": -1.108124047521
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -1.075968116103,
+      "right_value": 1.114335283495
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 557040.0,
+      "missing_left": true,
+      "left_value": 0.978500152137,
+      "right_value": -1.238709951191
+    },
+    {
+      "feature_name": "zero_income_months_6m",
+      "threshold": 5.5,
+      "missing_left": true,
+      "left_value": 0.374358934564,
+      "right_value": -8.802727771643
+    },
+    {
+      "feature_name": "source_frequency_confidence_mean_basis_points",
+      "threshold": 9737.0,
+      "missing_left": false,
+      "left_value": 1.140139151659,
+      "right_value": -0.663405597969
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 557040.0,
+      "missing_left": true,
+      "left_value": 0.872782803852,
+      "right_value": -0.966421222512
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.658331922121,
+      "right_value": 1.057490901535
+    },
+    {
+      "feature_name": "investment_transaction_count_12m",
+      "threshold": 9.5,
+      "missing_left": false,
+      "left_value": -0.563355640188,
+      "right_value": 1.077680757135
+    },
+    {
+      "feature_name": "source_frequency_confidence_mean_basis_points",
+      "threshold": 9737.0,
+      "missing_left": false,
+      "left_value": 1.099871589961,
+      "right_value": -0.535028345791
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.489512071181,
+      "right_value": 1.031480353105
+    },
+    {
+      "feature_name": "credits_1m_minor",
+      "threshold": 30000.0,
+      "missing_left": true,
+      "left_value": 1.419549451714,
+      "right_value": -0.338788193216
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.435712962285,
+      "right_value": 1.004996064514
+    },
+    {
+      "feature_name": "recurrence_score_mean_12m_basis_points",
+      "threshold": 9703.0,
+      "missing_left": false,
+      "left_value": 1.083514038778,
+      "right_value": -0.437648054601
+    },
+    {
+      "feature_name": "credits_1m_minor",
+      "threshold": 30000.0,
+      "missing_left": true,
+      "left_value": 1.353715923624,
+      "right_value": -0.308465505932
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.422163003138,
+      "right_value": 0.991532186115
+    },
+    {
+      "feature_name": "net_investment_contributions_12m_minor",
+      "threshold": 180000.0,
+      "missing_left": false,
+      "left_value": -0.545643267543,
+      "right_value": 0.823556511186
+    },
+    {
+      "feature_name": "credits_1m_minor",
+      "threshold": 30000.0,
+      "missing_left": true,
+      "left_value": 1.26168894743,
+      "right_value": -0.285385184568
+    },
+    {
+      "feature_name": "source_frequency_confidence_mean_basis_points",
+      "threshold": 9737.0,
+      "missing_left": false,
+      "left_value": 0.998409846933,
+      "right_value": -0.360145281427
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.38302588222,
+      "right_value": 0.97540074242
+    },
+    {
+      "feature_name": "net_investment_contributions_12m_minor",
+      "threshold": 20000.0,
+      "missing_left": true,
+      "left_value": 1.192462886301,
+      "right_value": -0.277049490166
+    },
+    {
+      "feature_name": "recurrence_score_mean_12m_basis_points",
+      "threshold": 9703.0,
+      "missing_left": false,
+      "left_value": 1.002181169837,
+      "right_value": -0.315090124853
+    },
+    {
+      "feature_name": "income_mean_3m_minor",
+      "threshold": 383167.0,
+      "missing_left": true,
+      "left_value": -0.315630399152,
+      "right_value": 0.963595870868
+    },
+    {
+      "feature_name": "credits_1m_minor",
+      "threshold": 30000.0,
+      "missing_left": true,
+      "left_value": 1.225305649463,
+      "right_value": -0.25483088004
+    },
+    {
+      "feature_name": "credits_1m_minor",
+      "threshold": 50000.0,
+      "missing_left": true,
+      "left_value": -0.370028733712,
+      "right_value": 0.786575567945
+    },
+    {
+      "feature_name": "income_variance_12m",
+      "threshold": 0.0,
+      "missing_left": false,
+      "left_value": -0.945818265609,
+      "right_value": 0.398387710178
+    },
+    {
+      "feature_name": "net_investment_contributions_12m_minor",
+      "threshold": 20000.0,
+      "missing_left": true,
+      "left_value": 1.108931479141,
+      "right_value": -0.257316292792
+    },
+    {
+      "feature_name": "recurrence_score_mean_12m_basis_points",
+      "threshold": 9703.0,
+      "missing_left": false,
+      "left_value": 0.958811859523,
+      "right_value": -0.26380713778
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.265463982576,
+      "right_value": 0.929598041045
+    },
+    {
+      "feature_name": "credits_1m_minor",
+      "threshold": 30000.0,
+      "missing_left": true,
+      "left_value": 1.143996918131,
+      "right_value": -0.229872582018
+    },
+    {
+      "feature_name": "source_amount_cv_mean_12m",
+      "threshold": 0.05178138,
+      "missing_left": false,
+      "left_value": 0.956267832024,
+      "right_value": -0.216481318338
+    },
+    {
+      "feature_name": "income_std_12m_minor",
+      "threshold": 224950.0,
+      "missing_left": false,
+      "left_value": -0.268479868732,
+      "right_value": 0.790886999737
+    },
+    {
+      "feature_name": "income_1m_minor",
+      "threshold": 0.0,
+      "missing_left": true,
+      "left_value": -0.218487915772,
+      "right_value": 0.902154889852
+    },
+    {
+      "feature_name": "credits_1m_minor",
+      "threshold": 30000.0,
+      "missing_left": true,
+      "left_value": 1.076093240785,
+      "right_value": -0.183744866896
+    },
+    {
+      "feature_name": "largest_source_monthly_capacity_minor",
+      "threshold": 525000.0,
+      "missing_left": false,
+      "left_value": 0.910555521884,
+      "right_value": -0.212861484182
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 129312.0,
+      "missing_left": true,
+      "left_value": 0.721040273372,
+      "right_value": -0.270467246777
+    },
+    {
+      "feature_name": "credits_3m_minor",
+      "threshold": 1269500.0,
+      "missing_left": true,
+      "left_value": -0.215563214767,
+      "right_value": 0.886456361336
+    },
+    {
+      "feature_name": "net_investment_contributions_12m_minor",
+      "threshold": 180000.0,
+      "missing_left": false,
+      "left_value": -0.292126819941,
+      "right_value": 0.669106658606
+    },
+    {
+      "feature_name": "income_variance_12m",
+      "threshold": 0.0,
+      "missing_left": false,
+      "left_value": -0.62172710096,
+      "right_value": 0.344185988492
+    },
+    {
+      "feature_name": "credits_1m_minor",
+      "threshold": 50000.0,
+      "missing_left": true,
+      "left_value": -0.272925546338,
+      "right_value": 0.659490301953
+    },
+    {
+      "feature_name": "credits_1m_minor",
+      "threshold": 30000.0,
+      "missing_left": true,
+      "left_value": 1.023019466555,
+      "right_value": -0.175013853503
+    },
+    {
+      "feature_name": "recurrence_score_mean_12m_basis_points",
+      "threshold": 9703.0,
+      "missing_left": false,
+      "left_value": 0.860737798027,
+      "right_value": -0.197735751842
+    },
+    {
+      "feature_name": "investment_balance_minor",
+      "threshold": 129312.0,
+      "missing_left": true,
+      "left_value": 0.632458141544,
+      "right_value": -0.258901823195
+    },
+    {
+      "feature_name": "source_age_months_max",
+      "threshold": 6.5,
+      "missing_left": false,
+      "left_value": 0.836341275463,
+      "right_value": -0.18745351617
+    },
+    {
+      "feature_name": "net_investment_contributions_12m_minor",
+      "threshold": 180000.0,
+      "missing_left": false,
+      "left_value": -0.228177700708,
+      "right_value": 0.604441610591
+    },
+    {
+      "feature_name": "credit_count_3m",
+      "threshold": 5.5,
+      "missing_left": true,
+      "left_value": -0.159769523278,
+      "right_value": 0.80661727541
+    },
+    {
+      "feature_name": "excluded_own_transfer_12m_minor",
+      "threshold": 90000.0,
+      "missing_left": true,
+      "left_value": 0.675884737211,
+      "right_value": -0.221452353229
+    },
+    {
+      "feature_name": "recurrence_score_mean_12m_basis_points",
+      "threshold": 9703.0,
+      "missing_left": false,
+      "left_value": 0.813078851077,
+      "right_value": -0.170067157224
+    },
+    {
+      "feature_name": "credits_1m_minor",
+      "threshold": 30000.0,
+      "missing_left": true,
+      "left_value": 0.916930207426,
+      "right_value": -0.121517571913
+    },
+    {
+      "feature_name": "credit_count_1m",
+      "threshold": 1.5,
+      "missing_left": true,
+      "left_value": -0.232126851762,
+      "right_value": 0.58673689733
+    },
+    {
+      "feature_name": "largest_source_monthly_capacity_minor",
+      "threshold": 525000.0,
+      "missing_left": false,
+      "left_value": 0.770772995502,
+      "right_value": -0.137360528444
+    },
+    {
+      "feature_name": "income_p50_12m_minor",
+      "threshold": 522250.0,
+      "missing_left": true,
+      "left_value": -0.138029882834,
+      "right_value": 0.79980581272
+    },
+    {
+      "feature_name": "excluded_own_transfer_12m_minor",
+      "threshold": 90000.0,
+      "missing_left": true,
+      "left_value": 0.614576578366,
+      "right_value": -0.225658099952
+    },
+    {
+      "feature_name": "recurrence_score_mean_12m_basis_points",
+      "threshold": 9703.0,
+      "missing_left": false,
+      "left_value": 0.749726994448,
+      "right_value": -0.131061074059
+    },
+    {
+      "feature_name": "income_p50_12m_minor",
+      "threshold": 522250.0,
+      "missing_left": true,
+      "left_value": -0.125709705901,
+      "right_value": 0.769398164155
+    },
+    {
+      "feature_name": "excluded_own_transfer_12m_minor",
+      "threshold": 90000.0,
+      "missing_left": true,
+      "left_value": 0.539568221254,
+      "right_value": -0.205015291272
+    },
+    {
+      "feature_name": "largest_source_monthly_capacity_minor",
+      "threshold": 525000.0,
+      "missing_left": false,
+      "left_value": 0.726363999506,
+      "right_value": -0.126388645571
+    },
+    {
+      "feature_name": "credit_utilization_ratio",
+      "threshold": 0.477334,
+      "missing_left": true,
+      "left_value": -0.090194794679,
+      "right_value": 0.90451653544
+    },
+    {
+      "feature_name": "income_p50_12m_minor",
+      "threshold": 522250.0,
+      "missing_left": true,
+      "left_value": -0.118773686653,
+      "right_value": 0.746121928917
+    },
+    {
+      "feature_name": "credits_1m_minor",
+      "threshold": 30000.0,
+      "missing_left": true,
+      "left_value": 0.768280943233,
+      "right_value": -0.092745579798
+    }
+  ],
+  "dataset_version": "synthetic-customer-months-1.0.0",
+  "split_version": "customer-sha256-70-15-15-v1",
+  "simulator_version": "0.7.0",
+  "income_target_version": "income-targets-1.0.0",
+  "source_contract_versions": [
+    "1.3",
+    "1.4",
+    "1.5"
+  ],
+  "input_contract_version": "1.2",
+  "training_rounds_requested": 600,
+  "l2_regularization": 1.0,
+  "minimum_leaf_size": 20,
+  "maximum_bins": 32,
+  "training_customer_count": 510,
+  "validation_customer_count": 101,
+  "training_row_count": 6120
+}
