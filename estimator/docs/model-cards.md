@@ -1,7 +1,8 @@
 # Model cards
 
-One card per promoted artifact. Each states what the artifact does, the data it was fitted on, how
-it was measured, and where it is known to fail. An artifact without a card is not promoted.
+One card per artifact the estimator reads or is a candidate to read. Each states what the artifact
+does, the data it was fitted on, how it was measured, and where it is known to fail. Every card
+opens with its promotion status; a card is not itself a promotion.
 
 All measurements come from synthetic populations. They describe behavior against a simulator, not
 accuracy on real clients, and no card here supports a production claim.
@@ -45,11 +46,11 @@ observed feed, not a property of these rules. See
 
 ---
 
-## `capacity-gbdt-stumps-0.5.0` — sustainable monthly income
+## `capacity-gbdt-stumps-0.6.0` — sustainable monthly income
 
 **Task.** Predict `sustainable_monthly_income` for one customer-month.
 
-**Inputs.** Feature set `customer-month-features-1.1.0`, 98 point-in-time features. Requires
+**Inputs.** Feature set `customer-month-features-1.2.0`, 104 point-in-time features. Requires
 estimator input `1.2` for the capacity group; on `1.0` or `1.1` those six features report
 `CONTRACT_DOMAIN_UNAVAILABLE` and the model routes on what remains.
 
@@ -60,19 +61,31 @@ Requires simulator contract `1.3` or later.
 regressor boosts `log1p(sustainable)` around `log1p(income_mean_3m_minor)`. Decision stumps over
 binned features, with a per-stump direction for missing values.
 
-**Data.** 240 customers across `income_diverse`, `life_events`, and `incomplete_observation`, split
-70/15/15 by customer.
+**Data.** 720 customers across `income_diverse`, `life_events`, and `incomplete_observation`, split
+70/15/15 by customer. Customer-disjoint from every population used to fit or gate the interval.
 
-**Measured.** Held-out MAE `24,200` against `53,892` for the best deterministic baseline, WAPE
-`0.0443`. Improves full coverage, partial consent, volatile income, short history, and every income
-band. Zero-income customers predicted exactly. Refitted against simulator contract `1.6`.
+**Measured.** Held-out MAE `25,217` against `74,469` for the best deterministic baseline, WAPE
+`0.0499` on 109 test customers. Refitted against simulator contract `1.6` and feature set
+`customer-month-features-1.2.0`.
+
+**Version.** This model shipped for one milestone as `capacity-gbdt-stumps-0.5.0`, written over that
+artifact's file while carrying its name, so a model trained on 510 customers under feature set
+`1.2.0` was indistinguishable from one trained on 174 under `1.1.0`. ADR 0007 gives it `0.6.0` and
+restores `0.5.0` to its own bytes. Every consumer reads `0.6.0`.
+
+The `1.2.0` features exist because the model could see how many income sources a customer had and
+how regular they looked, but never what they were worth per month. `detect_income_streams` reported
+the median of *paying* months as the monthly amount, so a quarterly source of `9,000` read as
+`9,000` rather than `3,000`, and `source_features` did not expose even that. Six features were added:
+frequency-normalized source capacity, its largest component, cadence confidence, observation count,
+source age, and a no-source flag. The retrained model splits on four of them in the regressor and
+three in the gate, where cadence confidence is the fifth most-used feature.
 
 **Known failure modes.**
-- Loses to the trivial cash-flow baseline on perfectly stable salaried income, `13,820` against
-  `12,060`. Estimator `0.6` routes around this deliberately.
+- Still loses narrowly to the trivial cash-flow baseline on perfectly stable salaried income,
+  `11,413` against `11,140`. Estimator `0.6` routes around this deliberately.
 - Degrades sharply on income conditions absent from training. On the held-out high-volatility suite
-  sustainable WAPE is `0.4645`, an order of magnitude worse than on its training conditions, and
-  slightly worse than the `0.443` measured before the contract `1.6` refit.
+  sustainable WAPE is `0.410`, an order of magnitude worse than on its training conditions.
 - Trained on three suites only. Income profiles outside them are out of distribution and nothing
   currently detects that at inference time.
 
@@ -81,45 +94,99 @@ product output.
 
 ---
 
-## `conformal-intervals-0.7.0` — sustainable income interval
+## `adaptive-intervals-0.9.0` — sustainable income interval
 
-**Status: NOT PROMOTED.** The contract `1.6` refit fails the coverage gate this artifact exists to
-satisfy. It is documented here because the artifact ships in the repository and the failure is the
-finding, not an accident.
+**Status: NOT_PROMOTED.** Every band publishes and every band passes its coverage floor and both
+tail gates. Three failures block promotion: the `income_diverse` upper tail, and the sharpness
+comparison on `income_diverse` and `incomplete_observation`.
 
-**Task.** Turn a sustainable-income point estimate into an `80%` interval.
+**Task.** Turn the routed sustainable-income estimate into a `p10`/`p90` pair.
 
-**Method.** Split conformal on the log residual. Offsets are the empirical `0.1` and `0.9` quantiles
-of out-of-fold residuals, collected from models refitted per fold that never saw the row.
+**Method.** Conformalized quantile regression with bandwise asymmetric correction. Two boosted stump
+ensembles predict this row's lower and upper log-residual quantiles under pinball loss. Each
+confidence band then corrects each tail separately, at that tail's own finite-sample `0.90` quantile
+fitted on untouched customers. See
+[ADR 0007](../../docs/adr/0007-complete-adaptive-interval-promotion.md).
 
-**Measured.** Held-out coverage `0.8568` against nominal `0.80`, standard error `0.0185` on 468
-rows. The declared tolerance is `0.05`, so `0.0568` from nominal fails it. Confidence stays
-monotonic with relative error: WAPE `0.0277`, `0.0700`, `0.2491` across the high, medium, and low
-bands.
+`0.8` corrected both tails of all three bands by one pooled constant. High and medium held 92% of the
+conformity mass and both over-covered, so that constant came out negative, `-0.0077`, and narrowed
+the low band that was already under its floor. The low band's own lower tail needed `+0.1236` and its
+upper tail `+0.0079`; no single symmetric number expresses that.
 
-**Why it fails.** A single global offset is fitted over a residual distribution that has become
-strongly bimodal by consent segment. Repairing the reversal defect made the partial-consent segment
-much more accurate, WAPE `0.0178` at coverage `1.00`, while the complete-coverage segment kept its
-error, WAPE `0.0868` at coverage `0.777`. One offset over-covers the tight mode and under-covers the
-wide one, and the pooled figure lands outside tolerance. Before contract `1.6` the same split
-measured `0.98` against `0.76` and the pooled figure happened to land inside tolerance at `0.8365`.
-The method did not degrade; a more accurate point estimate exposed a limitation
-[ADR 0003](../../docs/adr/0003-interval-and-confidence-semantics.md) had already documented.
+Residuals are taken around the estimate `combine_month` publishes, routing included, not around the
+capacity model's own prediction. Four customer-disjoint populations train the point model, train the
+quantile model, correct it, and gate it; the report asserts zero shared customers.
+
+**Measured.** On 720 final-test customers never used by any earlier stage, coverage `0.9039` against
+nominal `0.80` on **8640 of 8640 rows**. By band: high `0.9174`, medium `0.9103`, low `0.7987`, each
+against a floor of `0.7500`. By suite: `income_diverse` `0.7670`, `incomplete_observation` `0.9618`,
+`life_events` `0.9830`. Zero-truth coverage `0.9983`. Tail miss rates overall: lower `0.0363`, upper
+`0.0597` against `0.10` each.
+
+**Gate.** Coverage is one-sided on under-coverage, per suite and per band. Each tail is additionally
+gated on its own miss rate against `0.10`, because a joint `80%` figure is satisfied by a lower tail
+missing `0.02` and an upper missing `0.18`. Sharpness is mandatory, with no configurable ceiling: the
+mean Winkler score is compared per suite against the fixed-band conformal model on the same rows.
+Every band publishes unconditionally; the measurement decides only whether the artifact promotes,
+never its shape. Error bars are measured by resampling customers rather than months.
 
 **Known failure modes.**
-- Coverage is not uniform across confidence bands: `0.982`, `0.845`, `0.397` from high to low. A
-  single global offset cannot serve every band, and low-confidence intervals under-cover badly.
-  Conditional conformal calibration, with offsets fitted per band, is the documented next step and
-  is now required rather than optional.
-- Coverage collapses on unseen conditions. On the held-out high-volatility suite it falls to `0.30`,
-  so the stated `80%` does not hold outside the calibration distribution.
+- `income_diverse` clears its coverage floor at `0.7670` while its upper tail misses `0.1372` against
+  a ceiling of `0.1250`. The published `p90` holds about `86%` of the time on that suite.
+- Sharpness fails on two suites. On `incomplete_observation` this is unambiguous: the fixed-band
+  model covers `0.9844` against `0.9618` in 21% less width. On `income_diverse` the baseline that
+  outscores it covers `0.5319`, so "no worse than the baseline" there is being asked of a model that
+  reaches nominal coverage against one that does not.
+- The conformal unit is the customer-month, not the customer. The 8,016 scores are roughly twelve
+  correlated rows per customer, so this is empirical customer-disjoint calibration with
+  customer-clustered error bars, **not** a finite-sample guarantee, and must not be described as one.
+- Coverage does not extend outside the calibration distribution, and nothing detects that at
+  inference time. On the held-out stress suites it falls to `0.491` on noisy and `0.125` on
+  high-volatility. The stated `80%` is a claim about conditions resembling the three calibration
+  suites and nothing wider.
+- Final-test seeds `510_000`–`530_000` have been inspected across several method-selection rounds.
+  They are validation seeds, not a release lockbox.
 - Annual quantiles are not produced. Deriving them from monthly quantiles needs a dependence
   structure across months that nobody has measured.
-- Must be refitted whenever the capacity model changes. The artifact records the capacity model
-  version it was fitted against so a mismatch is visible.
+- Must be refitted whenever the capacity model changes. The artifact records the capacity artifact's
+  SHA-256, because the version string alone did not detect the contract `1.6` refit.
 
-**Intended use.** None until it passes its gate. `tests/test_quantiles.py` fails while this artifact
-is unpromoted, which is the intended behavior.
+**Intended use.** Candidate. The runtime default is unchanged until it promotes.
+
+---
+
+## `conformal-intervals-0.8.0` — superseded, limited promotion
+
+**Status: LIMITED_PROMOTION.** Recorded `PROMOTED` under a gate that let a failing band withdraw
+itself and still count. Two of three bands publish and roughly 9% of supported months receive no
+interval, so it is a research result and a frozen comparison baseline, not a release. The artifact is
+frozen byte-for-byte; only the promotion claim in its report was downgraded.
+
+**Method.** Conformalized quantile regression with one pooled widening for both tails of every band.
+See [ADR 0006](../../docs/adr/0006-uncertainty-protocol-and-gate-semantics.md).
+
+**Measured.** Published coverage `0.9140` on 7870 of 8640 rows. High `0.9146`, medium `0.9132`, low
+`0.7026` against a floor of `0.7490` and withheld. Per-suite figures in its report cover published
+rows only, so they are not comparable with `0.9`'s whole-population figures.
+
+**Known failure modes.**
+- The low confidence band covers `0.7026` against a floor of `0.7490` and is withheld, so about 9% of
+  supported months report `quantile_unavailable_reason = UNCALIBRATED_INTERVAL` and receive no
+  interval at all.
+- Both tails of every band share one pooled correction, `-0.0077`, so `p10` and `p90` are two halves
+  of a joint `80%` claim rather than two quantiles that hold separately. The report has no field that
+  would show one tail paying for the other.
+- Coverage does not extend outside the calibration distribution, and nothing detects that at
+  inference time: `0.491` on the held-out noisy suite and `0.125` on high-volatility.
+- Calibration is over customer-months rather than customers, so this is empirical customer-disjoint
+  calibration with customer-clustered error bars, not a finite-sample guarantee.
+- Its `capacity_artifact_sha256` is dangling. It names bytes now stored as
+  `capacity-estimator-0.6.0.json` under a corrected `model_version`; the pre-rename hash is recorded
+  in that model's report.
+- Annual quantiles are not produced.
+
+**Retained for.** The fixed-band conformal model that ADR 0007's sharpness gate measures against, and
+the ADR 0006 result itself.
 
 ---
 

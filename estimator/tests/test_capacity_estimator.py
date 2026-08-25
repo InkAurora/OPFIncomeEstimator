@@ -32,13 +32,13 @@ from training.capacity_metrics import (
 from training.datasets import customer_partition
 
 ARTIFACT_PATH = (
-    Path(__file__).parents[1] / "training" / "artifacts" / "capacity-estimator-0.5.0.json"
+    Path(__file__).parents[1] / "training" / "artifacts" / "capacity-estimator-0.6.0.json"
 )
 REPORT_PATH = (
     Path(__file__).parents[1]
     / "training"
     / "artifacts"
-    / "capacity-estimator-0.5.0-report.json"
+    / "capacity-estimator-0.6.0-report.json"
 )
 
 

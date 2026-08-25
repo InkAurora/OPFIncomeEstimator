@@ -22,6 +22,8 @@ from income_estimator.models.capacity import (
     CapacityEstimatorArtifact,
     GradientBoostedCapacityModel,
 )
+from income_estimator.models.ensemble import combine_month
+from income_estimator.models.quantiles import confidence_band
 from training.capacity_boosting import fit_capacity_model
 from training.capacity_datasets import CapacityRow
 
@@ -50,6 +52,28 @@ class OutOfFoldPrediction:
     log_residual: float
     predicted_positive_basis_points: int
     is_zero_truth: bool
+    confidence_basis_points: int
+
+
+def _confidence_basis_points(
+    row: CapacityRow,
+    model: GradientBoostedCapacityModel,
+) -> int:
+    """Score the row with the model that held it out, never with the promoted one.
+
+    ADR 0005 bands calibration residuals by confidence. Scoring these rows with the promoted model
+    would reintroduce exactly the in-sample optimism out-of-fold prediction exists to remove, since
+    that model trained on these customers.
+    """
+
+    realized = int(row.features.get("income_1m_minor") or 0)
+    return combine_month(
+        realized,
+        row.features,
+        model,
+        realized_components={"recurring_streams_0_2": realized},
+        realized_selected="recurring_streams_0_2",
+    ).confidence_score_basis_points
 
 
 @dataclass(frozen=True, slots=True)
@@ -65,6 +89,17 @@ class OutOfFoldResult:
         return tuple(
             item.log_residual for item in self.predictions if not item.is_zero_truth
         )
+
+    def positive_log_residuals_by_band(self) -> dict[str, tuple[float, ...]]:
+        """The same residuals, grouped by the confidence band each row was scored into."""
+
+        grouped: dict[str, list[float]] = {}
+        for item in self.predictions:
+            if item.is_zero_truth:
+                continue
+            band = confidence_band(item.confidence_basis_points)
+            grouped.setdefault(band, []).append(item.log_residual)
+        return {band: tuple(values) for band, values in grouped.items()}
 
 
 def _split_folds(
@@ -138,6 +173,7 @@ def build_out_of_fold_predictions(
                         row.features
                     ),
                     is_zero_truth=truth == 0,
+                    confidence_basis_points=_confidence_basis_points(row, model),
                 )
             )
     return OutOfFoldResult(

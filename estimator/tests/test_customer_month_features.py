@@ -52,10 +52,10 @@ def _incomplete_coverage() -> list[dict[str, object]]:
 
 
 def test_feature_set_version_and_schema_fingerprint_are_frozen() -> None:
-    assert FEATURE_SET_VERSION == "customer-month-features-1.1.0"
-    assert FEATURE_SCHEMA_FINGERPRINT == "1b2550a38523d823110a9c1d4396f5ca"
+    assert FEATURE_SET_VERSION == "customer-month-features-1.2.0"
+    assert FEATURE_SCHEMA_FINGERPRINT == "e54e70affc30a6fad10282e62463a936"
     assert feature_schema_fingerprint(FEATURE_SCHEMA) == FEATURE_SCHEMA_FINGERPRINT
-    assert len(FEATURE_NAMES) == len(set(FEATURE_NAMES)) == 98
+    assert len(FEATURE_NAMES) == len(set(FEATURE_NAMES)) == 104
 
 
 def test_every_row_carries_the_full_versioned_schema(request_payload, transaction) -> None:

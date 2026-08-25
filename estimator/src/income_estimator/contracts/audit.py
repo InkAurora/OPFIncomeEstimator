@@ -52,6 +52,8 @@ class IncomeStream(AuditModel):
     income_probability_basis_points: int = Field(ge=0, le=10_000)
     pattern: Literal["RECURRING_SOURCE", "INCOME_ECOSYSTEM", "ONE_OFF"]
     expected_monthly_amount_minor: int = Field(gt=0)
+    monthly_capacity_minor: int = Field(ge=0)
+    frequency_confidence_basis_points: int = Field(ge=0, le=10_000)
     observed_months: tuple[str, ...] = Field(min_length=1)
     account_ids: tuple[str, ...] = Field(min_length=1)
     transaction_ids: tuple[str, ...] = Field(min_length=1)

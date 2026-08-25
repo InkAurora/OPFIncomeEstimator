@@ -96,6 +96,44 @@ def source_features(view: PointInTimeView) -> dict[str, FeatureOutcome]:
             round_ratio(fmean(stream.amount_coefficient_of_variation for stream in active))
         )
 
+    # ADR 0006. The streams carry a frequency-normalized monthly rate and how well the observations
+    # support the cadence it was derived from. Neither was exposed, so the capacity model could see
+    # how many sources a customer had and how regular they looked, but never what they were worth
+    # per month or how much to trust that figure.
+    if not active:
+        result["source_monthly_capacity_minor"] = missing(MISSING_NO_OBSERVED_RECORDS)
+        result["largest_source_monthly_capacity_minor"] = missing(MISSING_NO_OBSERVED_RECORDS)
+        result["source_frequency_confidence_mean_basis_points"] = missing(
+            MISSING_NO_OBSERVED_RECORDS
+        )
+        result["source_observation_count_12m"] = present(0)
+        result["source_age_months_max"] = missing(MISSING_NO_OBSERVED_RECORDS)
+        result["has_no_detected_source"] = present(1)
+    else:
+        capacities = [stream.monthly_capacity_minor for stream in active]
+        result["source_monthly_capacity_minor"] = present(sum(capacities))
+        result["largest_source_monthly_capacity_minor"] = present(max(capacities))
+        result["source_frequency_confidence_mean_basis_points"] = present(
+            round_basis_points(
+                fmean(stream.frequency_confidence_basis_points for stream in active)
+            )
+        )
+        result["source_observation_count_12m"] = present(
+            sum(
+                1
+                for stream in active
+                for transaction_id in stream.transaction_ids
+                if transaction_id in view.decision_by_id
+                and view.in_trailing_window(
+                    view.decision_by_id[transaction_id].posted_month, 12
+                )
+            )
+        )
+        result["source_age_months_max"] = present(
+            max(view.months_since(stream.first_seen[:7]) for stream in active)
+        )
+        result["has_no_detected_source"] = present(0)
+
     last_months = [
         month
         for month in (_last_activity_month(view, stream) for stream in streams)

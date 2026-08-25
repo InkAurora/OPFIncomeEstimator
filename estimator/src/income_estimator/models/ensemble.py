@@ -230,14 +230,22 @@ def combine_month(
     elif intervals is None:
         quantile_reason = QUANTILE_UNAVAILABLE_UNCALIBRATED
     else:
-        lower, upper = intervals.interval_minor(
+        bounds = intervals.interval_minor(
             sustainable,
             positive_basis_points=(
                 capacity.predict_positive_basis_points(features)
                 if capacity is not None
                 else None
             ),
+            confidence_basis_points=score,
+            features=features,
         )
+        # A band the calibration does not publish is uncalibrated for this month specifically. An
+        # absent quantile is never a point estimate widened by a guess.
+        if bounds is None:
+            quantile_reason = QUANTILE_UNAVAILABLE_UNCALIBRATED
+        else:
+            lower, upper = bounds
     return MonthlyEnsembleResult(
         realized_income_minor=realized_income_minor,
         sustainable_income_minor=sustainable,

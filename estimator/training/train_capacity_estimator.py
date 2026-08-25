@@ -80,7 +80,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
-    artifact_path = output / "capacity-estimator-0.5.0.json"
+    artifact_path = output / "capacity-estimator-0.6.0.json"
     artifact_bytes = (artifact.model_dump_json(indent=2) + "\n").encode()
     artifact_path.write_bytes(artifact_bytes)
 
@@ -112,7 +112,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "full_coverage_tolerance": FULL_COVERAGE_TOLERANCE,
         },
     }
-    report_path = output / "capacity-estimator-0.5.0-report.json"
+    report_path = output / "capacity-estimator-0.6.0-report.json"
     report_path.write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",

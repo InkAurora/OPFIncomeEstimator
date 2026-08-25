@@ -15,7 +15,7 @@ from income_estimator.models.ensemble import ENSEMBLE_VERSION
 from income_estimator.pipeline import EnsembleIncomeEstimator
 
 CAPACITY_MODEL_PATH = (
-    Path(__file__).parents[1] / "training" / "artifacts" / "capacity-estimator-0.5.0.json"
+    Path(__file__).parents[1] / "training" / "artifacts" / "capacity-estimator-0.6.0.json"
 )
 
 
@@ -122,7 +122,7 @@ def test_ensemble_emits_both_targets_and_stays_1_0_readable(
     assert isinstance(estimate, IncomeEstimateV11)
     assert estimate.estimator_version == "ensemble-0.6.0"
     assert ENSEMBLE_VERSION in estimate.component_versions
-    assert estimate.model_versions == ("capacity-gbdt-stumps-0.5.0",)
+    assert estimate.model_versions == ("capacity-gbdt-stumps-0.6.0",)
     assert month.realized_income_estimate_minor == 500_000
     assert month.sustainable_income_p50_minor is not None
     assert month.sustainable_income_p10_minor is None

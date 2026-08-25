@@ -154,7 +154,7 @@ row.missing_features
 
 ```bash
 income-estimator --features request.json
-income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.5.0.json --calibration training/artifacts/quantile-calibration-0.7.0.json request.json
+income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.8.0.json request.json
 ```
 
 The default estimator is promoted `0.2`. The rejected `0.3` classifier stays optional and is
@@ -213,7 +213,7 @@ from pathlib import Path
 from income_estimator import GradientBoostedCapacityModel, build_customer_month_features
 
 model = GradientBoostedCapacityModel.from_path(
-    Path("training/artifacts/capacity-estimator-0.5.0.json")
+    Path("training/artifacts/capacity-estimator-0.6.0.json")
 )
 row = build_customer_month_features(request).row("2026-06")
 model.predict_minor(row.to_mapping())
@@ -258,7 +258,7 @@ from pathlib import Path
 from income_estimator import EnsembleIncomeEstimator
 
 estimate = EnsembleIncomeEstimator(
-    Path("training/artifacts/capacity-estimator-0.5.0.json")
+    Path("training/artifacts/capacity-estimator-0.6.0.json")
 ).estimate_v1_1(request)
 month = estimate.monthly_estimates[-1]
 month.realized_income_estimate_minor
@@ -275,30 +275,49 @@ accounts is never reported as well understood however tidy the visible half look
 The capacity artifact is optional. Without it the ensemble still answers, using the
 recurring-stream component, and says `CAPACITY_MODEL_UNAVAILABLE` in the routing reasons.
 
-## Calibrated intervals (0.7)
+## Calibrated intervals (0.8 shipped, 0.9 candidate)
 
-Estimator `0.7` fills `sustainable_income_p10/p50/p90` with split-conformal intervals calibrated on
-out-of-fold residuals. Construction rules are fixed by
-[ADR 0003](../docs/adr/0003-interval-and-confidence-semantics.md).
+`sustainable_income_p10/p50/p90` are filled by conformalized quantile regression around the routed
+estimate. Construction rules are fixed by
+[ADR 0003](../docs/adr/0003-interval-and-confidence-semantics.md); the protocol and gate semantics
+by [ADR 0006](../docs/adr/0006-uncertainty-protocol-and-gate-semantics.md) and
+[ADR 0007](../docs/adr/0007-complete-adaptive-interval-promotion.md).
 
-The `0.5` artifact cannot supply calibration residuals. Its residuals on `train` are in-sample, and
-`validation` was consumed twice already, once for the tree count and once for the gate threshold.
-`training/out_of_fold.py` therefore refits the hurdle per fold and predicts only the fold it held
-out, with folds assigned by customer because two months of one customer share almost everything.
+Two boosted stump ensembles predict each row's lower and upper log-residual quantiles under pinball
+loss. Each confidence band then corrects each tail separately, on that tail's own scores from
+customers the quantile model never saw, so the lower bound is a `p10` claim and the upper bound a
+`p90` claim rather than two halves of one `80%` claim. Four customer-disjoint populations train the
+point model, train the quantile model, correct it, and gate it.
 
 ```bash
-python -m training.calibrate_quantiles --population-size-per-suite 80 --workers 4 --folds 5
+python -m training.calibrate_quantiles --population-size-per-suite 240 --workers 4
 ```
 
-Held-out coverage is `0.8365` against a nominal `0.80`, inside the documented `0.05` tolerance,
-with a coverage standard error of `0.0226` on 312 rows. Confidence is monotonic with relative
-error: WAPE `0.024` for the high band, `0.069` for medium, `0.221` for low.
+The `0.9` candidate covers `0.9039` against a nominal `0.80` on **8640 of 8640** final-test rows
+from 720 customers. Every band publishes and every band clears its `0.75` floor: high `0.9174`,
+medium `0.9103`, low `0.7987`. By suite: `income_diverse` `0.7670`, `incomplete_observation`
+`0.9618`, `life_events` `0.9830`. Zero-truth coverage is `0.9983`.
 
-Two findings are recorded rather than smoothed over. Coverage is not uniform across confidence
-bands, at `1.00`, `0.817`, and `0.412` from high to low, so a single global offset cannot serve
-every band and low-confidence intervals under-cover; conditional conformal calibration is the
-natural next step. And `annual_income_p10/p50/p90` stay absent, because deriving them from monthly
-quantiles needs a dependence structure across months that nobody has measured.
+The shipped `0.8` artifact covers `0.9140` on 7870 of 8640 rows, withholding the low band. Its
+per-suite figures count published rows only and are not comparable with the whole-population figures
+above.
+
+The coverage gate is one-sided. Under-coverage understates risk and fails; exceeding nominal does
+not, because on a suite whose point estimate is often exact no interval width can bring coverage
+down to nominal. Each tail is gated separately against `0.10`, because a joint `80%` figure is
+satisfied by a lower tail missing `0.02` and an upper missing `0.18`. Sharpness is mandatory and has
+no configurable ceiling: the Winkler score is compared per suite against the fixed-band conformal
+model on the same rows, which is what stops a one-sided gate from being satisfied by widening.
+
+`0.9` does not promote, and the findings are recorded rather than smoothed over. `income_diverse`
+clears its coverage floor while its upper tail misses `0.1372` against a ceiling of `0.1250`, so its
+published `p90` holds about `86%` of the time. Sharpness fails on `income_diverse` and
+`incomplete_observation`. Calibration is over customer-months rather than customers, so this is
+empirical customer-disjoint calibration with customer-clustered error bars and not a finite-sample
+guarantee. Coverage does not survive outside the calibration distribution, at `0.491` on the
+held-out noisy suite and `0.125` on high-volatility, and nothing detects that at inference time. And
+`annual_income_p10/p50/p90` stay absent, because deriving them from monthly quantiles needs a
+dependence structure across months that nobody has measured.
 
 A predicted zero does not get a symmetric band. When the gate is confident the interval is `[0, 0]`,
 a claim the evaluation can falsify; when it is unsure the lower bound stays zero and the upper bound
@@ -310,8 +329,8 @@ from pathlib import Path
 from income_estimator import EnsembleIncomeEstimator
 
 estimator = EnsembleIncomeEstimator(
-    Path("training/artifacts/capacity-estimator-0.5.0.json"),
-    calibration_path=Path("training/artifacts/quantile-calibration-0.7.0.json"),
+    Path("training/artifacts/capacity-estimator-0.6.0.json"),
+    calibration_path=Path("training/artifacts/quantile-calibration-0.8.0.json"),
 )
 month = estimator.estimate_v1_1(request).monthly_estimates[-1]
 month.sustainable_income_p10_minor, month.sustainable_income_p90_minor
@@ -334,7 +353,7 @@ remainder folded into a single entry, so the printed decomposition still reconst
 prediction. The contract rejects one that does not.
 
 ```bash
-income-estimator --explain --capacity-model training/artifacts/capacity-estimator-0.5.0.json --calibration training/artifacts/quantile-calibration-0.7.0.json request.json
+income-estimator --explain --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.8.0.json request.json
 ```
 
 [Model cards](docs/model-cards.md) cover every promoted artifact, each with its measured results and
@@ -353,17 +372,18 @@ python -m evaluation.stress_report --population-size 20 --workers 4
 | suite | in training | realized WAPE | sustainable WAPE | interval coverage |
 |---|---|---|---|---|
 | clean | no | 0.000 | contract below 1.3 | — |
-| normal | yes | 0.000 | 0.147 | 0.688 |
-| partial_consent | yes | 0.008 | 0.018 | 0.971 |
-| life_events | yes | 0.000 | 0.024 | 1.000 |
-| noisy | no | 0.179 | 0.092 | 0.883 |
-| high_volatility | no | 0.000 | 0.443 | 0.375 |
+| normal | yes | 0.000 | 0.127 | 0.739 |
+| partial_consent | yes | 0.000 | 0.007 | 0.981 |
+| life_events | yes | 0.000 | 0.021 | 0.975 |
+| noisy | no | 0.017 | 0.030 | 0.491 |
+| high_volatility | no | 0.000 | 0.410 | 0.125 |
 
-Both held-out suites expose real weakness. The noisy suite is the worst realized error by a wide
-margin: an asset sale, a merchant refund, and an own transfer described as a PIX receipt are exactly
-the credits the rules were built to reject, and some get through. The high-volatility suite is the
-worst sustainable error and the worst interval coverage, at `0.375` against a nominal `0.80`, so the
-stated interval does not hold outside the calibration distribution.
+Both held-out suites expose real weakness. The noisy suite carries the only nonzero realized error,
+now timing rather than classification: a reversal's corrected re-post that has not arrived by the
+request cutoff carries income the estimator cannot yet see. The high-volatility suite is the worst
+sustainable error, and both held-out suites under-cover badly, at `0.491` and `0.125` against a
+nominal `0.80`. The interval is calibrated on `income_diverse`, `life_events`, and
+`incomplete_observation`, and its guarantee does not reach conditions outside them.
 
 No suite produced a single false-income month: the estimator never invented income where truth was
 zero.
@@ -401,7 +421,7 @@ one input-contract file and prints either view:
 income-estimator request.json
 income-estimator --audit request.json
 income-estimator --features request.json
-income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.5.0.json --calibration training/artifacts/quantile-calibration-0.7.0.json request.json
+income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.8.0.json request.json
 income-estimator --baseline-0.1 request.json
 income-estimator --model training/artifacts/transaction-classifier-0.3.0.json request.json
 ```

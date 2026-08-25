@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from typing import Literal
 
-FEATURE_SET_VERSION = "customer-month-features-1.1.0"
+FEATURE_SET_VERSION = "customer-month-features-1.2.0"
 
 FeatureGroup = Literal[
     "CASH_FLOW",
@@ -318,6 +318,54 @@ _SOURCES_SCHEMA: tuple[FeatureSpec, ...] = (
         unit="RATIO",
         window_months=12,
         formula="mean amount coefficient of variation of streams active in trailing 12 months",
+    ),
+    FeatureSpec(
+        name="source_monthly_capacity_minor",
+        group="SOURCES",
+        unit="MINOR",
+        window_months=12,
+        formula=(
+            "sum of frequency-normalized monthly rates of streams active in the trailing 12 "
+            "months; a quarterly source contributes a third of its payment"
+        ),
+    ),
+    FeatureSpec(
+        name="largest_source_monthly_capacity_minor",
+        group="SOURCES",
+        unit="MINOR",
+        window_months=12,
+        formula="largest frequency-normalized monthly rate among active streams",
+    ),
+    FeatureSpec(
+        name="source_frequency_confidence_mean_basis_points",
+        group="SOURCES",
+        unit="BASIS_POINTS",
+        window_months=12,
+        formula=(
+            "mean support for each active stream's inferred cadence, from gap regularity and "
+            "observation count"
+        ),
+    ),
+    FeatureSpec(
+        name="source_observation_count_12m",
+        group="SOURCES",
+        unit="COUNT",
+        window_months=12,
+        formula="credits belonging to active streams posted in the trailing 12 months",
+    ),
+    FeatureSpec(
+        name="source_age_months_max",
+        group="SOURCES",
+        unit="COUNT",
+        window_months=12,
+        formula="months between the earliest first_seen among active streams and the cutoff",
+    ),
+    FeatureSpec(
+        name="has_no_detected_source",
+        group="SOURCES",
+        unit="COUNT",
+        window_months=12,
+        formula="1 when no stream has a credit in the trailing 12 months, else 0",
     ),
     FeatureSpec(
         name="months_since_last_source_activity",

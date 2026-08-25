@@ -29,7 +29,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-CAPACITY_FEATURE_VERSION = "customer-month-features-1.1.0"
+CAPACITY_FEATURE_VERSION = "customer-month-features-1.2.0"
 
 
 class CapacityModel(BaseModel):

@@ -31,7 +31,7 @@ from training.capacity_datasets import (
 )
 from training.datasets import DATASET_VERSION as TRANSACTION_DATASET_VERSION
 
-CAPACITY_MODEL_VERSION = "capacity-gbdt-stumps-0.5.0"
+CAPACITY_MODEL_VERSION = "capacity-gbdt-stumps-0.6.0"
 MISSING_BIN = -1
 ANCHOR_FEATURE_NAME = "income_mean_3m_minor"
 

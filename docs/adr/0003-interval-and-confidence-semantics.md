@@ -1,6 +1,7 @@
 # ADR 0003: Interval and confidence semantics
 
-- Status: Accepted
+- Status: Accepted; the global-offset decision is superseded by
+  [ADR 0005](0005-conditional-conformal-calibration.md)
 - Date: 2026-08-22
 - Extends: [ADR 0001](0001-income-target-definitions.md), [ADR 0002](0002-income-target-construction.md)
 - Calibration contract: `conformal-intervals-0.7.0`

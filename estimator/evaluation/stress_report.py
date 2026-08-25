@@ -199,12 +199,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--capacity-model",
         type=Path,
-        default=Path(__file__).parents[1] / "training/artifacts/capacity-estimator-0.5.0.json",
+        default=Path(__file__).parents[1] / "training/artifacts/capacity-estimator-0.6.0.json",
     )
     parser.add_argument(
         "--calibration",
         type=Path,
-        default=Path(__file__).parents[1] / "training/artifacts/quantile-calibration-0.7.0.json",
+        default=Path(__file__).parents[1] / "training/artifacts/quantile-calibration-0.8.0.json",
     )
     parser.add_argument("--output", type=Path, default=Path(__file__).parent / "baselines")
     parser.add_argument("--population-size", type=int, default=20)

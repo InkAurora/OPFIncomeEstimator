@@ -7,7 +7,7 @@
   ],
   "model_versions": [
     "capacity-gbdt-stumps-0.5.0",
-    "conformal-intervals-0.7.0"
+    "conformal-intervals-0.8.0"
   ],
   "months": 12,
   "population_size": 20,
@@ -20,7 +20,7 @@
       "in_training_distribution": false,
       "interval_count": 0,
       "interval_coverage": null,
-      "mean_confidence_basis_points": 7319.7583,
+      "mean_confidence_basis_points": 7325.2333,
       "realized_income": {
         "count": 240,
         "mean_absolute_error_minor": 0.0,
@@ -40,9 +40,9 @@
       "description": "mixed income profiles with complete observation",
       "false_income_month_count": 0,
       "in_training_distribution": true,
-      "interval_count": 240,
-      "interval_coverage": 0.6125,
-      "mean_confidence_basis_points": 6928.1375,
+      "interval_count": 207,
+      "interval_coverage": 0.73913,
+      "mean_confidence_basis_points": 6941.8667,
       "realized_income": {
         "count": 240,
         "mean_absolute_error_minor": 0.0,
@@ -54,9 +54,9 @@
       "suite": "normal",
       "sustainable_income": {
         "count": 240,
-        "mean_absolute_error_minor": 61482.0917,
+        "mean_absolute_error_minor": 53839.3042,
         "mean_truth_minor": 425201.4,
-        "wape": 0.14459522
+        "wape": 0.12662071
       }
     },
     {
@@ -64,9 +64,9 @@
       "description": "stable salary behind partial consent and a degraded feed",
       "false_income_month_count": 0,
       "in_training_distribution": true,
-      "interval_count": 240,
-      "interval_coverage": 0.991667,
-      "mean_confidence_basis_points": 6605.25,
+      "interval_count": 213,
+      "interval_coverage": 0.981221,
+      "mean_confidence_basis_points": 6605.6833,
       "realized_income": {
         "count": 240,
         "mean_absolute_error_minor": 0.0,
@@ -78,9 +78,9 @@
       "suite": "partial_consent",
       "sustainable_income": {
         "count": 240,
-        "mean_absolute_error_minor": 5388.7875,
+        "mean_absolute_error_minor": 3944.8167,
         "mean_truth_minor": 600000.0,
-        "wape": 0.00898131
+        "wape": 0.00657469
       }
     },
     {
@@ -89,8 +89,8 @@
       "false_income_month_count": 0,
       "in_training_distribution": true,
       "interval_count": 240,
-      "interval_coverage": 1.0,
-      "mean_confidence_basis_points": 7057.15,
+      "interval_coverage": 0.975,
+      "mean_confidence_basis_points": 7060.1667,
       "realized_income": {
         "count": 240,
         "mean_absolute_error_minor": 0.0,
@@ -102,9 +102,9 @@
       "suite": "life_events",
       "sustainable_income": {
         "count": 240,
-        "mean_absolute_error_minor": 12549.3333,
+        "mean_absolute_error_minor": 10757.8333,
         "mean_truth_minor": 501529.1667,
-        "wape": 0.02502214
+        "wape": 0.02145007
       }
     },
     {
@@ -112,9 +112,9 @@
       "description": "income-shaped non-income credits with a late, duplicated, reversed feed",
       "false_income_month_count": 0,
       "in_training_distribution": false,
-      "interval_count": 240,
-      "interval_coverage": 0.9375,
-      "mean_confidence_basis_points": 7393.925,
+      "interval_count": 232,
+      "interval_coverage": 0.491379,
+      "mean_confidence_basis_points": 7441.7417,
       "realized_income": {
         "count": 240,
         "mean_absolute_error_minor": 9957.325,
@@ -126,9 +126,9 @@
       "suite": "noisy",
       "sustainable_income": {
         "count": 240,
-        "mean_absolute_error_minor": 21179.1333,
+        "mean_absolute_error_minor": 18045.9625,
         "mean_truth_minor": 595500.0,
-        "wape": 0.0355653
+        "wape": 0.03030388
       }
     },
     {
@@ -136,9 +136,9 @@
       "description": "irregular self-employed and business income on a clean feed",
       "false_income_month_count": 0,
       "in_training_distribution": false,
-      "interval_count": 240,
-      "interval_coverage": 0.3,
-      "mean_confidence_basis_points": 5407.775,
+      "interval_count": 160,
+      "interval_coverage": 0.125,
+      "mean_confidence_basis_points": 5456.325,
       "realized_income": {
         "count": 240,
         "mean_absolute_error_minor": 0.0,
@@ -150,9 +150,9 @@
       "suite": "high_volatility",
       "sustainable_income": {
         "count": 240,
-        "mean_absolute_error_minor": 166952.2667,
+        "mean_absolute_error_minor": 147532.4875,
         "mean_truth_minor": 359450.0,
-        "wape": 0.4644659
+        "wape": 0.41043953
       }
     }
   ]

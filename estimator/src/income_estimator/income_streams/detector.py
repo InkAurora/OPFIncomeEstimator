@@ -26,6 +26,51 @@ def _frequency(dates: list[date]) -> str:
     return "IRREGULAR"
 
 
+# Payments per year for each inferred frequency. ADR 0006: a quarterly source of 9,000 supports
+# 3,000 a month, and the detector previously reported the paying-month amount as if it were the
+# monthly rate.
+_PAYMENTS_PER_YEAR: dict[str, float] = {
+    "WEEKLY": 52.0,
+    "BIWEEKLY": 26.0,
+    "MONTHLY": 12.0,
+    "QUARTERLY": 4.0,
+}
+
+
+def _monthly_capacity(frequency: str, amounts: list[int], dates: list[date]) -> int:
+    """Normalize a stream to the monthly rate it can sustain.
+
+    A regular frequency converts by its own cadence. An irregular or one-off stream has no cadence
+    to convert, so it is spread across the span it was actually observed over, which is the only
+    defensible run rate available from the observations.
+    """
+
+    per_year = _PAYMENTS_PER_YEAR.get(frequency)
+    if per_year is not None:
+        return max(0, round(median(amounts) * per_year / 12))
+    span_days = (dates[-1] - dates[0]).days
+    months = max(1.0, (span_days + 30) / 30.44)
+    return max(0, round(sum(amounts) / months))
+
+
+def _frequency_confidence(dates: list[date], frequency: str) -> int:
+    """How much the observed cadence supports the inferred frequency.
+
+    A frequency read off two transactions is a guess; one read off twelve evenly spaced ones is
+    close to a fact. The capacity model needs to tell those apart, because the monthly rate derived
+    from a guessed cadence carries the guess with it.
+    """
+
+    if frequency in {"ONE_OFF", "IRREGULAR"} or len(dates) < 2:
+        return 0
+    gaps = [(right - left).days for left, right in zip(dates, dates[1:])]
+    gap_mean = fmean(gaps)
+    gap_cv = pstdev(gaps) / gap_mean if gap_mean else 0.0
+    regularity = max(0.0, 1.0 - min(1.0, gap_cv))
+    observations = min(1.0, len(dates) / 6)
+    return min(10_000, round(10_000 * regularity * observations))
+
+
 def _recurrence_score(dates: list[date], amounts: list[int]) -> int:
     if len(dates) < 2:
         return 2_000
@@ -110,6 +155,8 @@ def detect_income_streams(
                     len(observed_months),
                 ),
                 expected_monthly_amount_minor=round(median(monthly_amounts.values())),
+                monthly_capacity_minor=_monthly_capacity(frequency, amounts, dates),
+                frequency_confidence_basis_points=_frequency_confidence(dates, frequency),
                 observed_months=observed_months,
                 account_ids=tuple(
                     sorted({account_id_by_id[item.transaction_id] for item in ordered})

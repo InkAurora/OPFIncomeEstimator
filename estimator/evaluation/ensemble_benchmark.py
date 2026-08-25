@@ -164,7 +164,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--capacity-model",
         type=Path,
-        default=Path(__file__).parents[1] / "training/artifacts/capacity-estimator-0.5.0.json",
+        default=Path(__file__).parents[1] / "training/artifacts/capacity-estimator-0.6.0.json",
     )
     parser.add_argument("--output", type=Path, default=Path(__file__).parent / "baselines")
     parser.add_argument("--population-size-per-suite", type=int, default=80)
