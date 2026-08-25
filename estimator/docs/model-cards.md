@@ -139,6 +139,12 @@ rather than months.
   model covers `0.9844` against `0.9618` in 21% less width. On `income_diverse` the baseline that
   outscores it covers `0.5319`, so "no worse than the baseline" there is being asked of a model that
   reaches nominal coverage against one that does not.
+- Width is allocated in the wrong direction within each suite. Broken down by the candidate's own
+  predicted width, it beats the fixed-band model across the middle quartiles and loses everything in
+  its widest, which covers `0.943` on `income_diverse` at `7.4x` the baseline's width. The failing
+  `p90` is almost entirely the narrowest quartile's, missing `0.308` at a width the fixed-band model
+  matches. The defect is the slope of the width model, not its level, so a global widening worsens
+  the sharpness failure without addressing the tail one. See `width_allocation` in the report.
 - The conformal unit is the customer-month, not the customer. The 8,016 scores are roughly twelve
   correlated rows per customer, so this is empirical customer-disjoint calibration with
   customer-clustered error bars, **not** a finite-sample guarantee, and must not be described as one.

@@ -76,6 +76,49 @@ this answers is whether the existing features separate hard income-diverse rows 
 incomplete-observation rows well enough to fit a conditional selector, or whether new features are
 needed before that is worth attempting.
 
+#### What the first run showed
+
+They separate, and the strongest separator is the candidate's own predicted width. Measured on the
+validation population at `240` customers per suite, the paired difference by width quartile:
+
+| Suite | q1 | q2 | q3 | q4 |
+| --- | --- | --- | --- | --- |
+| `income_diverse` | `+10,319` | `-45,811` | `-56,962` | `+333,439` |
+| `incomplete_observation` | `-45,768` | `+20,412` | `+24,902` | `+152,411` |
+
+Both failures are the same defect. The candidate is *better* than the fixed-band model across the
+middle of its own width distribution and loses everything in its widest quartile, where it spends
+`728,476` against the baseline's `97,830` on `income_diverse` and covers `0.943` against a nominal
+`0.80`. Twenty-five percent of rows carry the whole sharpness failure, on `10.6` and `24.3` sigma of
+separation respectively.
+
+The tail failure decomposes over the same cut, exactly:
+
+| `income_diverse` quartile | upper-tail miss | coverage | candidate width | baseline width |
+| --- | --- | --- | --- | --- |
+| q1 | `0.308` | `0.583` | `39,020` | `38,416` |
+| q2 | `0.142` | `0.724` | `131,260` | `59,559` |
+| q3 | `0.085` | `0.819` | `250,009` | `91,356` |
+| q4 | `0.014` | `0.943` | `728,476` | `97,830` |
+
+Their mean is `0.1371`, and the suite's measured upper-tail miss rate is `0.1372`. The `p90` that
+fails is almost entirely q1's, on rows where the candidate is no wider than the fixed-band model it
+is supposed to improve on.
+
+So the width model is miscalibrated in slope, not in level. It widens the rows it already believes
+are hard, which were covered anyway, and leaves the rows it believes are easy at a width that misses
+`p90` three times in ten. A global widening moves q4 further into the failure it already owns while
+barely touching q1, which is where the misses are.
+
+Two other covariates cut the same way and are available at inference. `data_completeness` separates
+at `7.6` sigma inside `income_diverse`, where the candidate costs `+100,934` on `high` rows and gains
+`-143,864` on `partial`. `confidence_band` separates at `10.2` sigma, with the entire pooled cost in
+the `high` band, `+76,016` at coverage `0.917`, while `medium` is `-18,913`.
+
+The low band is neutral and should be left alone: `-4,507` on a `+/-11,805` error bar, coverage
+`0.7987`, tails `0.1091` and `0.0922` against `0.10`. Whatever the reallocation does, it must not
+touch it.
+
 Four populations, customer-disjoint, and the report asserts zero overlap:
 
 | Population | Seeds | Purpose |
