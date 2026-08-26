@@ -169,7 +169,13 @@ FINAL_TEST_SUITES = (
 # "final test". A release lockbox is drawn from seeds no run has touched, once every gate passes on
 # validation, and is read exactly once.
 FINAL_TEST_ROLE = "validation-not-release-lockbox"
-RELEASE_LOCKBOX_SEED_FLOOR = 610_000
+
+# Seeds `610_000`+ were generated once, at eight customers per suite, to check that the lockbox
+# evaluator ran at all. Nothing was decided from it and every suite was below the gating threshold,
+# but a population that has been generated is no longer untouched, and "it barely counts" is the
+# reasoning a lockbox exists to refuse. That floor is spent; the release read uses a fresh one.
+SPENT_LOCKBOX_SEED_FLOORS: tuple[int, ...] = (610_000,)
+RELEASE_LOCKBOX_SEED_FLOOR = 710_000
 
 
 def _populations(
