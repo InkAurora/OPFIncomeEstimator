@@ -8,6 +8,7 @@ The project aims to transform consented financial data into explainable income e
 
 ```text
 .
+|-- demo_app/              # Single-process Streamlit demo of the whole flow
 |-- docs/                  # Architecture and implementation plans
 |-- estimator/             # Income-estimation logic and interfaces
 `-- finances_simulator/    # Synthetic financial-data generation
@@ -15,6 +16,8 @@ The project aims to transform consented financial data into explainable income e
 
 - [`estimator`](estimator/README.md) consumes normalized financial observations and produces an estimate with supporting evidence and confidence information.
 - [`finances_simulator`](finances_simulator/README.md) creates synthetic client scenarios for development, testing, and validation.
+- [`demo_app`](demo_app/README.md) runs the simulator and the promoted estimator together in one
+  Streamlit page, for demonstration rather than for production use.
 - [`docs/implementation-plan.md`](docs/implementation-plan.md) defines the simulator implementation plan.
 - [`docs/estimator-implementation-plan.md`](docs/estimator-implementation-plan.md) defines the estimator architecture, model progression, evaluation strategy, and acceptance criteria.
 
@@ -118,6 +121,21 @@ estimator stress suites, `configs/scenarios/life_events.yaml` for frozen schema 
 `configs/scenarios/salaried_basic.yaml` for frozen schema `1.0`. See
 [`finances_simulator/README.md`](finances_simulator/README.md) for every profile, output contract,
 and current limitations.
+
+## Demo quick start
+
+One page that runs the whole flow: pick a client profile, a seed, and a history length, and the
+simulator generates a hidden financial life, the estimator answers from its consented projection
+alone, and the private truth is joined afterwards to score the answer.
+
+```bash
+python -m streamlit run demo_app/app.py
+```
+
+It runs the promoted pair exactly: capacity model `capacity-gbdt-stumps-0.6.0` and interval
+calibration `conditional-selector-intervals-0.11.0`, under estimator `ensemble-0.6.0`. Two of the
+five profiles are the documented weak cases, and the page shows their interval coverage falling
+below nominal rather than hiding it. See [`demo_app/README.md`](demo_app/README.md).
 
 ## Getting started
 
