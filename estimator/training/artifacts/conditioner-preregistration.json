@@ -1,0 +1,748 @@
+{
+  "conditioner_quantiles": [
+    0.25,
+    0.5,
+    0.75
+  ],
+  "criterion": "worst-seed per-suite tail miss under an honest inner customer split",
+  "customer_count": 709,
+  "final_test_inspected": false,
+  "inner_split_seeds": 10,
+  "minimum_cell_rows": 40,
+  "outer_folds": 5,
+  "ranking": [
+    {
+      "best_seed_tail_miss": 0.087379,
+      "cut_points": [
+        2.0,
+        3.0,
+        5.0
+      ],
+      "feature": "observed_domain_count",
+      "median_seed_tail_miss": 0.110943,
+      "worst_seed_tail_miss": 0.133481
+    },
+    {
+      "best_seed_tail_miss": 0.098706,
+      "cut_points": [
+        8.0,
+        9.0,
+        26.0
+      ],
+      "feature": "transaction_count_1m",
+      "median_seed_tail_miss": 0.12832,
+      "worst_seed_tail_miss": 0.154867
+    },
+    {
+      "best_seed_tail_miss": 0.115217,
+      "cut_points": [
+        242141.0,
+        261324.0,
+        596275.0
+      ],
+      "feature": "debits_1m_minor",
+      "median_seed_tail_miss": 0.133754,
+      "worst_seed_tail_miss": 0.160853
+    },
+    {
+      "best_seed_tail_miss": 0.126378,
+      "cut_points": [
+        6979.0,
+        7750.0,
+        8750.0
+      ],
+      "feature": "data_completeness_score_basis_points",
+      "median_seed_tail_miss": 0.143323,
+      "worst_seed_tail_miss": 0.171271
+    },
+    {
+      "best_seed_tail_miss": 0.128986,
+      "cut_points": [
+        16.0,
+        19.0,
+        73.0
+      ],
+      "feature": "debit_count_3m",
+      "median_seed_tail_miss": 0.155734,
+      "worst_seed_tail_miss": 0.172566
+    },
+    {
+      "best_seed_tail_miss": 0.133186,
+      "cut_points": [
+        723635.0,
+        814639.0,
+        1585078.0
+      ],
+      "feature": "debits_3m_minor",
+      "median_seed_tail_miss": 0.155799,
+      "worst_seed_tail_miss": 0.176689
+    },
+    {
+      "best_seed_tail_miss": 0.129804,
+      "cut_points": [
+        641551.0,
+        1933548.0,
+        3119918.0
+      ],
+      "feature": "available_balance_minor",
+      "median_seed_tail_miss": 0.156751,
+      "worst_seed_tail_miss": 0.183642
+    },
+    {
+      "best_seed_tail_miss": 0.134304,
+      "cut_points": [
+        4.0,
+        7.0,
+        10.0
+      ],
+      "feature": "days_since_last_transaction",
+      "median_seed_tail_miss": 0.155957,
+      "worst_seed_tail_miss": 0.188192
+    },
+    {
+      "best_seed_tail_miss": 0.137472,
+      "cut_points": [
+        500000.0,
+        586665.0,
+        600000.0
+      ],
+      "feature": "income_p75_12m_minor",
+      "median_seed_tail_miss": 0.172365,
+      "worst_seed_tail_miss": 0.1936
+    },
+    {
+      "best_seed_tail_miss": 0.140773,
+      "cut_points": [
+        481689.0,
+        536417.0,
+        600000.0
+      ],
+      "feature": "income_mean_6m_minor",
+      "median_seed_tail_miss": 0.165561,
+      "worst_seed_tail_miss": 0.193925
+    },
+    {
+      "best_seed_tail_miss": 0.149691,
+      "cut_points": [
+        23.0,
+        25.0,
+        79.0
+      ],
+      "feature": "transaction_count_3m",
+      "median_seed_tail_miss": 0.160608,
+      "worst_seed_tail_miss": 0.195428
+    },
+    {
+      "best_seed_tail_miss": 0.147338,
+      "cut_points": [
+        479793.0,
+        535292.0,
+        600000.0
+      ],
+      "feature": "income_mean_12m_minor",
+      "median_seed_tail_miss": 0.167294,
+      "worst_seed_tail_miss": 0.197819
+    },
+    {
+      "best_seed_tail_miss": 0.137026,
+      "cut_points": [
+        491535.0,
+        581450.0,
+        600000.0
+      ],
+      "feature": "income_mean_3m_minor",
+      "median_seed_tail_miss": 0.171521,
+      "worst_seed_tail_miss": 0.200775
+    },
+    {
+      "best_seed_tail_miss": 0.147636,
+      "cut_points": [
+        0.0,
+        0.014849,
+        0.375151
+      ],
+      "feature": "income_cv_12m",
+      "median_seed_tail_miss": 0.179374,
+      "worst_seed_tail_miss": 0.20264
+    },
+    {
+      "best_seed_tail_miss": 0.14878,
+      "cut_points": [
+        0.0,
+        0.014729,
+        0.349339
+      ],
+      "feature": "income_cv_6m",
+      "median_seed_tail_miss": 0.169354,
+      "worst_seed_tail_miss": 0.203416
+    },
+    {
+      "best_seed_tail_miss": 0.162913,
+      "cut_points": [
+        0.0,
+        0.003627,
+        0.067358
+      ],
+      "feature": "source_amount_cv_mean_12m",
+      "median_seed_tail_miss": 0.184632,
+      "worst_seed_tail_miss": 0.204163
+    },
+    {
+      "best_seed_tail_miss": 0.146623,
+      "cut_points": [
+        237078.0,
+        422100.0,
+        534269.0
+      ],
+      "feature": "investment_balance_minor",
+      "median_seed_tail_miss": 0.163661,
+      "worst_seed_tail_miss": 0.204437
+    },
+    {
+      "best_seed_tail_miss": 0.113445,
+      "cut_points": [
+        493386.0,
+        500000.0,
+        600000.0
+      ],
+      "feature": "income_p25_12m_minor",
+      "median_seed_tail_miss": 0.153518,
+      "worst_seed_tail_miss": 0.205
+    },
+    {
+      "best_seed_tail_miss": 0.159273,
+      "cut_points": [
+        500000.0,
+        574750.0,
+        600000.0
+      ],
+      "feature": "income_median_6m_minor",
+      "median_seed_tail_miss": 0.19011,
+      "worst_seed_tail_miss": 0.211226
+    },
+    {
+      "best_seed_tail_miss": 0.159273,
+      "cut_points": [
+        475000.0,
+        546013.0,
+        570000.0
+      ],
+      "feature": "probable_income_median_6m_minor",
+      "median_seed_tail_miss": 0.190884,
+      "worst_seed_tail_miss": 0.211226
+    },
+    {
+      "best_seed_tail_miss": 0.151111,
+      "cut_points": [
+        0.0,
+        8241.0,
+        90262.0
+      ],
+      "feature": "income_std_3m_minor",
+      "median_seed_tail_miss": 0.176081,
+      "worst_seed_tail_miss": 0.212186
+    },
+    {
+      "best_seed_tail_miss": 0.151111,
+      "cut_points": [
+        0.0,
+        67916574.888889,
+        8147252800.888889
+      ],
+      "feature": "income_variance_3m",
+      "median_seed_tail_miss": 0.176081,
+      "worst_seed_tail_miss": 0.212186
+    },
+    {
+      "best_seed_tail_miss": 0.162861,
+      "cut_points": [
+        78000.0,
+        140000.0,
+        220000.0
+      ],
+      "feature": "investment_contribution_12m_minor",
+      "median_seed_tail_miss": 0.179045,
+      "worst_seed_tail_miss": 0.213022
+    },
+    {
+      "best_seed_tail_miss": 0.162861,
+      "cut_points": [
+        78000.0,
+        140000.0,
+        220000.0
+      ],
+      "feature": "net_investment_contributions_12m_minor",
+      "median_seed_tail_miss": 0.179045,
+      "worst_seed_tail_miss": 0.213022
+    },
+    {
+      "best_seed_tail_miss": 0.145495,
+      "cut_points": [
+        0.0,
+        10043.0,
+        117556.0
+      ],
+      "feature": "income_std_12m_minor",
+      "median_seed_tail_miss": 0.18314,
+      "worst_seed_tail_miss": 0.217184
+    },
+    {
+      "best_seed_tail_miss": 0.145495,
+      "cut_points": [
+        0.0,
+        100867635.76,
+        13819467290.6875
+      ],
+      "feature": "income_variance_12m",
+      "median_seed_tail_miss": 0.18314,
+      "worst_seed_tail_miss": 0.217184
+    },
+    {
+      "best_seed_tail_miss": 0.169728,
+      "cut_points": [
+        1000000.0,
+        1652860.0,
+        1800000.0
+      ],
+      "feature": "income_3m_minor",
+      "median_seed_tail_miss": 0.206872,
+      "worst_seed_tail_miss": 0.219167
+    },
+    {
+      "best_seed_tail_miss": 0.164441,
+      "cut_points": [
+        475000.0,
+        517275.0,
+        570000.0
+      ],
+      "feature": "probable_income_median_12m_minor",
+      "median_seed_tail_miss": 0.1868,
+      "worst_seed_tail_miss": 0.219585
+    },
+    {
+      "best_seed_tail_miss": 0.164441,
+      "cut_points": [
+        500000.0,
+        544500.0,
+        600000.0
+      ],
+      "feature": "income_median_12m_minor",
+      "median_seed_tail_miss": 0.1868,
+      "worst_seed_tail_miss": 0.219585
+    },
+    {
+      "best_seed_tail_miss": 0.164441,
+      "cut_points": [
+        500000.0,
+        544500.0,
+        600000.0
+      ],
+      "feature": "income_p50_12m_minor",
+      "median_seed_tail_miss": 0.1868,
+      "worst_seed_tail_miss": 0.219585
+    },
+    {
+      "best_seed_tail_miss": 0.153619,
+      "cut_points": [
+        0.0,
+        9694.0,
+        114132.0
+      ],
+      "feature": "income_std_6m_minor",
+      "median_seed_tail_miss": 0.176429,
+      "worst_seed_tail_miss": 0.219745
+    },
+    {
+      "best_seed_tail_miss": 0.153619,
+      "cut_points": [
+        0.0,
+        93983282.64,
+        13026007909.333334
+      ],
+      "feature": "income_variance_6m",
+      "median_seed_tail_miss": 0.176429,
+      "worst_seed_tail_miss": 0.219745
+    },
+    {
+      "best_seed_tail_miss": 0.15774,
+      "cut_points": [
+        427500.0,
+        490884.0,
+        570000.0
+      ],
+      "feature": "probable_income_mean_12m_minor",
+      "median_seed_tail_miss": 0.182911,
+      "worst_seed_tail_miss": 0.220228
+    },
+    {
+      "best_seed_tail_miss": 0.172715,
+      "cut_points": [
+        1122623.0,
+        1619463.0,
+        2493506.0
+      ],
+      "feature": "debits_6m_minor",
+      "median_seed_tail_miss": 0.186478,
+      "worst_seed_tail_miss": 0.221887
+    },
+    {
+      "best_seed_tail_miss": 0.181287,
+      "cut_points": [
+        34.0,
+        72.0,
+        108.0
+      ],
+      "feature": "transaction_count_12m",
+      "median_seed_tail_miss": 0.18982,
+      "worst_seed_tail_miss": 0.223824
+    },
+    {
+      "best_seed_tail_miss": 0.16373,
+      "cut_points": [
+        427500.0,
+        486875.0,
+        570000.0
+      ],
+      "feature": "probable_income_mean_6m_minor",
+      "median_seed_tail_miss": 0.1869,
+      "worst_seed_tail_miss": 0.224307
+    },
+    {
+      "best_seed_tail_miss": 0.171862,
+      "cut_points": [
+        3.0,
+        6.0,
+        10.0
+      ],
+      "feature": "investment_transaction_count_12m",
+      "median_seed_tail_miss": 0.199992,
+      "worst_seed_tail_miss": 0.225652
+    },
+    {
+      "best_seed_tail_miss": 0.178152,
+      "cut_points": [
+        540000.0,
+        630000.0,
+        680000.0
+      ],
+      "feature": "credits_1m_minor",
+      "median_seed_tail_miss": 0.215384,
+      "worst_seed_tail_miss": 0.229444
+    },
+    {
+      "best_seed_tail_miss": 0.179583,
+      "cut_points": [
+        202178.0,
+        500000.0,
+        600000.0
+      ],
+      "feature": "income_min_12m_minor",
+      "median_seed_tail_miss": 0.207108,
+      "worst_seed_tail_miss": 0.231474
+    },
+    {
+      "best_seed_tail_miss": 0.187728,
+      "cut_points": [
+        26.0,
+        53.0,
+        99.0
+      ],
+      "feature": "debit_count_12m",
+      "median_seed_tail_miss": 0.200885,
+      "worst_seed_tail_miss": 0.234615
+    },
+    {
+      "best_seed_tail_miss": 0.186356,
+      "cut_points": [
+        950000.0,
+        1472500.0,
+        1710000.0
+      ],
+      "feature": "probable_income_3m_minor",
+      "median_seed_tail_miss": 0.21766,
+      "worst_seed_tail_miss": 0.244094
+    },
+    {
+      "best_seed_tail_miss": 0.200584,
+      "cut_points": [
+        550000.0,
+        600000.0,
+        612660.0
+      ],
+      "feature": "income_max_12m_minor",
+      "median_seed_tail_miss": 0.229569,
+      "worst_seed_tail_miss": 0.248731
+    },
+    {
+      "best_seed_tail_miss": 0.189413,
+      "cut_points": [
+        18.0,
+        23.0,
+        24.0
+      ],
+      "feature": "days_since_last_credit",
+      "median_seed_tail_miss": 0.215751,
+      "worst_seed_tail_miss": 0.251592
+    },
+    {
+      "best_seed_tail_miss": 0.205696,
+      "cut_points": [
+        1155333.0,
+        2197216.0,
+        3381825.0
+      ],
+      "feature": "debits_12m_minor",
+      "median_seed_tail_miss": 0.223097,
+      "worst_seed_tail_miss": 0.258703
+    },
+    {
+      "best_seed_tail_miss": 0.192913,
+      "cut_points": [
+        380000.0,
+        536667.0,
+        570000.0
+      ],
+      "feature": "probable_income_mean_3m_minor",
+      "median_seed_tail_miss": 0.230665,
+      "worst_seed_tail_miss": 0.258736
+    },
+    {
+      "best_seed_tail_miss": 0.210641,
+      "cut_points": [
+        1147904.0,
+        1860000.0,
+        1920000.0
+      ],
+      "feature": "credits_3m_minor",
+      "median_seed_tail_miss": 0.236226,
+      "worst_seed_tail_miss": 0.262574
+    },
+    {
+      "best_seed_tail_miss": 0.196709,
+      "cut_points": [
+        1471878.0,
+        2600000.0,
+        3600000.0
+      ],
+      "feature": "income_6m_minor",
+      "median_seed_tail_miss": 0.232477,
+      "worst_seed_tail_miss": 0.263241
+    },
+    {
+      "best_seed_tail_miss": 0.201462,
+      "cut_points": [
+        7902.0,
+        8950.0,
+        9780.0
+      ],
+      "feature": "recurrence_score_mean_12m_basis_points",
+      "median_seed_tail_miss": 0.244402,
+      "worst_seed_tail_miss": 0.268934
+    },
+    {
+      "best_seed_tail_miss": 0.234568,
+      "cut_points": [
+        120000.0,
+        250000.0,
+        500000.0
+      ],
+      "feature": "excluded_own_transfer_12m_minor",
+      "median_seed_tail_miss": 0.288593,
+      "worst_seed_tail_miss": 0.298808
+    },
+    {
+      "best_seed_tail_miss": 0.237136,
+      "cut_points": [
+        1398283.0,
+        2280000.0,
+        3044750.0
+      ],
+      "feature": "probable_income_6m_minor",
+      "median_seed_tail_miss": 0.26998,
+      "worst_seed_tail_miss": 0.300071
+    },
+    {
+      "best_seed_tail_miss": 0.226528,
+      "cut_points": [
+        8268.0,
+        9439.0,
+        9875.0
+      ],
+      "feature": "recurrence_score_max_12m_basis_points",
+      "median_seed_tail_miss": 0.267512,
+      "worst_seed_tail_miss": 0.301408
+    },
+    {
+      "best_seed_tail_miss": 0.240196,
+      "cut_points": [
+        3.0,
+        6.0,
+        9.0
+      ],
+      "feature": "source_observation_count_12m",
+      "median_seed_tail_miss": 0.278853,
+      "worst_seed_tail_miss": 0.30441
+    },
+    {
+      "best_seed_tail_miss": 0.238095,
+      "cut_points": [
+        4352.0,
+        6459.0,
+        8209.0
+      ],
+      "feature": "source_frequency_confidence_mean_basis_points",
+      "median_seed_tail_miss": 0.28862,
+      "worst_seed_tail_miss": 0.309367
+    },
+    {
+      "best_seed_tail_miss": 0.247722,
+      "cut_points": [
+        1500000.0,
+        3000000.0,
+        4800000.0
+      ],
+      "feature": "income_12m_minor",
+      "median_seed_tail_miss": 0.272961,
+      "worst_seed_tail_miss": 0.310122
+    },
+    {
+      "best_seed_tail_miss": 0.243719,
+      "cut_points": [
+        1920000.0,
+        3504571.0,
+        5194500.0
+      ],
+      "feature": "credits_12m_minor",
+      "median_seed_tail_miss": 0.276691,
+      "worst_seed_tail_miss": 0.314448
+    },
+    {
+      "best_seed_tail_miss": 0.256525,
+      "cut_points": [
+        1875285.0,
+        2818194.0,
+        3760642.0
+      ],
+      "feature": "credits_6m_minor",
+      "median_seed_tail_miss": 0.289257,
+      "worst_seed_tail_miss": 0.316319
+    },
+    {
+      "best_seed_tail_miss": 0.243579,
+      "cut_points": [
+        1425000.0,
+        2850000.0,
+        4560000.0
+      ],
+      "feature": "probable_income_12m_minor",
+      "median_seed_tail_miss": 0.280288,
+      "worst_seed_tail_miss": 0.318737
+    },
+    {
+      "best_seed_tail_miss": 0.243579,
+      "cut_points": [
+        1500000.0,
+        3000000.0,
+        4800000.0
+      ],
+      "feature": "source_income_12m_minor",
+      "median_seed_tail_miss": 0.280288,
+      "worst_seed_tail_miss": 0.318737
+    },
+    {
+      "best_seed_tail_miss": 0.236201,
+      "cut_points": [
+        5.0,
+        6.0,
+        7.0
+      ],
+      "feature": "credit_count_3m",
+      "median_seed_tail_miss": 0.269322,
+      "worst_seed_tail_miss": 0.319718
+    },
+    {
+      "best_seed_tail_miss": 0.24026,
+      "cut_points": [
+        7.0,
+        14.0,
+        20.0
+      ],
+      "feature": "credit_count_12m",
+      "median_seed_tail_miss": 0.283933,
+      "worst_seed_tail_miss": 0.320571
+    },
+    {
+      "best_seed_tail_miss": 0.26369,
+      "cut_points": [
+        3.0,
+        6.0,
+        10.0
+      ],
+      "feature": "window_months",
+      "median_seed_tail_miss": 0.289294,
+      "worst_seed_tail_miss": 0.324417
+    },
+    {
+      "best_seed_tail_miss": 0.26369,
+      "cut_points": [
+        3.0,
+        6.0,
+        10.0
+      ],
+      "feature": "months_observed",
+      "median_seed_tail_miss": 0.289294,
+      "worst_seed_tail_miss": 0.324417
+    },
+    {
+      "best_seed_tail_miss": 0.26369,
+      "cut_points": [
+        2.0,
+        5.0,
+        9.0
+      ],
+      "feature": "months_since_first_observation",
+      "median_seed_tail_miss": 0.289294,
+      "worst_seed_tail_miss": 0.324417
+    },
+    {
+      "best_seed_tail_miss": 0.259072,
+      "cut_points": [
+        2.0,
+        5.0,
+        9.0
+      ],
+      "feature": "source_age_months_max",
+      "median_seed_tail_miss": 0.288532,
+      "worst_seed_tail_miss": 0.326012
+    }
+  ],
+  "row_count": 8028,
+  "schema_version": "1.0",
+  "selected": {
+    "best_seed_tail_miss": 0.087379,
+    "cut_points": [
+      2.0,
+      3.0,
+      5.0
+    ],
+    "feature": "observed_domain_count",
+    "median_seed_tail_miss": 0.110943,
+    "worst_seed_tail_miss": 0.133481
+  },
+  "selected_on": "uncertainty-training",
+  "selection_suites": [
+    {
+      "scenario": "income_diverse.yaml",
+      "seed": 210000
+    },
+    {
+      "scenario": "life_events.yaml",
+      "seed": 220000
+    },
+    {
+      "scenario": "incomplete_observation.yaml",
+      "seed": 230000
+    }
+  ],
+  "selection_version": "conditioner-preregistration-1.0"
+}
