@@ -1255,7 +1255,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             band_adjustments=band_adjustments if adaptive else {},
             width_recalibrator=None,
             conditional_selector=selector if adaptive else None,
-            support_envelope=support_envelope if adaptive else None,
+            # The comparator carries the same envelope. It is calibrated on the same population,
+            # so it covers the same conditions, and a sharpness comparison where one side answers
+            # rows the other refuses is measured on two different row sets. The WAPE invariant
+            # catches exactly that, and caught this.
+            support_envelope=support_envelope,
             zero_gate_certain_basis_points=ZERO_GATE_CERTAIN_BASIS_POINTS,
             calibration_row_count=len(calibration_rows),
             calibration_customer_count=len(calibration_customers),

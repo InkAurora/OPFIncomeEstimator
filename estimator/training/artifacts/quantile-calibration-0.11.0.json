@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4",
+  "schema_version": "1.5",
   "calibration_version": "conditional-selector-intervals-0.11.0",
   "method": "split-conformal-log-residual",
   "capacity_model_version": "capacity-gbdt-stumps-0.6.0",
@@ -2929,6 +2929,49 @@
     "selection_version": "conditioner-preregistration-1.0",
     "selected_on": "uncertainty-training",
     "preregistration_sha256": "826ee934a8642a8573caaac10c3876ad238e80a2a3d299bbee751112abd6a9ff"
+  },
+  "support_envelope": {
+    "schema_version": "1.0",
+    "method": "calibration-feature-range",
+    "ranges": {
+      "available_balance_minor": {
+        "minimum": -8991650.0,
+        "maximum": 5352830.0
+      },
+      "data_completeness_score_basis_points": {
+        "minimum": 4062.0,
+        "maximum": 10000.0
+      },
+      "income_6m_minor": {
+        "minimum": 0.0,
+        "maximum": 5287748.0
+      },
+      "installment_commitment_minor": {
+        "minimum": 0.0,
+        "maximum": 210000.0
+      },
+      "investment_balance_minor": {
+        "minimum": 28210.0,
+        "maximum": 710215.0
+      },
+      "net_investment_contributions_12m_minor": {
+        "minimum": 18000.0,
+        "maximum": 468000.0
+      },
+      "observed_domain_count": {
+        "minimum": 2.0,
+        "maximum": 5.0
+      },
+      "outstanding_debt_minor": {
+        "minimum": 161000.0,
+        "maximum": 682001.0
+      },
+      "transaction_count_1m": {
+        "minimum": 4.0,
+        "maximum": 36.0
+      }
+    },
+    "calibration_row_count": 8640
   },
   "zero_gate_certain_basis_points": 1000,
   "zero_mass_floor_basis_points": 1000,
