@@ -17,6 +17,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 from income_estimator.contracts.output_v1_1 import (
+    QUANTILE_UNAVAILABLE_OUT_OF_SUPPORT,
     QUANTILE_UNAVAILABLE_UNCALIBRATED,
     ComponentEstimateV11,
     ConfidenceComponentV11,
@@ -229,6 +230,11 @@ def combine_month(
         quantile_reason = None
     elif intervals is None:
         quantile_reason = QUANTILE_UNAVAILABLE_UNCALIBRATED
+    elif intervals.artifact.unsupported(features):
+        # The calibration exists and does not cover this row. Publishing the interval anyway would
+        # put an `80%` label on conditions nothing measured, which is the failure mode the held-out
+        # stress suites showed and nothing at inference time could see.
+        quantile_reason = QUANTILE_UNAVAILABLE_OUT_OF_SUPPORT
     else:
         bounds = intervals.interval_minor(
             sustainable,

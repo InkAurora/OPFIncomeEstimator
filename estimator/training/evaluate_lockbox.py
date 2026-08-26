@@ -126,10 +126,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     failures.extend(overall_tail_failures)
 
     published = int(overall.get("count") or 0)
-    if published != len(rows):
+    refused = int(overall.get("out_of_support_count") or 0)
+    unestimated = int(overall.get("no_point_estimate_count") or 0)
+    if published + refused + unestimated != len(rows):
         failures.append(
             f"{published} of {len(rows)} lockbox rows receive an interval; complete promotion "
-            f"requires every supported row to publish"
+            f"requires every supported row to publish ({overall.get('withheld_count')} withheld, "
+            f"{refused} out of support, {unestimated} without a point estimate)"
         )
 
     bands = _segmented(
@@ -212,6 +215,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "suites": [{"scenario": scenario, "seed": seed} for scenario, seed in LOCKBOX_SUITES],
         "row_count": len(rows),
         "published_rows": published,
+        "out_of_support_rows": refused,
         "customer_count": int(overall.get("customer_count") or 0),
         "nominal_coverage": nominal,
         "nominal_tail_miss_rate": nominal_miss,

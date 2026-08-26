@@ -159,6 +159,70 @@ def _power(width: float, scale: float, slope: float) -> float:
     return min(MAXIMUM_LOG_OFFSET, scale * width**slope)
 
 
+SUPPORT_ENVELOPE_METHOD = "calibration-feature-range"
+
+
+class FeatureRange(UncertaintyModel):
+    """The range one feature took across the calibration population."""
+
+    minimum: float
+    maximum: float
+
+    @model_validator(mode="after")
+    def validate_range(self) -> FeatureRange:
+        if self.minimum > self.maximum:
+            raise ValueError("minimum must not exceed maximum")
+        return self
+
+    def contains(self, value: float) -> bool:
+        return self.minimum <= value <= self.maximum
+
+
+class SupportEnvelopeArtifact(UncertaintyModel):
+    """The conditions this calibration is a claim about, and nothing wider.
+
+    An `80%` interval is a statement about the population it was calibrated on. Outside that
+    population the corrections were never measured, and the label keeps its wording while losing its
+    meaning; on held-out stress conditions earlier calibrations covered as little as `0.49`, with
+    nothing at inference time to say so.
+
+    Abstaining is the honest answer there. The output contract already carries a reason for an
+    absent quantile, and a refusal a caller can see beats a number that reads as measured and is
+    not.
+
+    The envelope is the range each feature took across the calibration population, over the features
+    the interval's width actually depends on: the ones the residual quantile ensembles split on,
+    plus the selector's conditioner. Extrapolating those is exactly where the claim has no
+    support.
+    Features outside that set are not fenced, because the interval does not condition on them.
+
+    A missing value is in support. Missingness is modelled rather than imputed everywhere else
+    here, and calibration saw plenty of it; an absent feature is a condition the calibration
+    covers, not an extrapolation beyond it.
+    """
+
+    schema_version: Literal["1.0"] = "1.0"
+    method: Literal["calibration-feature-range"] = SUPPORT_ENVELOPE_METHOD
+    ranges: dict[str, FeatureRange]
+    calibration_row_count: int = Field(gt=0)
+
+    @model_validator(mode="after")
+    def validate_ranges(self) -> SupportEnvelopeArtifact:
+        if not self.ranges:
+            raise ValueError("an envelope that fences nothing declares no support")
+        return self
+
+    def unsupported(self, features: Mapping[str, float | int | None]) -> tuple[str, ...]:
+        """Which fenced features this row falls outside. Empty means in support."""
+
+        outside = []
+        for name, allowed in self.ranges.items():
+            value = features.get(name)
+            if value is not None and not allowed.contains(float(value)):
+                outside.append(name)
+        return tuple(sorted(outside))
+
+
 CONDITIONAL_SELECTOR_METHOD = "cell-selector-fixed-or-adaptive"
 
 
@@ -316,11 +380,14 @@ class ResidualQuantileModel:
 
 __all__ = [
     "CONDITIONAL_SELECTOR_METHOD",
+    "SUPPORT_ENVELOPE_METHOD",
     "MAXIMUM_LOG_OFFSET",
     "RESIDUAL_QUANTILE_METHOD",
     "WIDTH_RECALIBRATED_BANDS",
     "WIDTH_RECALIBRATION_METHOD",
     "CellPolicy",
+    "FeatureRange",
+    "SupportEnvelopeArtifact",
     "ConditionalSelectorArtifact",
     "ResidualQuantileArtifact",
     "ResidualQuantileModel",

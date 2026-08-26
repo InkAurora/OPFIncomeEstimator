@@ -53,7 +53,9 @@ from income_estimator.models.quantiles import (
 from income_estimator.models.uncertainty import (
     CellPolicy,
     ConditionalSelectorArtifact,
+    FeatureRange,
     ResidualQuantileModel,
+    SupportEnvelopeArtifact,
 )
 from training.capacity_datasets import (
     CAPACITY_DATASET_VERSION,
@@ -95,6 +97,18 @@ MINIMUM_CELL_SCORES = 100
 # it alone is what lets its published intervals be checked byte-identical against a selector-free
 # artifact.
 SELECTOR_BANDS: tuple[str, ...] = ("high", "medium")
+
+# How many of the residual quantile ensembles' most-used features the support envelope fences,
+# beside the selector's conditioner. Declared rather than tuned: fencing all sixty-odd features the
+# stumps ever touch refuses ordinary rows over features that move the interval by nothing, and
+# fencing none publishes an `80%` label on conditions nothing measured.
+SUPPORT_ENVELOPE_FEATURES = 8
+
+# Validation is drawn from the same three scenarios as calibration, so the envelope should barely
+# touch it. This is a sanity bound on the envelope itself, not a target to pad towards: a refusal
+# rate above it means the box is fencing ordinary variation rather than the edge of the calibrated
+# regime.
+SUPPORT_ENVELOPE_REFUSAL_CEILING = 0.01
 
 # A segment is gated only when its sample can resolve a miss at all. Counted in customers, because
 # that is the unit the population draw uses.
@@ -422,7 +436,12 @@ def _coverage_metrics(rows, capacity, intervals) -> dict[str, object]:
     """
 
     if not rows:
-        return {"count": 0, "withheld_count": 0, "no_point_estimate_count": 0}
+        return {
+            "count": 0,
+            "withheld_count": 0,
+            "out_of_support_count": 0,
+            "no_point_estimate_count": 0,
+        }
     alpha = 1.0 - (DEFAULT_UPPER_QUANTILE - DEFAULT_LOWER_QUANTILE)
     covered = 0
     lower_missed = 0
@@ -434,7 +453,9 @@ def _coverage_metrics(rows, capacity, intervals) -> dict[str, object]:
     rows_by_customer: dict[str, int] = {}
     totals_by_customer: dict[str, list[int]] = {}
     withheld = 0
+    refused = 0
     unestimated = 0
+    envelope = getattr(intervals, "artifact", None)
     for row in rows:
         routed = _routed(row, capacity)
         point = routed.sustainable_income_minor
@@ -449,7 +470,12 @@ def _coverage_metrics(rows, capacity, intervals) -> dict[str, object]:
             features=row.features,
         )
         if bounds is None:
-            withheld += 1
+            # Two different refusals. Outside the calibrated conditions is a deliberate abstention
+            # and is not a gap in the band's coverage; a withheld band is.
+            if envelope is not None and envelope.unsupported(row.features):
+                refused += 1
+            else:
+                withheld += 1
             continue
         lower, upper = bounds
         truth = row.sustainable_monthly_income_minor
@@ -472,6 +498,7 @@ def _coverage_metrics(rows, capacity, intervals) -> dict[str, object]:
         return {
             "count": 0,
             "withheld_count": withheld,
+            "out_of_support_count": refused,
             "no_point_estimate_count": unestimated,
         }
     truth_total = sum(truths)
@@ -483,6 +510,7 @@ def _coverage_metrics(rows, capacity, intervals) -> dict[str, object]:
     return {
         "count": len(widths),
         "withheld_count": withheld,
+        "out_of_support_count": refused,
         "no_point_estimate_count": unestimated,
         "customer_count": len(rows_by_customer),
         "empirical_coverage": round(covered / len(widths), 6),
@@ -718,6 +746,33 @@ def _width_allocation(paired: Sequence[_PairedRow]) -> dict[str, object]:
             for dimension, buckets in sorted(grouped.items())
         },
     }
+
+
+def _support_envelope(rows, fenced: Sequence[str]) -> SupportEnvelopeArtifact:
+    """The range each fenced feature took across the calibration population.
+
+    Only the features the interval's width conditions on are fenced. Fencing every feature would
+    refuse a large share of ordinary rows for drifting on something the model never reads, and
+    fencing none would publish an `80%` label on conditions nothing measured.
+
+    A feature absent from every calibration row is dropped rather than fenced at an empty range,
+    which would refuse every row that has it.
+    """
+
+    observed: dict[str, list[float]] = {}
+    for row in rows:
+        for name in fenced:
+            value = row.features.get(name)
+            if value is not None:
+                observed.setdefault(name, []).append(float(value))
+    return SupportEnvelopeArtifact(
+        ranges={
+            name: FeatureRange(minimum=min(values), maximum=max(values))
+            for name, values in sorted(observed.items())
+            if values
+        },
+        calibration_row_count=len(rows),
+    )
 
 
 def _choose_branch(items: Sequence[tuple[float, tuple[float, float], tuple[float, float]]]) -> str:
@@ -1150,6 +1205,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         preregistration_sha256=hashlib.sha256(preregistration_bytes).hexdigest(),
     )
 
+    # Fence the features the width leans on, not every feature it ever touches. Four hundred stumps
+    # between them split on almost the whole table, most of them once or twice, and a box drawn
+    # around all of it refuses ordinary rows for drifting on something that moves the interval by
+    # nothing. Usage is the honest ranking: a feature the ensembles return to is one the width
+    # depends on, and extrapolating that is where the claim stops being measured.
+    usage: dict[str, int] = {}
+    for tree in (*quantile_artifact.lower_trees, *quantile_artifact.upper_trees):
+        usage[tree.feature_name] = usage.get(tree.feature_name, 0) + 1
+    ranked = sorted(usage.items(), key=lambda item: (-item[1], item[0]))
+    fenced_features = sorted(
+        {name for name, _ in ranked[:SUPPORT_ENVELOPE_FEATURES]} | {conditioner}
+    )
+    support_envelope = _support_envelope(calibration_rows, fenced_features)
+
     nominal = DEFAULT_UPPER_QUANTILE - DEFAULT_LOWER_QUANTILE
     nominal_miss = DEFAULT_LOWER_QUANTILE
     all_bands = tuple(band for band, _ in CONFIDENCE_BAND_FLOORS)
@@ -1186,6 +1255,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             band_adjustments=band_adjustments if adaptive else {},
             width_recalibrator=None,
             conditional_selector=selector if adaptive else None,
+            support_envelope=support_envelope if adaptive else None,
             zero_gate_certain_basis_points=ZERO_GATE_CERTAIN_BASIS_POINTS,
             calibration_row_count=len(calibration_rows),
             calibration_customer_count=len(calibration_customers),
@@ -1246,12 +1316,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             + (", ".join(sorted(published_bands)) or "no band")
             + f" rather than every band {sorted(all_bands)}"
         )
-    if published_rows != len(final_rows):
+    refused_rows = int(overall.get("out_of_support_count") or 0)
+    unestimated_rows = int(overall.get("no_point_estimate_count") or 0)
+    if published_rows + refused_rows + unestimated_rows != len(final_rows):
         failures.append(
             f"{published_rows} of {len(final_rows)} final-test rows receive an interval; "
             f"complete promotion requires every supported row to publish "
-            f"({overall.get('withheld_count')} withheld, "
-            f"{overall.get('no_point_estimate_count')} without a point estimate)"
+            f"({overall.get('withheld_count')} withheld, {refused_rows} out of support, "
+            f"{unestimated_rows} without a point estimate)"
         )
 
     overall_gate, overall_failure = _undercoverage_failure("published", overall, nominal)
@@ -1342,6 +1414,40 @@ def main(argv: Sequence[str] | None = None) -> int:
                 for name, count in sorted(selector_fallbacks.items())
             )
             + " fall back to the pooled pair rather than fitting their own, which cannot promote"
+        )
+
+    # Abstention refuses conditions, it does not narrow them. Validation is drawn from the same
+    # three scenarios as calibration, so its rows should sit inside the envelope; a large share
+    # outside would mean the envelope is fencing sampling noise rather than a change of regime.
+    # The share is measured and reported rather than gated at zero, because a finite calibration
+    # sample cannot bound a fresh draw exactly and pretending otherwise would mean padding the
+    # envelope until validation passed, which is tuning on the population that judges it.
+    out_of_support = [row for row in final_rows if artifact.unsupported(row.features)]
+    fenced_counts: dict[str, int] = {}
+    for row in out_of_support:
+        for name in artifact.unsupported(row.features):
+            fenced_counts[name] = fenced_counts.get(name, 0) + 1
+    if len(out_of_support) != refused_rows:
+        failures.append(
+            f"the envelope refuses {len(out_of_support)} rows but the harness scored "
+            f"{refused_rows} as refused; abstention must happen in one place"
+        )
+    support_share = len(out_of_support) / len(final_rows) if final_rows else 0.0
+    support_gate = {
+        "fenced_feature_count": len(support_envelope.ranges),
+        "fenced_features": sorted(support_envelope.ranges),
+        "out_of_support_rows": len(out_of_support),
+        "out_of_support_share": round(support_share, 6),
+        "row_count": len(final_rows),
+        "ceiling": SUPPORT_ENVELOPE_REFUSAL_CEILING,
+        "by_feature": dict(sorted(fenced_counts.items())),
+        "passed": support_share <= SUPPORT_ENVELOPE_REFUSAL_CEILING,
+    }
+    if not support_gate["passed"]:
+        failures.append(
+            f"the support envelope refuses {support_share:.4f} of validation rows, above the "
+            f"{SUPPORT_ENVELOPE_REFUSAL_CEILING:.4f} ceiling; it is fencing the calibration "
+            f"distribution rather than the edge of it"
         )
 
     low_band_divergences = 0
@@ -1456,6 +1562,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             "upper_log_offset": artifact.upper_log_offset,
             "minimum_band_residuals": MINIMUM_BAND_RESIDUALS,
             "minimum_cell_scores": MINIMUM_CELL_SCORES,
+            "support_envelope": {
+                "method": support_envelope.method,
+                "fenced_feature_count": len(support_envelope.ranges),
+                "fenced_features": sorted(support_envelope.ranges),
+                "calibration_row_count": support_envelope.calibration_row_count,
+            },
             "conditional_selector": {
                 "method": selector.method,
                 "feature_name": selector.feature_name,
@@ -1532,6 +1644,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "sharpness_noninferiority_margin": SHARPNESS_NONINFERIORITY_MARGIN,
             "sharpness_valid_baseline_only": valid_baseline_only,
             "low_band_bypasses_recalibrator": low_band_bypass,
+            "support_envelope_covers_validation": support_gate,
             "overall": overall_gate,
             "overall_tails": overall_tail_gate,
             "zero_truth": zero_gate,
@@ -1605,6 +1718,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     print(
         f"  low-band bypass {low_band_bypass['divergent_rows']}/{low_band_bypass['rows']} divergent"
+    )
+    print(
+        f"  support envelope fences {len(support_envelope.ranges)} features; "
+        f"{support_gate['out_of_support_rows']}/{support_gate['row_count']} validation rows "
+        f"out of support ({support_gate['out_of_support_share']:.4f} vs ceiling "
+        f"{SUPPORT_ENVELOPE_REFUSAL_CEILING})"
     )
     print(f"Promotion: {report['promotion']['status']}")
     for failure in failures:

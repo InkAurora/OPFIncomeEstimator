@@ -28,6 +28,7 @@ from income_estimator.models.uncertainty import (
     ConditionalSelectorArtifact,
     ResidualQuantileArtifact,
     ResidualQuantileModel,
+    SupportEnvelopeArtifact,
     WidthRecalibratorArtifact,
 )
 from income_estimator.pipeline import EnsembleIncomeEstimator
@@ -1332,3 +1333,82 @@ def test_a_selector_and_a_recalibrator_may_not_both_be_published() -> None:
 def test_a_selector_needs_the_learned_band_it_may_choose() -> None:
     with pytest.raises(ValidationError, match="conditional selector"):
         _artifact(conditional_selector=_selector())
+
+
+def _envelope(**overrides) -> SupportEnvelopeArtifact:
+    payload = {
+        "ranges": {
+            "income_cv_12m": {"minimum": 0.0, "maximum": 2.0},
+            "observed_domain_count": {"minimum": 1.0, "maximum": 6.0},
+        },
+        "calibration_row_count": 8_016,
+    }
+    payload.update(overrides)
+    return SupportEnvelopeArtifact.model_validate(payload)
+
+
+def test_the_envelope_names_which_features_put_a_row_outside() -> None:
+    envelope = _envelope()
+
+    assert envelope.unsupported({"income_cv_12m": 1.0, "observed_domain_count": 3}) == ()
+    assert envelope.unsupported({"income_cv_12m": 9.0}) == ("income_cv_12m",)
+    assert envelope.unsupported(
+        {"income_cv_12m": 9.0, "observed_domain_count": 99}
+    ) == ("income_cv_12m", "observed_domain_count")
+    # The bounds themselves are inside, so calibration's own extremes are not refused.
+    assert envelope.unsupported({"income_cv_12m": 2.0}) == ()
+
+
+def test_a_missing_feature_is_in_support() -> None:
+    """Missingness is modelled everywhere else here; calibration saw plenty of it."""
+
+    assert _envelope().unsupported({}) == ()
+    assert _envelope().unsupported({"income_cv_12m": None}) == ()
+
+
+def test_an_artifact_without_an_envelope_fences_nothing() -> None:
+    """Every schema below 1.5 must keep publishing exactly what it published."""
+
+    artifact = _artifact(residual_quantiles=_RESIDUAL_QUANTILES, conformal_widening=0.1)
+
+    assert artifact.support_envelope is None
+    assert artifact.unsupported({"income_cv_12m": 9_999.0}) == ()
+
+
+def test_an_out_of_support_row_is_refused_rather_than_answered(
+    request_payload,
+    transaction,
+) -> None:
+    """A refusal a caller can see beats an `80%` label on conditions nothing measured."""
+
+    from income_estimator.contracts.output_v1_1 import QUANTILE_UNAVAILABLE_OUT_OF_SUPPORT
+
+    payload = request_payload(
+        transactions=[
+            transaction(f"salary-{index:02d}", posted_at=f"2026-{index:02d}-05")
+            for index in range(1, 7)
+        ],
+        months=6,
+    )
+    estimator = EnsembleIncomeEstimator(CAPACITY_MODEL_PATH, calibration_path=ARTIFACT_PATH)
+    supported = estimator.estimate_v1_1(payload).monthly_estimates[-1]
+    assert supported.sustainable_income_p10_minor is not None
+
+    # Fence a feature at a range nothing can satisfy, leaving everything else untouched.
+    estimator.intervals = ConformalIntervalModel(
+        estimator.intervals.artifact.model_copy(
+            update={
+                "support_envelope": _envelope(
+                    ranges={"income_mean_3m_minor": {"minimum": -2.0, "maximum": -1.0}}
+                )
+            }
+        )
+    )
+    refused = estimator.estimate_v1_1(payload).monthly_estimates[-1]
+
+    assert refused.sustainable_income_p50_minor == supported.sustainable_income_p50_minor
+    assert refused.sustainable_income_p10_minor is None
+    assert refused.sustainable_income_p90_minor is None
+    assert refused.quantile_unavailable_reason == QUANTILE_UNAVAILABLE_OUT_OF_SUPPORT
+    # Distinct from the band having no fitted correction, which is a different failure.
+    assert refused.quantile_unavailable_reason != "UNCALIBRATED_INTERVAL"

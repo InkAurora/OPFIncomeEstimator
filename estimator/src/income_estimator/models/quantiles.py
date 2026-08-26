@@ -36,6 +36,7 @@ from income_estimator.models.uncertainty import (
     ConditionalSelectorArtifact,
     ResidualQuantileArtifact,
     ResidualQuantileModel,
+    SupportEnvelopeArtifact,
     WidthRecalibratorArtifact,
 )
 
@@ -84,7 +85,7 @@ class BandAdjustment(QuantileModel):
 
 
 class ConformalCalibrationArtifact(QuantileModel):
-    schema_version: Literal["1.0", "1.1", "1.2", "1.3", "1.4"] = "1.4"
+    schema_version: Literal["1.0", "1.1", "1.2", "1.3", "1.4", "1.5"] = "1.5"
     calibration_version: str = Field(min_length=1)
     method: Literal["split-conformal-log-residual"] = CALIBRATION_METHOD
     capacity_model_version: str = Field(min_length=1)
@@ -102,6 +103,7 @@ class ConformalCalibrationArtifact(QuantileModel):
     band_adjustments: dict[str, BandAdjustment] = Field(default_factory=dict)
     width_recalibrator: WidthRecalibratorArtifact | None = None
     conditional_selector: ConditionalSelectorArtifact | None = None
+    support_envelope: SupportEnvelopeArtifact | None = None
     zero_gate_certain_basis_points: int = Field(ge=0, le=10_000)
     zero_mass_floor_basis_points: int = Field(default=1_000, ge=0, le=10_000)
     calibration_row_count: int = Field(gt=0)
@@ -181,6 +183,17 @@ class ConformalCalibrationArtifact(QuantileModel):
         if band is None:
             return self.lower_log_offset, self.upper_log_offset
         return band.lower_log_offset, band.upper_log_offset
+
+    def unsupported(self, features: Mapping[str, float | int | None]) -> tuple[str, ...]:
+        """Which fenced features put this row outside the calibrated conditions.
+
+        Empty when the row is in support, and empty for every artifact that declares no envelope,
+        which is what keeps schemas below `1.5` behaving exactly as they did.
+        """
+
+        if self.support_envelope is None:
+            return ()
+        return self.support_envelope.unsupported(features)
 
     def recalibrate_width(
         self,
@@ -370,10 +383,17 @@ class ConformalIntervalModel:
 
         With a residual scale model and this row's features, the width is conditioned on how large
         an error the model expects here. Otherwise the confidence score selects a band's offsets,
-        and without that the global pair applies, which is the schema 1.0 behavior. `None` means
-        this artifact does not publish an interval for that band.
+        and without that the global pair applies, which is the schema 1.0 behavior.
+
+        `None` means no interval, for either of two reasons the caller distinguishes: the row sits
+        outside the conditions this calibration was measured on, or its band has no published
+        correction. Both refusals are made here rather than by the caller, so that everything which
+        produces an interval, the runtime and the evaluation harness alike, refuses the same rows.
+        A gate that scores rows the runtime would decline is measuring a different model.
         """
 
+        if self.artifact.unsupported(features or {}):
+            return None
         if not self.artifact.publishes(confidence_basis_points):
             return None
         lower_offset, upper_offset = self._offsets(confidence_basis_points, features)
