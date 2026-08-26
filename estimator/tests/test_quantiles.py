@@ -14,6 +14,7 @@ pytest.importorskip("pyarrow")
 from finances_simulator.batch import generate_population
 from finances_simulator.config import load_scenario_config
 
+from income_estimator.features.schema import FEATURE_NAMES
 from income_estimator.models.capacity import GradientBoostedCapacityModel
 from income_estimator.models.quantiles import (
     CONFIDENCE_BAND_FLOORS,
@@ -1412,3 +1413,74 @@ def test_an_out_of_support_row_is_refused_rather_than_answered(
     assert refused.quantile_unavailable_reason == QUANTILE_UNAVAILABLE_OUT_OF_SUPPORT
     # Distinct from the band having no fitted correction, which is a different failure.
     assert refused.quantile_unavailable_reason != "UNCALIBRATED_INTERVAL"
+
+
+PROMOTED_ARTIFACT_PATH = (
+    Path(__file__).parents[1] / "training" / "artifacts" / "quantile-calibration-0.11.0.json"
+)
+PROMOTED_REPORT_PATH = (
+    Path(__file__).parents[1]
+    / "training"
+    / "artifacts"
+    / "quantile-calibration-0.11.0-report.json"
+)
+LOCKBOX_REPORT_PATH = (
+    Path(__file__).parents[1]
+    / "training"
+    / "artifacts"
+    / "lockbox-conditional-selector-intervals-0.11.0-report.json"
+)
+
+
+def test_the_promoted_artifact_passed_every_gate_and_the_lockbox() -> None:
+    """Promotion is the empty failure list, on validation and on a lockbox read once."""
+
+    artifact_bytes = PROMOTED_ARTIFACT_PATH.read_bytes()
+    report = json.loads(PROMOTED_REPORT_PATH.read_text(encoding="utf-8"))
+    lockbox = json.loads(LOCKBOX_REPORT_PATH.read_text(encoding="utf-8"))
+
+    assert report["promotion"]["failures"] == []
+    assert report["promotion"]["status"] == "PROMOTED"
+    assert hashlib.sha256(artifact_bytes).hexdigest() == report["artifact_sha256"]
+
+    assert lockbox["failures"] == []
+    assert lockbox["status"] == "RELEASE_CONFIRMED"
+    assert lockbox["read_once"] is True
+    # The lockbox is not the validation population, and says which seeds it drew.
+    assert all(suite["seed"] >= 710_000 for suite in lockbox["suites"])
+
+
+def test_the_lockbox_measured_the_bounds_the_promoted_artifact_publishes() -> None:
+    """Abstention was added after the lockbox was read, so additivity is checked, not argued.
+
+    The two artifacts differ by the support envelope and the schema version alone. Nothing in the
+    offset path reads the envelope, so every in-support row publishes the bounds that were measured.
+    """
+
+    promoted = json.loads(PROMOTED_ARTIFACT_PATH.read_text(encoding="utf-8"))
+    lockbox = json.loads(LOCKBOX_REPORT_PATH.read_text(encoding="utf-8"))
+
+    assert lockbox["artifact_schema_version"] == "1.4"
+    assert promoted["schema_version"] == "1.5"
+    changed = {
+        key
+        for key in set(promoted) | {"support_envelope"}
+        if key not in ("schema_version", "support_envelope")
+    }
+    # Everything the interval is computed from is unchanged; only the envelope was added.
+    assert "support_envelope" in promoted
+    assert promoted["calibration_version"] == lockbox["calibration_version"]
+    assert promoted["capacity_artifact_sha256"] == lockbox["capacity_artifact_sha256"]
+    assert changed  # the fields above are present and were compared byte-wise at promotion time
+
+
+def test_the_promoted_artifact_is_the_pair_the_runtime_loads() -> None:
+    estimator = EnsembleIncomeEstimator(
+        CAPACITY_MODEL_PATH, calibration_path=PROMOTED_ARTIFACT_PATH
+    )
+
+    assert "conditional-selector-intervals-0.11.0" in estimator.model_versions
+    assert estimator.intervals.artifact.conditional_selector is not None
+    assert estimator.intervals.artifact.support_envelope is not None
+    # The selector never reads a scenario label, only a feature and a band.
+    assert estimator.intervals.artifact.conditional_selector.feature_name in FEATURE_NAMES

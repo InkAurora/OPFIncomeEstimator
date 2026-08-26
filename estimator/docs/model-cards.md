@@ -94,9 +94,71 @@ product output.
 
 ---
 
+## `conditional-selector-intervals-0.11.0` — sustainable income interval, promoted
+
+**Status: PROMOTED.** Every gate passes on the validation population and on a release lockbox read
+once. See [ADR 0008](../../docs/adr/0008-conditional-selector-promotion-and-abstention.md).
+
+**Task.** Turn the routed sustainable-income estimate into a `p10`/`p90` pair, or refuse.
+
+**Method.** Conformalized quantile regression with a conditional cell selector. Rows fall into
+quartiles of `observed_domain_count`, cut at `2`/`3`/`5`, crossed with the confidence band. Each cell
+chooses the learned residual band or the fixed per-band offsets and carries its own two tail
+corrections. The branch is decided out-of-fold inside the uncertainty-training population, comparing
+the branches only after both have been corrected to hold their tails. Corrections are fitted on
+calibration customers. Five of six cells chose fixed; the learned band earned its place in `q2/high`.
+
+The `low` band is not selected over. It holds both tails at `0.1091` and `0.0922` against `0.10`, and
+the run checks its intervals are byte-identical with the selector stripped from the artifact.
+
+The conditioner was pre-registered: ranked first of `64` candidates inside the uncertainty-training
+population and frozen in `conditioner-preregistration.json` before the selector was built, with no
+final-test population loaded. An earlier scan against final test picked the same winner and was
+discarded, because selecting a model on the population that measures it means the measurement is not
+a test.
+
+**Measured.** Validation, `720` customers no earlier stage used: `8,635` of `8,640` rows publish and
+`5` are refused as out of support. Coverage `0.9050` against nominal `0.80`. By band: high `0.9176`,
+medium `0.9128`, low `0.7987`, each against a floor of `0.7500`. By suite: `income_diverse` `0.8025`,
+`incomplete_observation` `0.9295`, `life_events` `0.9830`. Zero-truth `0.9983`. Overall tail miss
+rates `0.0478` and `0.0471` against `0.10`.
+
+Release lockbox, seeds `710_000`+, generated for the first time by that run and read once:
+`RELEASE_CONFIRMED`, coverage `0.9116` on `8,640` of `8,640` rows, empty failure list.
+
+**Gate.** Coverage one-sided on under-coverage, per suite and per band. Each tail gated on its own
+miss rate against `0.10`. Sharpness is a one-sided non-inferiority test on the paired per-row
+difference against the fixed-band model, judged against a margin declared in advance at `2%` of that
+suite's baseline score; every suite passes by `7x`, `24x` and `19x`. Error bars from resampling
+customers. Complete promotion means every supported row publishes.
+
+**Known failure modes.**
+- The lockbox was read before out-of-support abstention was added. The promoted artifact differs
+  from the one it measured by the added `support_envelope` and the schema bump alone, every other
+  field identical, and nothing in the offset path reads the envelope — so for any in-support row the
+  bounds are the ones that were measured. Whether any lockbox row now falls outside the envelope is
+  untested; it could only remove intervals, never change one.
+- Out-of-distribution coverage is unmeasured for this artifact. The envelope refuses outside the
+  calibrated conditions rather than repairing behaviour beyond them, and the `0.491`/`0.125` stress
+  figures quoted historically were measured on a different artifact under a binding violation.
+- `observed_domain_count` is integer-valued, so its quartile cuts collapse to three occupied buckets
+  rather than four. No cell fell back, each carrying at least `720` scores, but the pre-registration
+  guard should have caught the discreteness.
+- The conformal unit is the customer-month, not the customer. Empirical customer-disjoint calibration
+  with customer-clustered error bars, **not** a finite-sample guarantee.
+- `income_diverse`'s sharpness comparison is contested: the fixed-band baseline it is measured
+  against does not hold its own tails there. Recorded as `baseline_tails_hold`, not exempted.
+- Annual quantiles are not produced.
+
+**Intended use.** The runtime default, bound to `capacity-gbdt-stumps-0.6.0` by version and digest.
+The rollback is no intervals.
+
+---
+
 ## `adaptive-intervals-0.9.0` — sustainable income interval
 
-**Status: NOT_PROMOTED.** Every band publishes and every band passes its coverage floor and both
+**Status: NOT_PROMOTED, superseded by `conditional-selector-intervals-0.11.0`.** Every band
+publishes and every band passes its coverage floor and both
 tail gates. Three failures block promotion: the `income_diverse` upper tail, and the sharpness
 comparison on `income_diverse` and `incomplete_observation`.
 

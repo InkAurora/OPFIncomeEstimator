@@ -1,5 +1,138 @@
 # Frozen training artifacts
 
+## Quantile calibration 0.11 — conditional cell selector, PROMOTED
+
+`conditional-selector-intervals-0.11.0` is the promoted calibration. Artifact schema `1.5`; the
+reader accepts `1.0` through `1.5` and the writer emits only `1.5`.
+
+- `quantile-calibration-0.11.0.json` holds the residual quantile model, the per-band offsets and
+  adjustments, the conditional selector, the support envelope, and the capacity artifact hash it was
+  fitted against;
+- `quantile-calibration-0.11.0-report.json` records every gate on the validation population;
+- `lockbox-conditional-selector-intervals-0.11.0-report.json` records the release lockbox read;
+- `conditioner-preregistration.json` records how the selector's conditioner was chosen, and what it
+  beat, before the selector was built.
+
+### What it does
+
+Rows are partitioned into quartiles of one conditioner crossed with the confidence band. Each cell
+chooses the learned band or the fixed band, and carries its own two tail corrections. The `low` band
+is not selected over at all: it holds both its tails already, at `0.1091` and `0.0922` against
+`0.10`, and it keeps its band-level correction untouched.
+
+The branch is decided out-of-fold inside the uncertainty-training population, one quantile refit per
+fold, comparing the two branches only after both have been corrected to hold their tails, so the
+narrower one wins on like-for-like terms. The corrections are then fitted on calibration customers
+against the branch each cell selected — the same split-conformal step as before, on a finer
+partition.
+
+Five of six cells chose `fixed`. The learned band earned its place in one cell, `q2/high`. That is
+the diagnostic's finding restated by the model: the learned band was over-wide almost everywhere.
+
+### The conditioner was pre-registered
+
+`observed_domain_count`, cut at `2`/`3`/`5`, ranked first of `64` candidates on `8,028` out-of-fold
+rows across `709` uncertainty-training customers. It was chosen without any final-test population
+being loaded, and `conditioner-preregistration.json` carries the full ranking and the criterion.
+
+This matters more than the choice. An earlier scan ranked the same features against final test and
+picked the same winner, and that route is disqualifying: selecting a model on the population that
+then measures it means the measurement is no longer a test. The pre-registration exists so the
+choice can be checked rather than trusted.
+
+The lockbox bears this out. Validation and lockbox agree almost exactly — `income_diverse` coverage
+`0.8021` against `0.8059`, lower tail `0.1014` against `0.0969`, upper tail `0.0965` against
+`0.0972`. A selection effect is precisely what would have shown up as a gap there.
+
+### Measured on validation
+
+`8,635` of `8,640` rows publish; `5` are refused as out of support. Coverage `0.9050` against a
+nominal `0.80`.
+
+| Suite | coverage | floor | lower tail | upper tail | width | sharpness bound | margin |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `income_diverse` | `0.8025` | `0.7500` | `0.1014` | `0.0965` | `168,704` | `-44,297` | `6,176` |
+| `incomplete_observation` | `0.9295` | `0.7500` | `0.0427` | `0.0278` | `45,698` | `-66,053` | `2,785` |
+| `life_events` | `0.9830` | `0.7500` | `0.0000` | `0.0170` | `51,616` | `-31,263` | `1,676` |
+
+By band: high `0.9176`, medium `0.9128`, low `0.7987`, each against a floor of `0.7500` and each
+holding both tails. Zero-truth coverage `0.9983`.
+
+Against `0.9`, `income_diverse` gains coverage, `0.7670` to `0.8025`, while its width falls from
+`286,952` to `168,704` and its failing upper tail drops from `0.1372` to `0.0965`.
+`incomplete_observation` narrows from `162,927` to `45,698`, a `72%` reduction, and gains coverage.
+Both of the diagnostic's targets, widen where it misses and shrink where it over-covers, are met at
+once.
+
+### Confirmed on the release lockbox
+
+`RELEASE_CONFIRMED` on seeds `710_000`+, generated for the first time by that run and read once.
+Published coverage `0.9116` on `8,640` of `8,640` rows, every band and suite inside its floor and
+both tails, every suite passing sharpness.
+
+Reproduce from the `estimator` directory, after the capacity model and the pre-registration:
+
+```bash
+python -m training.select_conditioner --population-size-per-suite 240 --workers 4
+python -m training.calibrate_quantiles --population-size-per-suite 240 --workers 4
+python -m training.evaluate_lockbox --population-size-per-suite 240 --workers 4
+```
+
+### Known limits
+
+- **The lockbox was read before abstention was added.** The promoted artifact differs from the one
+  it measured by exactly two things, the added `support_envelope` and the schema bump, with every
+  offset, adjustment, cell policy and tree identical. Nothing in the offset path reads the envelope,
+  so for any in-support row the published bounds are the bounds `RELEASE_CONFIRMED` measured. What
+  is untested is whether any lockbox row now falls outside the envelope, which could only remove
+  intervals, never change one. Confirming it needs a second lockbox read, and a lockbox read twice
+  is a validation set.
+- Seeds `610_000`+ were spent on a mechanism smoke test before the real read and are recorded as
+  spent in `SPENT_LOCKBOX_SEED_FLOORS`. The release read used `710_000`+.
+- `observed_domain_count` is integer-valued, so its quartile cuts at `2`/`3`/`5` collapse to three
+  occupied buckets rather than four. No cell fell back, every one carrying at least `720` scores,
+  but the pre-registration guard should have caught the discreteness rather than leaving it to be
+  noticed afterwards.
+- The conformal unit is still the customer-month rather than the customer. This is empirical
+  customer-disjoint calibration with customer-clustered error bars, **not** a finite-sample
+  guarantee, and must not be described as one.
+- Annual quantiles are still not produced.
+
+## Support envelope and out-of-calibration abstention
+
+An `80%` interval is a statement about the population it was calibrated on. Outside it the
+corrections were never measured, the label keeps its wording and loses its meaning, and until now
+nothing at inference time could say so.
+
+The artifact carries the range each fenced feature took across the calibration population. A row
+outside any of those ranges receives no interval and
+`quantile_unavailable_reason = OUT_OF_CALIBRATED_SUPPORT`, which is distinct from
+`UNCALIBRATED_INTERVAL`: that one says the band has no fitted correction, this one says the
+correction exists and does not apply here.
+
+Nine features are fenced: the eight the residual quantile ensembles split on most, plus the
+selector's conditioner. Four hundred stumps between them touch almost the whole feature table, most
+of it once or twice, and a box drawn around all of it refused `25` of `576` rows at smoke scale —
+fencing sampling noise rather than a change of regime. Usage is the ranking because a feature the
+ensembles return to is one the width actually depends on.
+
+A missing value is in support. Missingness is modelled rather than imputed everywhere else here, and
+calibration saw plenty of it.
+
+The refusal is made in `interval_minor`, so everything that produces an interval refuses the same
+rows. The first attempt put it in `combine_month` alone, which left the evaluation harness scoring
+rows the runtime would decline — a gate measuring a different model than it ships, which is the
+defect this line of work opened with.
+
+Complete promotion accordingly means every **supported** row publishes. The refusal share is gated
+against a `1%` ceiling so the envelope cannot quietly fence the calibration distribution itself; on
+validation it refuses `0.0006`, five rows, on `available_balance_minor`, `income_6m_minor` and
+`transaction_count_1m`.
+
+The envelope does not repair out-of-distribution coverage and is not meant to. It makes the scope of
+the claim honest by refusing outside it. Held-out stress behaviour remains unmeasured for this
+artifact.
+
 ## Quantile calibration 0.10 — width-slope recalibration, not promoted, not written here
 
 `recalibrated-width-intervals-0.10.0` is the candidate ADR 0007's diagnostic pointed to: one

@@ -317,7 +317,26 @@ regression, and a difference with no error bar is refused rather than passed. Th
 unconditional even where the baseline itself under-covers, which is recorded per suite as
 `baseline_tails_hold`.
 
-`0.9` does not promote, and the findings are recorded rather than smoothed over. `income_diverse`
+`0.11` promotes. It replaces the single adaptive band with a conditional cell selector: rows fall
+into quartiles of `observed_domain_count` crossed with the confidence band, and each cell chooses the
+learned band or the fixed one and carries its own two tail corrections. On validation `8,635` of
+`8,640` rows publish, coverage `0.9050`, every band and suite inside its floor and both tails, every
+suite passing sharpness by at least `7x` its margin. On a release lockbox read once, seeds
+`710_000`+, `RELEASE_CONFIRMED`. See
+[ADR 0008](../docs/adr/0008-conditional-selector-promotion-and-abstention.md).
+
+The conditioner was chosen inside the uncertainty-training population and frozen before the selector
+was built. An earlier ranking against final test picked the same feature and was discarded anyway:
+selecting a model on the population that then measures it means the measurement is not a test.
+
+Outside the calibrated conditions the estimator refuses. Nine features carry the range they took
+across calibration, and a row outside any of them receives no interval and
+`quantile_unavailable_reason = OUT_OF_CALIBRATED_SUPPORT` — distinct from `UNCALIBRATED_INTERVAL`,
+which says the band has no fitted correction rather than that the correction does not apply here. On
+validation that refuses `5` rows of `8,640`. It makes the scope of the `80%` claim honest; it does
+not repair behaviour outside it.
+
+`0.9` did not promote, and the findings are recorded rather than smoothed over. `income_diverse`
 clears its coverage floor while its upper tail misses `0.1372` against a ceiling of `0.1250`, so its
 published `p90` holds about `86%` of the time. Sharpness fails on `income_diverse` and
 `incomplete_observation`. Calibration is over customer-months rather than customers, so this is
