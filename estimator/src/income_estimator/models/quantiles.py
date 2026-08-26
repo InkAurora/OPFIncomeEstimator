@@ -33,6 +33,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from income_estimator.models.uncertainty import (
+    ConditionalSelectorArtifact,
     ResidualQuantileArtifact,
     ResidualQuantileModel,
     WidthRecalibratorArtifact,
@@ -83,7 +84,7 @@ class BandAdjustment(QuantileModel):
 
 
 class ConformalCalibrationArtifact(QuantileModel):
-    schema_version: Literal["1.0", "1.1", "1.2", "1.3"] = "1.3"
+    schema_version: Literal["1.0", "1.1", "1.2", "1.3", "1.4"] = "1.4"
     calibration_version: str = Field(min_length=1)
     method: Literal["split-conformal-log-residual"] = CALIBRATION_METHOD
     capacity_model_version: str = Field(min_length=1)
@@ -100,6 +101,7 @@ class ConformalCalibrationArtifact(QuantileModel):
     conformal_widening: float | None = None
     band_adjustments: dict[str, BandAdjustment] = Field(default_factory=dict)
     width_recalibrator: WidthRecalibratorArtifact | None = None
+    conditional_selector: ConditionalSelectorArtifact | None = None
     zero_gate_certain_basis_points: int = Field(ge=0, le=10_000)
     zero_mass_floor_basis_points: int = Field(default=1_000, ge=0, le=10_000)
     calibration_row_count: int = Field(gt=0)
@@ -132,6 +134,13 @@ class ConformalCalibrationArtifact(QuantileModel):
             raise ValueError("band adjustments correct learned quantiles and need them present")
         if self.width_recalibrator is not None and self.residual_quantiles is None:
             raise ValueError("a width recalibrator transforms learned quantiles and needs them")
+        if self.conditional_selector is not None and self.residual_quantiles is None:
+            raise ValueError("a conditional selector may choose the learned band and needs it")
+        if self.conditional_selector is not None and self.width_recalibrator is not None:
+            raise ValueError(
+                "a conditional selector and a width recalibrator are two answers to the same "
+                "question and may not both be published"
+            )
         return self
 
     @property
@@ -294,12 +303,17 @@ class ConformalIntervalModel:
     ) -> tuple[float, float]:
         """Offsets for one row: adaptive when a scale model and features are both available.
 
-        Three stages, in this order. The learned bounds are this row's own residual quantiles. The
-        width recalibrator then compresses the range of those bounds, tail by tail, on the bands it
-        was fitted for. The conformal corrections, fitted on untouched customers against the
-        recalibrated bound, recover the coverage the learned quantiles do not carry on their own.
-        Each tail is corrected separately, per band, so the lower bound is a `p10` claim and the
-        upper bound a `p90` claim rather than two halves of one `80%` claim.
+        When a conditional selector is present it answers alone: the row's cell decides whether
+        to start from the learned band or the fixed one, and carries that cell's own two tail
+        corrections. Nothing else applies, which is why a selector and a width recalibrator may not
+        both be published.
+
+        Otherwise, three stages in this order. The learned bounds are this row's own residual
+        quantiles. The width recalibrator then compresses the range of those bounds, tail by tail,
+        on the bands it was fitted for. The conformal corrections, fitted on untouched customers
+        against the recalibrated bound, recover the coverage the learned quantiles do not carry on
+        their own. Each tail is corrected separately, per band, so the lower bound is a `p10` claim
+        and the upper bound a `p90` claim rather than two halves of one `80%` claim.
 
         The order is load-bearing. A conformal correction is a claim about the bound that is
         actually published, so it has to be fitted downstream of the transform; correcting first and
@@ -313,16 +327,31 @@ class ConformalIntervalModel:
         there is nothing to condition on, and the fixed offsets apply.
         """
 
-        if self.residual_quantiles is not None and features is not None:
-            lower, upper = self.residual_quantiles.predict_bounds(features)
-            lower, upper = self.artifact.recalibrate_width(
-                lower, upper, confidence_basis_points
+        if self.residual_quantiles is None or features is None:
+            return self.artifact.offsets_for(confidence_basis_points)
+
+        selector = self.artifact.conditional_selector
+        if selector is not None and confidence_basis_points is not None:
+            policy = selector.policy_for(
+                features, confidence_band(confidence_basis_points)
             )
-            lower_adjustment, upper_adjustment = self.artifact.adjustments_for(
-                confidence_basis_points
-            )
-            return min(0.0, lower - lower_adjustment), max(0.0, upper + upper_adjustment)
-        return self.artifact.offsets_for(confidence_basis_points)
+            if policy is not None:
+                lower, upper = (
+                    self.residual_quantiles.predict_bounds(features)
+                    if policy.branch == "adaptive"
+                    else self.artifact.offsets_for(confidence_basis_points)
+                )
+                return (
+                    min(0.0, lower - policy.lower_adjustment),
+                    max(0.0, upper + policy.upper_adjustment),
+                )
+
+        lower, upper = self.residual_quantiles.predict_bounds(features)
+        lower, upper = self.artifact.recalibrate_width(lower, upper, confidence_basis_points)
+        lower_adjustment, upper_adjustment = self.artifact.adjustments_for(
+            confidence_basis_points
+        )
+        return min(0.0, lower - lower_adjustment), max(0.0, upper + upper_adjustment)
 
     @classmethod
     def from_path(cls, path: Path) -> ConformalIntervalModel:

@@ -50,25 +50,27 @@ from income_estimator.models.quantiles import (
     confidence_band,
     empirical_quantile,
 )
-from income_estimator.models.uncertainty import ResidualQuantileModel
+from income_estimator.models.uncertainty import (
+    CellPolicy,
+    ConditionalSelectorArtifact,
+    ResidualQuantileModel,
+)
 from training.capacity_datasets import (
     CAPACITY_DATASET_VERSION,
     build_capacity_dataset,
 )
 from training.out_of_fold import customer_fold
 from training.uncertainty_boosting import (
-    WidthObservation,
     conformal_tail_adjustment,
     conformal_widening,
     conformity_scores,
     fit_residual_quantile_model,
-    fit_width_recalibrator,
     residual_rows,
     tail_conformity_scores,
 )
 
-CALIBRATION_VERSION = "recalibrated-width-intervals-0.10.0"
-ARTIFACT_STEM = "quantile-calibration-0.10.0"
+CALIBRATION_VERSION = "conditional-selector-intervals-0.11.0"
+ARTIFACT_STEM = "quantile-calibration-0.11.0"
 DEFAULT_LOWER_QUANTILE = 0.1
 DEFAULT_UPPER_QUANTILE = 0.9
 ZERO_GATE_CERTAIN_BASIS_POINTS = 1_000
@@ -82,6 +84,17 @@ TAIL_MISS_TOLERANCE = COVERAGE_TOLERANCE / 2
 # ADR 0005. A band fits its own offsets only when its tail quantiles rest on enough observations to
 # mean something; below this it falls back to the global pair.
 MINIMUM_BAND_RESIDUALS = 100
+
+# The same rule one partition finer. A selector cell is a quartile of the conditioner crossed with a
+# band, so there are more of them and each is smaller; a cell below this many calibration scores
+# cannot fit a `0.90` tail quantile worth publishing and takes the pooled pair instead.
+MINIMUM_CELL_SCORES = 100
+
+# The `low` band keeps its band-level correction. It holds both its tails already, at `0.1091` and
+# `0.0922` against `0.10`, so it is the one part of the model that is not the problem, and leaving
+# it alone is what lets its published intervals be checked byte-identical against a selector-free
+# artifact.
+SELECTOR_BANDS: tuple[str, ...] = ("high", "medium")
 
 # A segment is gated only when its sample can resolve a miss at all. Counted in customers, because
 # that is the unit the population draw uses.
@@ -701,6 +714,32 @@ def _width_allocation(paired: Sequence[_PairedRow]) -> dict[str, object]:
     }
 
 
+def _choose_branch(items: Sequence[tuple[float, tuple[float, float], tuple[float, float]]]) -> str:
+    """Pick the branch whose corrected band is narrower on this cell's out-of-fold rows.
+
+    Both branches are first corrected to hold their own tails at `0.90`, so the comparison is like
+    with like: whichever is narrower afterwards is the one that buys the same claim for less width.
+    That is the sharpness pressure the interval score applies later, applied here where it can still
+    change the answer.
+
+    Each item is `(log_residual, adaptive_bounds, fixed_bounds)`.
+    """
+
+    costs: dict[str, float] = {}
+    for index, branch in ((1, "adaptive"), (2, "fixed")):
+        lower_correction = empirical_quantile(
+            [item[index][0] - item[0] for item in items], DEFAULT_UPPER_QUANTILE
+        )
+        upper_correction = empirical_quantile(
+            [item[0] - item[index][1] for item in items], DEFAULT_UPPER_QUANTILE
+        )
+        costs[branch] = fmean(
+            (item[index][1] + upper_correction) - (item[index][0] - lower_correction)
+            for item in items
+        )
+    return min(costs, key=lambda branch: costs[branch])
+
+
 def _sharpness_failure(
     label: str,
     metrics: dict[str, object],
@@ -793,6 +832,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=Path,
         default=Path(__file__).parent / "artifacts/capacity-estimator-0.6.0.json",
     )
+    parser.add_argument(
+        "--preregistration",
+        type=Path,
+        default=Path(__file__).parent / "artifacts/conditioner-preregistration.json",
+        help="Frozen record of the conditioner chosen inside the uncertainty population",
+    )
     parser.add_argument("--output", type=Path, default=Path(__file__).parent / "artifacts")
     parser.add_argument("--population-size-per-suite", type=int, default=240)
     parser.add_argument("--months", type=int, default=12)
@@ -860,10 +905,46 @@ def main(argv: Sequence[str] | None = None) -> int:
         upper_quantile=DEFAULT_UPPER_QUANTILE,
     )
 
-    # The width transform is fitted on bands this model produced for customers it had not trained
-    # on. One refit per fold, inside the uncertainty population only: no calibration or final-test
-    # customer is touched here, and the conformal step downstream stays untouched in method.
-    observations: list[WidthObservation] = []
+    # The conditioner was ranked inside this same population and frozen before this run. Reading it
+    # here rather than choosing it here is the whole point: the feature was picked without any
+    # final-test population being loaded, and the record says so.
+    preregistration_bytes = args.preregistration.resolve().read_bytes()
+    preregistration = json.loads(preregistration_bytes.decode("utf-8"))
+    if preregistration.get("final_test_inspected"):
+        raise ValueError("the conditioner pre-registration records having read final test")
+    conditioner = preregistration["selected"]["feature"]
+    cut_points = tuple(float(cut) for cut in preregistration["selected"]["cut_points"])
+
+    def bucket_of(features) -> str:
+        value = features.get(conditioner)
+        if value is None:
+            return "unknown"
+        return f"q{sum(1 for cut in cut_points if float(value) > cut) + 1}"
+
+    # A fixed band fitted on the uncertainty population, used only to decide which branch each cell
+    # prefers. The artifact publishes the calibration-fitted `band_offsets`; what the decision needs
+    # from a fixed band is its shape relative to the learned one, not its exact level, and taking it
+    # from here keeps the choice inside the population it is allowed to see.
+    uncertainty_by_band: dict[str, list[float]] = {}
+    for row in uncertainty_residuals:
+        band = confidence_band(
+            uncertainty_routed[
+                (row.customer_id, row.reference_month)
+            ].confidence_score_basis_points
+        )
+        uncertainty_by_band.setdefault(band, []).append(row.log_residual)
+    uncertainty_fixed = {
+        band: (
+            min(0.0, empirical_quantile(values, DEFAULT_LOWER_QUANTILE)),
+            max(0.0, empirical_quantile(values, DEFAULT_UPPER_QUANTILE)),
+        )
+        for band, values in uncertainty_by_band.items()
+    }
+
+    # Which branch each cell uses is decided out-of-fold: one quantile refit per fold, and every
+    # learned band comes from a model that never saw that customer. No calibration or final-test
+    # customer is read here.
+    branch_rows: dict[str, list[tuple[float, tuple[float, float], tuple[float, float]]]] = {}
     for fold in range(WIDTH_RECALIBRATION_FOLDS):
         training = [
             row
@@ -885,26 +966,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         )
         for row in held_out:
-            raw_lower, raw_upper = fold_model.predict_bounds(row.features)
-            observations.append(
-                WidthObservation(
-                    customer_id=row.customer_id,
-                    band=confidence_band(
-                        uncertainty_routed[
-                            (row.customer_id, row.reference_month)
-                        ].confidence_score_basis_points
-                    ),
-                    raw_lower=raw_lower,
-                    raw_upper=raw_upper,
-                    log_residual=row.log_residual,
+            band = confidence_band(
+                uncertainty_routed[
+                    (row.customer_id, row.reference_month)
+                ].confidence_score_basis_points
+            )
+            if band not in SELECTOR_BANDS:
+                continue
+            branch_rows.setdefault(f"{bucket_of(row.features)}/{band}", []).append(
+                (
+                    row.log_residual,
+                    fold_model.predict_bounds(row.features),
+                    uncertainty_fixed.get(band, (0.0, 0.0)),
                 )
             )
-    width_recalibrator = fit_width_recalibrator(
-        observations,
-        lower_quantile=DEFAULT_LOWER_QUANTILE,
-        upper_quantile=DEFAULT_UPPER_QUANTILE,
-        fold_count=WIDTH_RECALIBRATION_FOLDS,
-    )
+    branch_by_cell = {cell: _choose_branch(items) for cell, items in branch_rows.items()}
 
     # One routing pass over the calibration population. Every downstream quantity, the residuals,
     # the bands, and the conformity scores, is derived from the same published estimate.
@@ -935,19 +1011,51 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     quantile_model = ResidualQuantileModel(quantile_artifact)
 
-    def published_bounds(row) -> tuple[float, float]:
-        """The band the runtime would publish for one calibration row, transform included.
+    # Fitted before the conformity scores rather than after, because the selector's `fixed` branch
+    # publishes these and the correction has to be a quantile of the score against what is
+    # published.
+    band_offsets: dict[str, BandOffsets] = {}
+    band_fallbacks: dict[str, int] = {}
+    for band, _ in CONFIDENCE_BAND_FLOORS:
+        values = residuals_by_band.get(band, ())
+        if len(values) < MINIMUM_BAND_RESIDUALS:
+            band_fallbacks[band] = len(values)
+            continue
+        band_offsets[band] = BandOffsets(
+            lower_log_offset=round(
+                min(0.0, empirical_quantile(values, DEFAULT_LOWER_QUANTILE)), 12
+            ),
+            upper_log_offset=round(
+                max(0.0, empirical_quantile(values, DEFAULT_UPPER_QUANTILE)), 12
+            ),
+            residual_count=len(values),
+        )
 
-        The conformal correction is a claim about the bound that is actually emitted. Fitting it on
-        the untransformed band would correct a quantity nothing publishes, and the `low` band would
-        pick up a correction for a transform it never receives.
+    global_lower = round(min(0.0, empirical_quantile(residuals, DEFAULT_LOWER_QUANTILE)), 12)
+    global_upper = round(max(0.0, empirical_quantile(residuals, DEFAULT_UPPER_QUANTILE)), 12)
+
+    def cell_of(row) -> str:
+        band = band_by_key[(row.customer_id, row.reference_month)]
+        return f"{bucket_of(row.features)}/{band}"
+
+    def published_bounds(row) -> tuple[float, float]:
+        """The band the runtime would publish for one calibration row, before its correction.
+
+        A conformal correction is a claim about the bound that is actually emitted, so it has to be
+        a quantile of the score against the branch this row's cell selected. Scoring every row
+        against the learned band and then publishing the fixed one for some of them would correct a
+        quantity nothing publishes.
         """
 
-        raw_lower, raw_upper = quantile_model.predict_bounds(row.features)
         band = band_by_key[(row.customer_id, row.reference_month)]
-        if not width_recalibrator.applies_to(band):
-            return raw_lower, raw_upper
-        return width_recalibrator.recalibrate(raw_lower, raw_upper)
+        if band not in SELECTOR_BANDS:
+            return quantile_model.predict_bounds(row.features)
+        if branch_by_cell.get(cell_of(row), "adaptive") == "adaptive":
+            return quantile_model.predict_bounds(row.features)
+        offsets = band_offsets.get(band)
+        if offsets is None:
+            return global_lower, global_upper
+        return offsets.lower_log_offset, offsets.upper_log_offset
 
     # The joint score and its single widening stay in the artifact as the documented fallback for a
     # band too thin to fit its own pair. ADR 0007 refuses to promote on it.
@@ -969,24 +1077,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     lower_tail_coverage = 1.0 - DEFAULT_LOWER_QUANTILE
     upper_tail_coverage = DEFAULT_UPPER_QUANTILE
 
-    band_offsets: dict[str, BandOffsets] = {}
-    band_fallbacks: dict[str, int] = {}
     band_adjustments: dict[str, BandAdjustment] = {}
     adjustment_fallbacks: dict[str, int] = {}
     for band, _ in CONFIDENCE_BAND_FLOORS:
-        values = residuals_by_band.get(band, ())
-        if len(values) < MINIMUM_BAND_RESIDUALS:
-            band_fallbacks[band] = len(values)
-        else:
-            band_offsets[band] = BandOffsets(
-                lower_log_offset=round(
-                    min(0.0, empirical_quantile(values, DEFAULT_LOWER_QUANTILE)), 12
-                ),
-                upper_log_offset=round(
-                    max(0.0, empirical_quantile(values, DEFAULT_UPPER_QUANTILE)), 12
-                ),
-                residual_count=len(values),
-            )
         band_lower = lower_scores_by_band.get(band, ())
         band_upper = upper_scores_by_band.get(band, ())
         if len(band_lower) < MINIMUM_BAND_RESIDUALS:
@@ -997,6 +1090,59 @@ def main(argv: Sequence[str] | None = None) -> int:
             upper_adjustment=round(conformal_tail_adjustment(band_upper, upper_tail_coverage), 12),
             score_count=len(band_lower),
         )
+
+    # Each cell's two tail corrections, fitted on calibration customers against the branch that
+    # cell selected. Same split-conformal step as the band adjustments, on a finer partition.
+    cell_lower: dict[str, list[float]] = {}
+    cell_upper: dict[str, list[float]] = {}
+    for row, lower_score, upper_score in zip(calibration_residuals, lower_scores, upper_scores):
+        if band_by_key[(row.customer_id, row.reference_month)] not in SELECTOR_BANDS:
+            continue
+        cell = cell_of(row)
+        cell_lower.setdefault(cell, []).append(lower_score)
+        cell_upper.setdefault(cell, []).append(upper_score)
+
+    # A cell too thin to fit its own pair falls back to its band's pair rather than inventing one,
+    # and the gate refuses to promote on that fallback.
+    selector_fallback = CellPolicy(
+        branch="adaptive",
+        lower_adjustment=round(
+            conformal_tail_adjustment(lower_scores, lower_tail_coverage), 12
+        ),
+        upper_adjustment=round(
+            conformal_tail_adjustment(upper_scores, upper_tail_coverage), 12
+        ),
+        score_count=len(lower_scores),
+    )
+    selector_cells: dict[str, CellPolicy] = {}
+    selector_fallbacks: dict[str, int] = {}
+    for cell in sorted(set(cell_lower) | set(branch_by_cell)):
+        lower_values = cell_lower.get(cell, [])
+        upper_values = cell_upper.get(cell, [])
+        if len(lower_values) < MINIMUM_CELL_SCORES:
+            selector_fallbacks[cell] = len(lower_values)
+            selector_cells[cell] = selector_fallback
+            continue
+        selector_cells[cell] = CellPolicy(
+            branch=branch_by_cell.get(cell, "adaptive"),
+            lower_adjustment=round(
+                conformal_tail_adjustment(lower_values, lower_tail_coverage), 12
+            ),
+            upper_adjustment=round(
+                conformal_tail_adjustment(upper_values, upper_tail_coverage), 12
+            ),
+            score_count=len(lower_values),
+        )
+    selector = ConditionalSelectorArtifact(
+        feature_name=conditioner,
+        cut_points=cut_points,
+        applies_to_bands=SELECTOR_BANDS,
+        cells=selector_cells,
+        fallback=selector_fallback,
+        selection_version=preregistration["selection_version"],
+        selected_on=preregistration["selected_on"],
+        preregistration_sha256=hashlib.sha256(preregistration_bytes).hexdigest(),
+    )
 
     nominal = DEFAULT_UPPER_QUANTILE - DEFAULT_LOWER_QUANTILE
     nominal_miss = DEFAULT_LOWER_QUANTILE
@@ -1032,7 +1178,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             residual_quantiles=quantile_artifact if adaptive else None,
             conformal_widening=widening if adaptive else None,
             band_adjustments=band_adjustments if adaptive else {},
-            width_recalibrator=width_recalibrator if adaptive else None,
+            width_recalibrator=None,
+            conditional_selector=selector if adaptive else None,
             zero_gate_certain_basis_points=ZERO_GATE_CERTAIN_BASIS_POINTS,
             calibration_row_count=len(calibration_rows),
             calibration_customer_count=len(calibration_customers),
@@ -1044,10 +1191,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     baseline = ConformalIntervalModel(baseline_artifact)
 
     # The `low` band is the one part of the model that already holds both its tails, and the
-    # transform is declared not to touch it. Declaring that is not the same as it being true, so it
-    # is checked against the artifact rather than asserted: the same artifact with the recalibrator
+    # selector is declared not to touch it. Declaring that is not the same as it being true, so it
+    # is checked against the artifact rather than asserted: the same artifact with the selector
     # removed must publish byte-identical bounds on every low-band row.
-    untransformed = ConformalIntervalModel(artifact.model_copy(update={"width_recalibrator": None}))
+    untransformed = ConformalIntervalModel(
+        artifact.model_copy(update={"conditional_selector": None})
+    )
 
     failures: list[str] = []
 
@@ -1179,6 +1328,16 @@ def main(argv: Sequence[str] | None = None) -> int:
                 sharpness_gate[scenario]["passed"] for scenario in valid_baseline_suites
             )
 
+    if selector_fallbacks:
+        failures.append(
+            "selector cells "
+            + ", ".join(
+                f"{name} ({count} scores)"
+                for name, count in sorted(selector_fallbacks.items())
+            )
+            + " fall back to the pooled pair rather than fitting their own, which cannot promote"
+        )
+
     low_band_divergences = 0
     low_band_rows = 0
     for row in final_rows:
@@ -1210,7 +1369,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     }
     if low_band_divergences:
         failures.append(
-            f"the width recalibrator changes {low_band_divergences} of {low_band_rows} low-band "
+            f"the conditional selector changes {low_band_divergences} of {low_band_rows} low-band "
             f"intervals; the low band is declared to bypass it exactly"
         )
 
@@ -1290,17 +1449,29 @@ def main(argv: Sequence[str] | None = None) -> int:
             "lower_log_offset": artifact.lower_log_offset,
             "upper_log_offset": artifact.upper_log_offset,
             "minimum_band_residuals": MINIMUM_BAND_RESIDUALS,
-            "width_recalibrator": {
-                "method": width_recalibrator.method,
-                "lower_scale": width_recalibrator.lower_scale,
-                "lower_slope": width_recalibrator.lower_slope,
-                "upper_scale": width_recalibrator.upper_scale,
-                "upper_slope": width_recalibrator.upper_slope,
-                "applies_to_bands": list(width_recalibrator.applies_to_bands),
-                "fold_count": width_recalibrator.fold_count,
-                "out_of_fold_row_count": width_recalibrator.training_row_count,
-                "out_of_fold_customer_count": width_recalibrator.training_customer_count,
-                "out_of_fold_observations": len(observations),
+            "minimum_cell_scores": MINIMUM_CELL_SCORES,
+            "conditional_selector": {
+                "method": selector.method,
+                "feature_name": selector.feature_name,
+                "cut_points": list(selector.cut_points),
+                "applies_to_bands": list(selector.applies_to_bands),
+                "selection_version": selector.selection_version,
+                "selected_on": selector.selected_on,
+                "preregistration_sha256": selector.preregistration_sha256,
+                "preregistration_worst_seed_tail_miss": preregistration["selected"][
+                    "worst_seed_tail_miss"
+                ],
+                "branch_decision_folds": WIDTH_RECALIBRATION_FOLDS,
+                "cells": {
+                    name: {
+                        "branch": cell.branch,
+                        "lower_adjustment": cell.lower_adjustment,
+                        "upper_adjustment": cell.upper_adjustment,
+                        "score_count": cell.score_count,
+                    }
+                    for name, cell in sorted(selector.cells.items())
+                },
+                "cells_using_fallback": selector_fallbacks,
             },
             "band_offsets": {
                 band: {
@@ -1411,12 +1582,23 @@ def main(argv: Sequence[str] | None = None) -> int:
     print(
         f"  zero-truth coverage={zero_gate.get('empirical_coverage')} rows={zero_gate.get('count')}"
     )
+    branches = {}
+    for name, cell in sorted(selector.cells.items()):
+        branches.setdefault(cell.branch, []).append(name)
     print(
-        f"  width recalibrator lower={width_recalibrator.lower_scale:.4f}"
-        f"^{width_recalibrator.lower_slope:.4f} "
-        f"upper={width_recalibrator.upper_scale:.4f}^{width_recalibrator.upper_slope:.4f} "
-        f"on {'/'.join(width_recalibrator.applies_to_bands)}; low-band bypass "
-        f"{low_band_bypass['divergent_rows']}/{low_band_bypass['rows']} divergent"
+        f"  selector on {selector.feature_name} cuts "
+        f"{'/'.join(f'{cut:g}' for cut in selector.cut_points)} over "
+        f"{'/'.join(selector.applies_to_bands)}: "
+        + ", ".join(f"{branch}={len(names)}" for branch, names in sorted(branches.items()))
+        + f"; fallback cells {len(selector_fallbacks)}"
+    )
+    for name, cell in sorted(selector.cells.items()):
+        print(
+            f"    {name:<14} {cell.branch:<9} lower={cell.lower_adjustment:+.4f} "
+            f"upper={cell.upper_adjustment:+.4f} n={cell.score_count}"
+        )
+    print(
+        f"  low-band bypass {low_band_bypass['divergent_rows']}/{low_band_bypass['rows']} divergent"
     )
     print(f"Promotion: {report['promotion']['status']}")
     for failure in failures:

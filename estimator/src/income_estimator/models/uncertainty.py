@@ -159,6 +159,116 @@ def _power(width: float, scale: float, slope: float) -> float:
     return min(MAXIMUM_LOG_OFFSET, scale * width**slope)
 
 
+CONDITIONAL_SELECTOR_METHOD = "cell-selector-fixed-or-adaptive"
+
+
+class CellPolicy(UncertaintyModel):
+    """What one cell does: which band it starts from, and how each tail is corrected."""
+
+    branch: Literal["adaptive", "fixed"]
+    lower_adjustment: float
+    upper_adjustment: float
+    score_count: int = Field(gt=0)
+
+
+class ConditionalSelectorArtifact(UncertaintyModel):
+    """Choose the learned band or the fixed band per cell, then correct each tail on its own.
+
+    The width recalibrator failed because the regimes overlap in raw width: at the same learned
+    width an income-diverse row needs a wider interval and a stable one needs a narrower one, and a
+    monotone function of that width cannot tell them apart. This conditions on a feature that can.
+
+    The conditioner is pre-registered. It was ranked inside the uncertainty-training population,
+    against a criterion evaluated on customer splits of that population alone, and the record of
+    what was chosen and what it beat is frozen in `conditioner-preregistration.json` before this
+    artifact was fitted. Ranking features against the population the gate measures was tried first
+    and is disqualifying: it selects a model on the data that is supposed to test it.
+
+    Cells are quartiles of the conditioner crossed with the confidence band. Each cell picks its
+    branch on out-of-fold uncertainty-training rows, by corrected width after both branches are
+    corrected to hold their tails, so the comparison is like with like and the narrower one wins.
+    Each cell's corrections are then fitted on calibration customers, which is the split-conformal
+    step, unchanged in method and only finer in partition.
+
+    A cell too thin to fit its own pair falls back rather than inventing one, and a calibration that
+    needs the fallback anywhere cannot promote.
+    """
+
+    schema_version: Literal["1.0"] = "1.0"
+    method: Literal["cell-selector-fixed-or-adaptive"] = CONDITIONAL_SELECTOR_METHOD
+    feature_name: str = Field(min_length=1)
+    cut_points: tuple[float, ...] = Field(min_length=1)
+    applies_to_bands: tuple[str, ...] = WIDTH_RECALIBRATED_BANDS
+    cells: dict[str, CellPolicy]
+    fallback: CellPolicy | None = None
+    selection_version: str = Field(min_length=1)
+    selected_on: str = Field(min_length=1)
+    preregistration_sha256: str = Field(min_length=64, max_length=64)
+
+    @model_validator(mode="after")
+    def validate_cells(self) -> ConditionalSelectorArtifact:
+        if not self.applies_to_bands:
+            raise ValueError("a selector that applies to no band selects nothing")
+        unknown = set(self.applies_to_bands) - {"high", "medium", "low"}
+        if unknown:
+            raise ValueError(f"unknown confidence bands: {sorted(unknown)}")
+        outside = sorted(
+            name
+            for name in self.cells
+            if name.rsplit("/", 1)[-1] not in self.applies_to_bands
+        )
+        if outside:
+            raise ValueError(f"cells outside the selector's bands: {outside}")
+        if list(self.cut_points) != sorted(self.cut_points):
+            raise ValueError("cut_points must be ascending")
+        if len(set(self.cut_points)) != len(self.cut_points):
+            raise ValueError("cut_points must be distinct")
+        if not self.cells:
+            raise ValueError("a selector with no cells selects nothing")
+        return self
+
+    def bucket(self, features: Mapping[str, float | int | None]) -> str:
+        """Name the conditioner quartile a row falls in. Missing is its own bucket.
+
+        A row with no value for the conditioner cannot be placed among the quartiles, and folding it
+        into the lowest would silently assign it a correction fitted on rows it has nothing in
+        common with.
+        """
+
+        value = features.get(self.feature_name)
+        if value is None:
+            return "unknown"
+        return f"q{sum(1 for cut in self.cut_points if float(value) > cut) + 1}"
+
+    def applies_to(self, band: str | None) -> bool:
+        """Whether one band is selected over at all.
+
+        The `low` band holds both its tails already, at `0.1091` and `0.0922` against `0.10`, and is
+        the one part of the model that is not the problem. It keeps its band-level correction
+        untouched, so its published intervals are byte-identical with the selector present or
+        absent.
+        """
+
+        return band is not None and band in self.applies_to_bands
+
+    def policy_for(
+        self,
+        features: Mapping[str, float | int | None],
+        band: str,
+    ) -> CellPolicy | None:
+        """This row's cell, or the fallback, or nothing when the band is not selected over."""
+
+        if not self.applies_to(band):
+            return None
+        return self.cells.get(f"{self.bucket(features)}/{band}", self.fallback)
+
+    @property
+    def uses_fallback(self) -> tuple[str, ...]:
+        """Cells that carry the fallback rather than their own fitted pair."""
+
+        return tuple(sorted(name for name, cell in self.cells.items() if cell is self.fallback))
+
+
 class ResidualQuantileModel:
     """Predict the log-space residual band for one row."""
 
@@ -205,10 +315,13 @@ class ResidualQuantileModel:
 
 
 __all__ = [
+    "CONDITIONAL_SELECTOR_METHOD",
     "MAXIMUM_LOG_OFFSET",
     "RESIDUAL_QUANTILE_METHOD",
     "WIDTH_RECALIBRATED_BANDS",
     "WIDTH_RECALIBRATION_METHOD",
+    "CellPolicy",
+    "ConditionalSelectorArtifact",
     "ResidualQuantileArtifact",
     "ResidualQuantileModel",
     "ScaleStump",

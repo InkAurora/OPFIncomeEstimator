@@ -25,6 +25,7 @@ from income_estimator.models.quantiles import (
     require_capacity_binding,
 )
 from income_estimator.models.uncertainty import (
+    ConditionalSelectorArtifact,
     ResidualQuantileArtifact,
     ResidualQuantileModel,
     WidthRecalibratorArtifact,
@@ -1230,3 +1231,104 @@ def test_the_recalibrator_is_fitted_only_on_the_bands_it_applies_to() -> None:
             upper_quantile=0.9,
             fold_count=5,
         )
+
+
+def _selector(**overrides) -> ConditionalSelectorArtifact:
+    payload = {
+        "feature_name": "observed_domain_count",
+        "cut_points": (2.0, 3.0, 5.0),
+        "cells": {
+            "q1/high": {
+                "branch": "fixed",
+                "lower_adjustment": 0.1,
+                "upper_adjustment": 0.2,
+                "score_count": 400,
+            },
+            "q2/high": {
+                "branch": "adaptive",
+                "lower_adjustment": 0.3,
+                "upper_adjustment": 0.4,
+                "score_count": 400,
+            },
+        },
+        "selection_version": "conditioner-preregistration-1.0",
+        "selected_on": "uncertainty-training",
+        "preregistration_sha256": "0" * 64,
+    }
+    payload.update(overrides)
+    return ConditionalSelectorArtifact.model_validate(payload)
+
+
+def test_the_selector_buckets_on_the_preregistered_cuts() -> None:
+    selector = _selector()
+
+    assert selector.bucket({"observed_domain_count": 1}) == "q1"
+    assert selector.bucket({"observed_domain_count": 3}) == "q2"
+    assert selector.bucket({"observed_domain_count": 5}) == "q3"
+    assert selector.bucket({"observed_domain_count": 9}) == "q4"
+    # A row with no value cannot be placed among the quartiles and is not folded into the lowest.
+    assert selector.bucket({}) == "unknown"
+
+
+def test_the_low_band_is_not_selected_over() -> None:
+    """The one band that holds both its tails keeps its band-level correction untouched."""
+
+    selector = _selector()
+
+    assert selector.applies_to("high") is True
+    assert selector.applies_to("low") is False
+    assert selector.policy_for({"observed_domain_count": 1}, "low") is None
+    assert selector.policy_for({"observed_domain_count": 1}, "high") is not None
+
+    with pytest.raises(ValidationError, match="cells outside the selector's bands"):
+        _selector(cells={"q1/low": {
+            "branch": "fixed",
+            "lower_adjustment": 0.0,
+            "upper_adjustment": 0.0,
+            "score_count": 100,
+        }})
+
+
+def test_a_cell_chooses_its_branch_and_carries_its_own_corrections() -> None:
+    """Each cell starts from the band it selected, then applies that cell's two corrections."""
+
+    artifact = _artifact(
+        residual_quantiles=_RESIDUAL_QUANTILES,
+        conformal_widening=0.0,
+        band_offsets={"high": {
+            "lower_log_offset": -0.5,
+            "upper_log_offset": 0.5,
+            "residual_count": 400,
+        }},
+        conditional_selector=_selector(),
+    )
+    model = ConformalIntervalModel(artifact)
+    features = {"income_mean_3m_minor": 500_000, "observed_domain_count": 1}
+    high = dict(CONFIDENCE_BAND_FLOORS)["high"]
+
+    # q1/high selected the fixed band, so the published bound is that band plus its corrections.
+    assert model._offsets(high, features) == pytest.approx((-0.6, 0.7))
+
+    # q2/high selected the learned band instead.
+    learned = ResidualQuantileModel(
+        ResidualQuantileArtifact.model_validate(_RESIDUAL_QUANTILES)
+    ).predict_bounds(features)
+    adaptive = model._offsets(high, {**features, "observed_domain_count": 3})
+    assert adaptive == pytest.approx((min(0.0, learned[0] - 0.3), max(0.0, learned[1] + 0.4)))
+
+
+def test_a_selector_and_a_recalibrator_may_not_both_be_published() -> None:
+    """Two answers to the same question, and the runtime would silently apply only one."""
+
+    with pytest.raises(ValidationError, match="two answers to the same question"):
+        _artifact(
+            residual_quantiles=_RESIDUAL_QUANTILES,
+            conformal_widening=0.1,
+            width_recalibrator=_recalibrator(),
+            conditional_selector=_selector(),
+        )
+
+
+def test_a_selector_needs_the_learned_band_it_may_choose() -> None:
+    with pytest.raises(ValidationError, match="conditional selector"):
+        _artifact(conditional_selector=_selector())
