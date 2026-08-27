@@ -143,11 +143,35 @@ resolves and the runtime refuses to load it.
 - The conformal unit remains the customer-month, not the customer. This is empirical
   customer-disjoint calibration with customer-clustered error bars, **not** a finite-sample
   guarantee.
-- Out-of-distribution coverage is unmeasured for this artifact. The envelope makes the scope of the
-  claim honest by refusing outside it; it does not repair behaviour beyond it.
+- Out-of-distribution coverage was unmeasured for this artifact when the decision was taken. It has
+  since been measured and is bad; see the addendum below. The envelope makes the scope of the claim
+  honest by refusing outside it; it does not repair behaviour beyond it, and it turns out not to
+  refuse nearly often enough to make the scope honest in practice.
 - Annual quantiles are not produced.
 
 ## Out of scope
 
 Customer-level conformal theory, repair of the `high_volatility` regime, and any third calibration
 model. Interval work stops here.
+
+## Addendum: measured out-of-distribution behaviour
+
+The stress suites were run against the promoted pair after this ADR was accepted, and recorded in
+`estimator/evaluation/baselines/stress-0.11.0-report.json`. On the two held-out income conditions
+the interval under-covers badly while publishing almost everything:
+
+| suite | intervals published | coverage | mean confidence |
+|---|---|---|---|
+| noisy | 224/240 | 0.348 | 0.744 |
+| high_volatility | 234/240 | 0.158 | 0.546 |
+
+Every withheld row is withheld for `OUT_OF_CALIBRATED_SUPPORT`, and for no other reason. The
+envelope therefore behaves exactly as specified and is still far too permissive: nine independent
+per-feature range checks admit rows drawn from a population the calibration never saw, because no
+single feature leaves its range. Confidence does not fall to compensate, so the `noisy` suite
+publishes `0.744` mean confidence over intervals that hold `0.348` of the time.
+
+This does not reverse the promotion, which was gated on in-distribution evidence and holds there.
+It does retire the claim that abstention alone makes the `80%` scope honest. Multivariate support
+detection and an out-of-distribution component in the confidence score are prerequisites for any
+further interval promotion.

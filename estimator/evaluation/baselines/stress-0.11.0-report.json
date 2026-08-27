@@ -1,0 +1,159 @@
+{
+  "estimator_version": "ensemble-0.6.0",
+  "held_out_conditions": [
+    "clean",
+    "noisy",
+    "high_volatility"
+  ],
+  "model_versions": [
+    "capacity-gbdt-stumps-0.6.0",
+    "conditional-selector-intervals-0.11.0"
+  ],
+  "months": 12,
+  "population_size": 20,
+  "schema_version": "1.0",
+  "suites": [
+    {
+      "customer_count": 20,
+      "description": "single salaried account, complete observation, no products",
+      "false_income_month_count": 0,
+      "in_training_distribution": false,
+      "interval_count": 0,
+      "interval_coverage": null,
+      "mean_confidence_basis_points": 7325.2333,
+      "realized_income": {
+        "count": 240,
+        "mean_absolute_error_minor": 0.0,
+        "mean_truth_minor": 650000.0,
+        "wape": 0.0
+      },
+      "scenario": "salaried_basic.yaml",
+      "seed": 610000,
+      "suite": "clean",
+      "sustainable_income": {
+        "count": 0,
+        "unavailable_reason": "CONTRACT_BELOW_1_3"
+      }
+    },
+    {
+      "customer_count": 20,
+      "description": "mixed income profiles with complete observation",
+      "false_income_month_count": 0,
+      "in_training_distribution": true,
+      "interval_count": 240,
+      "interval_coverage": 0.758333,
+      "mean_confidence_basis_points": 6941.8667,
+      "realized_income": {
+        "count": 240,
+        "mean_absolute_error_minor": 0.0,
+        "mean_truth_minor": 410563.15,
+        "wape": 0.0
+      },
+      "scenario": "income_diverse.yaml",
+      "seed": 620000,
+      "suite": "normal",
+      "sustainable_income": {
+        "count": 240,
+        "mean_absolute_error_minor": 53839.3042,
+        "mean_truth_minor": 425201.4,
+        "wape": 0.12662071
+      }
+    },
+    {
+      "customer_count": 20,
+      "description": "stable salary behind partial consent and a degraded feed",
+      "false_income_month_count": 0,
+      "in_training_distribution": true,
+      "interval_count": 240,
+      "interval_coverage": 0.958333,
+      "mean_confidence_basis_points": 6605.6833,
+      "realized_income": {
+        "count": 240,
+        "mean_absolute_error_minor": 0.0,
+        "mean_truth_minor": 600000.0,
+        "wape": 0.0
+      },
+      "scenario": "incomplete_observation.yaml",
+      "seed": 630000,
+      "suite": "partial_consent",
+      "sustainable_income": {
+        "count": 240,
+        "mean_absolute_error_minor": 3944.8167,
+        "mean_truth_minor": 600000.0,
+        "wape": 0.00657469
+      }
+    },
+    {
+      "customer_count": 20,
+      "description": "raises, promotions, job loss, job change, bonus, inheritance",
+      "false_income_month_count": 0,
+      "in_training_distribution": true,
+      "interval_count": 240,
+      "interval_coverage": 0.975,
+      "mean_confidence_basis_points": 7060.1667,
+      "realized_income": {
+        "count": 240,
+        "mean_absolute_error_minor": 0.0,
+        "mean_truth_minor": 535291.6667,
+        "wape": 0.0
+      },
+      "scenario": "life_events.yaml",
+      "seed": 640000,
+      "suite": "life_events",
+      "sustainable_income": {
+        "count": 240,
+        "mean_absolute_error_minor": 10757.8333,
+        "mean_truth_minor": 501529.1667,
+        "wape": 0.02145007
+      }
+    },
+    {
+      "customer_count": 20,
+      "description": "income-shaped non-income credits with a late, duplicated, reversed feed",
+      "false_income_month_count": 0,
+      "in_training_distribution": false,
+      "interval_count": 224,
+      "interval_coverage": 0.348214,
+      "mean_confidence_basis_points": 7441.7417,
+      "realized_income": {
+        "count": 240,
+        "mean_absolute_error_minor": 9957.325,
+        "mean_truth_minor": 594551.3583,
+        "wape": 0.01674763
+      },
+      "scenario": "noisy_observation.yaml",
+      "seed": 650000,
+      "suite": "noisy",
+      "sustainable_income": {
+        "count": 240,
+        "mean_absolute_error_minor": 18045.9625,
+        "mean_truth_minor": 595500.0,
+        "wape": 0.03030388
+      }
+    },
+    {
+      "customer_count": 20,
+      "description": "irregular self-employed and business income on a clean feed",
+      "false_income_month_count": 0,
+      "in_training_distribution": false,
+      "interval_count": 234,
+      "interval_coverage": 0.15812,
+      "mean_confidence_basis_points": 5456.325,
+      "realized_income": {
+        "count": 240,
+        "mean_absolute_error_minor": 0.0,
+        "mean_truth_minor": 378100.275,
+        "wape": 0.0
+      },
+      "scenario": "high_volatility.yaml",
+      "seed": 660000,
+      "suite": "high_volatility",
+      "sustainable_income": {
+        "count": 240,
+        "mean_absolute_error_minor": 147532.4875,
+        "mean_truth_minor": 359450.0,
+        "wape": 0.41043953
+      }
+    }
+  ]
+}

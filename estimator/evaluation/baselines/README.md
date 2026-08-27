@@ -30,13 +30,26 @@ The `0.491` noisy and `0.125` high-volatility coverage figures quoted from it ar
 attributable to no coherent model pair. They are still the reason out-of-distribution behaviour is
 an open question; they are not a measurement of any artifact in this repository.
 
-`stress_report.py` now defaults to the only pair here whose binding resolves,
-`capacity-estimator-0.6.0.json` with `quantile-calibration-0.9.0.json`, and writes
-`stress-0.9.0-report.json`. That run is deferred: `adaptive-intervals-0.9.0` is `NOT_PROMOTED`, and
-measuring out-of-distribution coverage is worth doing once against a candidate that has cleared its
-in-distribution gates.
+`stress_report.py` defaults to the promoted pair, `capacity-estimator-0.6.0.json` with
+`quantile-calibration-0.11.0.json`, and writes `stress-0.11.0-report.json`. That run was deferred
+until a candidate had cleared its in-distribution gates. `conditional-selector-intervals-0.11.0`
+has, so `stress-0.11.0-report.json` is now the current out-of-distribution evidence and the only
+stress report in this directory that is attributable to a reconstructible model pair.
 
 ```bash
 cd estimator
 python -m evaluation.stress_report --population-size 20 --workers 4
 ```
+
+It reports what the in-distribution gates could not see. On the two held-out income conditions the
+promoted interval under-covers badly while still publishing almost every row: `noisy` covers
+`0.348` on 224 of 240 published rows, `high_volatility` covers `0.158` on 234 of 240, both against
+a nominal `0.80`. Every withheld row is withheld by the support envelope: the reason is
+`OUT_OF_CALIBRATED_SUPPORT` on 16 of 240 noisy rows and 6 of 240 high-volatility rows, and on
+nothing else. The envelope checks nine features one range at a time, so a row can be nothing like
+the calibration population and still sit inside all nine. Mean confidence does not fall to match
+either — `noisy` averages `0.744` confidence while covering `0.348`.
+
+This is a measurement of the promoted artifact, unlike the `0.8.0` report above, and it does not
+support a claim that intervals are trustworthy outside the calibration conditions. It is the
+evidence that they are not.

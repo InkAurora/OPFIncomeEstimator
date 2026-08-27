@@ -138,9 +138,15 @@ customers. Complete promotion means every supported row publishes.
   field identical, and nothing in the offset path reads the envelope — so for any in-support row the
   bounds are the ones that were measured. Whether any lockbox row now falls outside the envelope is
   untested; it could only remove intervals, never change one.
-- Out-of-distribution coverage is unmeasured for this artifact. The envelope refuses outside the
-  calibrated conditions rather than repairing behaviour beyond them, and the `0.491`/`0.125` stress
-  figures quoted historically were measured on a different artifact under a binding violation.
+- **Out-of-distribution coverage is bad, and the envelope does not save it.** Measured on this
+  artifact in `evaluation/baselines/stress-0.11.0-report.json`: the held-out `noisy` suite covers
+  `0.348` on 224 of 240 published rows and `high_volatility` covers `0.158` on 234 of 240, both
+  against a nominal `0.80`. Every withheld row is withheld for `OUT_OF_CALIBRATED_SUPPORT` and for
+  no other reason, so the envelope behaves as specified and is simply far too permissive: nine
+  independent per-feature range checks admit rows from a population the calibration never saw,
+  because no single feature leaves its range. Mean confidence does not fall to compensate —
+  `0.744` on `noisy`. This supersedes the `0.491`/`0.125` figures quoted historically, which were
+  measured on a different artifact under a binding violation.
 - `observed_domain_count` is integer-valued, so its quartile cuts collapse to three occupied buckets
   rather than four. No cell fell back, each carrying at least `720` scores, but the pre-registration
   guard should have caught the discreteness.
@@ -256,7 +262,9 @@ rows only, so they are not comparable with `0.9`'s whole-population figures.
   of a joint `80%` claim rather than two quantiles that hold separately. The report has no field that
   would show one tail paying for the other.
 - Coverage does not extend outside the calibration distribution, and nothing detects that at
-  inference time: `0.491` on the held-out noisy suite and `0.125` on high-volatility.
+  inference time. The `0.491` noisy and `0.125` high-volatility figures recorded for this artifact
+  come from a run whose capacity binding cannot be reconstructed and are void as evidence; see
+  `evaluation/baselines/README.md`. They indicate the direction, not the magnitude.
 - Calibration is over customer-months rather than customers, so this is empirical customer-disjoint
   calibration with customer-clustered error bars, not a finite-sample guarantee.
 - Its `capacity_artifact_sha256` is dangling. It names bytes now stored as
