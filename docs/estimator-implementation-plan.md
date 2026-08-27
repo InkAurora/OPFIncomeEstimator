@@ -13,10 +13,13 @@ correct measured limitations of deterministic methods rather than replace an une
 
 ## 2. Current state
 
-The financial simulator and estimator support every milestone in this plan, through `0.8`:
+The financial simulator and estimator support every milestone in this plan, through `0.11`. This
+is a research baseline measured against the synthetic simulator only; see the repository README for
+what it does not cover.
 
 - simulator orchestrator `0.7.0` generates deterministic populations;
-- observation contract `1.5` includes incomplete-consent and data-quality artifacts;
+- observation contract `1.6` includes incomplete-consent and data-quality artifacts, and mandatory
+  reversal re-posts;
 - estimator boundary contracts `1.0` and `1.1` expose immutable observation-only requests;
 - automatic evaluation joins predictions with physically isolated private truth;
 - estimator `0.1.0` freezes the strict observation-only rule baseline;
@@ -26,11 +29,11 @@ The financial simulator and estimator support every milestone in this plan, thro
 - experimental estimator `0.3.0` adds point-in-time features, customer-isolated training, and a
   portable supervised transaction classifier;
 - fixed held-out artifacts compare promoted versions and record the `0.3` promotion decision;
-- feature set `customer-month-features-1.1.0` publishes point-in-time customer-month rows built by
-  replaying the promoted `0.2` estimator at each reference-month cutoff;
+- feature set `customer-month-features-1.2.0` publishes 104 point-in-time customer-month rows built
+  by replaying the promoted `0.2` estimator at each reference-month cutoff;
 - estimator input `1.2` exposes observed cards, limits, card transactions, invoices, loan payments,
   loan balances, investments, and investment balances, so the capacity feature group is computed;
-- promoted capacity estimator `capacity-gbdt-stumps-0.5.0` predicts sustainable monthly income from
+- promoted capacity estimator `capacity-gbdt-stumps-0.6.0` predicts sustainable monthly income from
   the customer-month table and beats every deterministic baseline on held-out data;
 - estimator output `1.1` separates realized from sustainable income and carries component
   estimates, disagreement, confidence, and excluded evidence;
@@ -38,7 +41,13 @@ The financial simulator and estimator support every milestone in this plan, thro
 - estimator `0.7` publishes split-conformal intervals calibrated on out-of-fold residuals, with
   measured coverage and confidence monotonic against relative error;
 - estimator `0.8` adds explanation contract `1.0`, model cards, and six separately reported
-  stress suites, two of which sit outside the training distribution;
+  stress suites, three of which sit outside the training distribution;
+- interval candidates `0.9` and `0.10` did not promote. `0.9`'s findings are in ADR 0007 and its
+  model card; `0.10`, the monotone width-slope recalibrator, solved sharpness but broke
+  `income_diverse` coverage from `0.7670` to `0.6083` against a `0.75` floor, and is recorded only
+  in its commit;
+- promoted interval calibration `conditional-selector-intervals-0.11.0` chooses a residual band per
+  conditional cell, corrects each tail separately, and refuses outside its recorded support;
 - private contract `income-targets-1.0` projects all five income targets from the hidden run, so
   `sustainable_monthly_income` now exists as a trainable label.
 
@@ -642,11 +651,14 @@ Six suites are reported separately: `clean`, `normal`, `partial_consent`, `life_
 and `high_volatility`. Each declares whether the promoted models were trained on its conditions,
 which distinguishes generalization to new customers from generalization to new conditions.
 
-Held-out conditions expose real weakness and are recorded rather than smoothed over. The `noisy`
-suite produces the worst realized error at WAPE `0.179` against `0.000` to `0.008` elsewhere. The
-`high_volatility` suite produces the worst sustainable error at WAPE `0.443` and interval coverage
-of `0.375` against a nominal `0.80`, so the stated interval does not hold outside the calibration
-distribution. No suite produced a false-income month.
+Held-out conditions expose real weakness and are recorded rather than smoothed over. Measured on
+the promoted pair and recorded in `estimator/evaluation/baselines/stress-0.11.0-report.json`: the
+`noisy` suite produces the worst realized error at WAPE `0.017` against `0.000` elsewhere, and the
+`high_volatility` suite produces the worst sustainable error at WAPE `0.410` with interval coverage
+of `0.158` against a nominal `0.80`. `noisy` covers `0.348`. The stated interval does not hold
+outside the calibration distribution, and the support envelope withholds only 16 of 240 noisy rows
+and 6 of 240 high-volatility rows, so it does not currently make that scope honest either. No suite
+produced a false-income month.
 
 Two suites named in this plan are deliberately not implemented. `adversarial` needs credits
 constructed to defeat the rules rather than merely resemble income, which requires new anomaly types

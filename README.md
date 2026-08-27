@@ -54,45 +54,63 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for repository-wide language and data-con
 
 ## Development status
 
-Simulator orchestrator `0.7.0` implements deterministic parallel populations, partitioned Parquet,
-schema validation at component boundaries, estimator contracts `1.0` and `1.1`, and automatic
-evaluation.
-Its members use frozen engine `0.6.0` and observation contract `1.5`, including consent coverage and
-observation artifacts. Contracts `1.4` through `1.0` remain supported with byte-stable reference
-outputs. Estimator `0.2.0` adds evidence-backed recurring-stream reconstruction to the frozen
-`0.1.0` rule baseline. Held-out incomplete-observation MAE improves `97.36%` without complete-data
-regression or added false-income classifications. Input contract `1.1` now accepts optional observed
-counterparty, provider transaction type, transaction-balance, and balance records. An isolated,
-customer-split transaction-classifier pipeline produced experimental candidate `0.3.0`; it tied the
-rule baseline on held-out F1 (`0.99552372`) with zero critical false positives, so the promotion gate
-kept `0.2.0` as the default. Estimator `0.4` adds feature set `customer-month-features-1.1.0`: a
-versioned, point-in-time table of `98` features per `customer_id` and `reference_month`, covering
-rolling cash flow, income stability, source structure, coverage, account activity, observed balance,
-loan, and investment context, and card, credit, and investment capacity. Each reference month
-replays the promoted `0.2` estimator on a request narrowed to that month's cutoff, so no feature can
-read a later arrival. Both `0.5` prerequisites are now met.
-Private contract `income-targets-1.0` projects all five income targets from the hidden simulation
-run, so `sustainable_monthly_income` exists as a trainable label; its construction is fixed by
-[`docs/adr/0002-income-target-construction.md`](docs/adr/0002-income-target-construction.md).
-Estimator input `1.2` adds observed credit cards, limits, card transactions, invoices, loan
-payments, loan balances, investments, and investment balances, so feature set
-`customer-month-features-1.1.0` computes the capacity group instead of declaring it unavailable.
-Estimator `0.5` adds a promoted capacity estimator for `sustainable_monthly_income`: a hurdle model
-whose logistic gate decides whether capacity is zero and whose anchored regressor sizes it
-otherwise. On held-out data it improves mean absolute error from `55,455` to `25,055` minor units
-against the best deterministic baseline, improves both full-coverage and partial-consent segments,
-and predicts zero-income customers exactly. Estimator output `1.1` separates realized from sustainable income and carries component estimates,
-disagreement, confidence, and excluded evidence without disturbing any `1.0` field. Estimator `0.6`
-routes both targets deterministically and reaches held-out MAE `21,227` against `23,236` for its
-best individual component. Estimator `0.7` fills those quantiles with split-conformal intervals calibrated on out-of-fold
-residuals, reaching held-out coverage `0.8365` against a nominal `0.80` with confidence monotonic
-against relative error. Estimator `0.8` adds explanation contract `1.0` with exact feature contributions, model cards for
-every promoted artifact, and six separately reported stress suites. Two suites sit outside the
-training distribution and expose the current limits: noisy observation gives the worst realized
-error, and high-volatility income gives the worst sustainable error with interval coverage of
-`0.375` against a nominal `0.80`. Every milestone in the estimator plan is now implemented. Provider adapters must still populate the optional
-counterparty context before counterparty-aware gains can be measured. See
-[`docs/estimator-implementation-plan.md`](docs/estimator-implementation-plan.md).
+`0.11` is a **research baseline, not a production release.** Every number below was measured against
+the synthetic simulator in this repository. Nothing has been validated against real consented client
+data, and no Open Finance provider adapter exists yet.
+
+### Simulator
+
+Package `0.8.0`. The Phase-7 orchestrator `0.7.0` generates deterministic parallel populations,
+partitioned Parquet, schema validation at component boundaries, and automatic evaluation reports.
+Its members run frozen engine `0.7.0` on observation contract `1.6`, which adds mandatory reversal
+re-posts. Engine profiles `0.6.0` through `0.1.0`, on contracts `1.5` through `1.0`, remain
+selectable; every contract except `1.5` also carries a committed byte-stable reference run under
+[`finances_simulator/examples/generated`](finances_simulator/examples/generated).
+
+### Estimator
+
+Package `0.11.0`. One estimate is produced by three artifacts read together:
+
+| Role | Artifact | Version |
+|---|---|---|
+| Realized monthly income | frozen rules | `recurring-streams-0.2.0` |
+| Sustainable monthly income | `capacity-estimator-0.6.0.json` | `capacity-gbdt-stumps-0.6.0` |
+| Interval around it | `quantile-calibration-0.11.0.json` | `conditional-selector-intervals-0.11.0` |
+| Routing between them | deterministic | `ensemble-0.6.0` |
+| Features | 104 point-in-time features | `customer-month-features-1.2.0` |
+
+It accepts input contracts `1.0` through `1.2`, returns output contract `1.1`, and explains itself
+under explanation contract `1.0`. The capacity and calibration artifacts are a bound pair: the
+calibration records the capacity `model_version` and the SHA-256 of its exact bytes, and the runtime
+refuses any other combination.
+
+Measured on held-out synthetic populations: realized-income reconstruction improves
+incomplete-observation MAE `99.25%` over the frozen `0.1` rule baseline with no complete-data
+regression and no added false-income classification. Routed MAE is `21,227` minor units against
+`23,236` for the best individual component. The promoted interval covers `0.9050` against a nominal
+`0.80` on validation, publishing `8,635` of `8,640` rows, and confirmed on a release lockbox read
+once.
+
+### What this does not yet cover
+
+- **No real-data evidence.** Every result is synthetic. Synthetic WAPE supports no production claim.
+- **No provider adapter.** Consented Open Finance payloads cannot reach the estimator yet, and the
+  optional counterparty fields of input `1.1` stay empty, so stream clustering falls back to
+  description matching.
+- **Intervals do not survive new income conditions.** On the two held-out stress suites the
+  promoted interval covers `0.348` and `0.158` against a nominal `0.80` while still publishing `93%`
+  and `98%` of its rows, and mean confidence does not fall to match. The support envelope abstains
+  only on `OUT_OF_CALIBRATED_SUPPORT`, and its nine independent per-feature range checks are far too
+  permissive to catch these rows. See
+  [`estimator/evaluation/baselines`](estimator/evaluation/baselines/README.md).
+- **High-volatility sustainable income is weak.** Sustainable WAPE `0.410` on that suite.
+- **No annual quantiles.** `annual_income_p10/p50/p90` stay absent because the dependence structure
+  across months has not been measured, and multiplying monthly quantiles by twelve would invent one.
+
+See [`docs/estimator-implementation-plan.md`](docs/estimator-implementation-plan.md) for target
+definitions and acceptance criteria, and
+[`estimator/docs/model-cards.md`](estimator/docs/model-cards.md) for each artifact's measured
+results and known failure modes.
 
 ## Simulator quick start
 

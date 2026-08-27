@@ -28,8 +28,29 @@ contract changes, milestones, evaluation metrics, and acceptance criteria.
 
 ## Current milestone
 
-Estimator `0.4` adds a point-in-time customer-month feature table on top of the promoted `0.2`
-reconstruction. Estimator `0.2` remains the default estimate producer:
+Estimator `0.11` is the promoted milestone. One answer is produced by three artifacts read
+together: realized income from the frozen `recurring-streams-0.2.0` reconstruction, sustainable
+income from capacity model `capacity-gbdt-stumps-0.6.0`, and that estimate's interval from
+calibration `conditional-selector-intervals-0.11.0`, routed by `ensemble-0.6.0` over feature set
+`customer-month-features-1.2.0`. Input contracts `1.0` through `1.2` are accepted; the estimate is
+output contract `1.1` and the explanation is contract `1.0`.
+
+```bash
+income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.11.0.json request.json
+```
+
+The two artifacts are a bound pair. The calibration records the capacity `model_version` and the
+SHA-256 of its exact bytes, and the runtime refuses any other combination when the estimator is
+constructed. `capacity-estimator-0.6.0.json` with `quantile-calibration-0.11.0.json` is the only
+pair in this repository whose binding resolves; `quantile-calibration-0.8.0.json` names capacity
+bytes that no longer exist here and cannot be loaded against anything.
+
+This is a research baseline, not a production release. Every number below was measured against the
+synthetic simulator. Nothing here has been validated against real consented client data, and no
+provider adapter exists yet.
+
+Sections below are the milestone record, oldest first. Realized income still comes from the `0.2`
+reconstruction, so its pipeline is unchanged:
 
 ```text
 Observed transactions
@@ -76,7 +97,7 @@ and recall `0.99108734`; both recorded zero critical false positives. Because pr
 strict F1 improvement, `0.3` is **not promoted** and `0.2` remains the default. See
 [`training/artifacts`](training/artifacts/README.md) for the reproducible artifact and report.
 
-## Customer-month features (0.4)
+## Customer-month features (0.4, schema 1.2.0)
 
 `build_customer_month_features` produces one point-in-time row per `customer_id` and
 `reference_month`, keyed to the last observable day of that month:
@@ -105,7 +126,7 @@ observable at that cutoff, so point-in-time safety is a property of the input ra
 formula. A transaction posted in January but observed in March is invisible to January, February,
 and every rolling window computed before it arrived.
 
-The versioned schema holds 98 features in seven groups:
+The versioned schema holds 104 features in seven groups:
 
 - **cash flow:** gross credits, debits, probability-weighted probable income, and reconstructed
   income over trailing 1, 3, 6, and 12 months, plus imputed income and excluded own transfers, loan
@@ -113,8 +134,9 @@ The versioned schema holds 98 features in seven groups:
 - **stability:** mean, median, standard deviation, variance, coefficient of variation, zero-income
   months, quartiles, minimum, and maximum of the reconstructed monthly income series;
 - **sources:** active, recurring, and ecosystem stream counts, trailing source income, largest
-  source share, Herfindahl-Hirschman concentration, recurrence scores, and months since last
-  source activity;
+  source share, Herfindahl-Hirschman concentration, recurrence scores, amount dispersion,
+  frequency-normalized monthly source capacity and its largest component, cadence confidence,
+  source observation count, source age, a no-source flag, and months since last source activity;
 - **coverage:** observed months, accounts, institutions, declared consent coverage, observed
   product domains, and a composite completeness score;
 - **activity:** transaction, credit, and debit counts, distinct credit counterparties, and days
@@ -154,7 +176,7 @@ row.missing_features
 
 ```bash
 income-estimator --features request.json
-income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.8.0.json request.json
+income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.11.0.json request.json
 ```
 
 The default estimator is promoted `0.2`. The rejected `0.3` classifier stays optional and is
@@ -275,7 +297,7 @@ accounts is never reported as well understood however tidy the visible half look
 The capacity artifact is optional. Without it the ensemble still answers, using the
 recurring-stream component, and says `CAPACITY_MODEL_UNAVAILABLE` in the routing reasons.
 
-## Calibrated intervals (0.8 shipped, 0.9 candidate)
+## Calibrated intervals (0.11 promoted)
 
 `sustainable_income_p10/p50/p90` are filled by conformalized quantile regression around the routed
 estimate. Construction rules are fixed by
@@ -366,7 +388,7 @@ from income_estimator import EnsembleIncomeEstimator
 
 estimator = EnsembleIncomeEstimator(
     Path("training/artifacts/capacity-estimator-0.6.0.json"),
-    calibration_path=Path("training/artifacts/quantile-calibration-0.8.0.json"),
+    calibration_path=Path("training/artifacts/quantile-calibration-0.11.0.json"),
 )
 month = estimator.estimate_v1_1(request).monthly_estimates[-1]
 month.sustainable_income_p10_minor, month.sustainable_income_p90_minor
@@ -375,7 +397,7 @@ month.sustainable_income_p10_minor, month.sustainable_income_p90_minor
 Without a calibration artifact the estimator still answers, leaving `p10` and `p90` absent with
 `quantile_unavailable_reason` set.
 
-## Explainability and stress evaluation (0.8)
+## Explainability and stress evaluation (0.8, measured on 0.11)
 
 `explain_estimate` returns explanation contract `1.0`: every credit with the rule that decided it,
 detected streams, component estimates, confidence decomposition, and the capacity model's feature
@@ -389,7 +411,7 @@ remainder folded into a single entry, so the printed decomposition still reconst
 prediction. The contract rejects one that does not.
 
 ```bash
-income-estimator --explain --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.8.0.json request.json
+income-estimator --explain --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.11.0.json request.json
 ```
 
 [Model cards](docs/model-cards.md) cover every promoted artifact, each with its measured results and
@@ -398,28 +420,41 @@ its known failure modes. A test asserts no promoted version is missing a card.
 ### Stress suites
 
 Six suites are reported separately, never pooled, because a pooled average hides the regime where an
-estimator fails. Two of them, `noisy` and `high_volatility`, were never in training, so they measure
-generalization to new conditions rather than to new customers.
+estimator fails. Three of them, `clean`, `noisy`, and `high_volatility`, were never in training, so
+they measure generalization to new conditions rather than to new customers.
 
 ```bash
 python -m evaluation.stress_report --population-size 20 --workers 4
 ```
 
-| suite | in training | realized WAPE | sustainable WAPE | interval coverage |
-|---|---|---|---|---|
-| clean | no | 0.000 | contract below 1.3 | — |
-| normal | yes | 0.000 | 0.127 | 0.739 |
-| partial_consent | yes | 0.000 | 0.007 | 0.981 |
-| life_events | yes | 0.000 | 0.021 | 0.975 |
-| noisy | no | 0.017 | 0.030 | 0.491 |
-| high_volatility | no | 0.000 | 0.410 | 0.125 |
+Measured on `capacity-gbdt-stumps-0.6.0` with `conditional-selector-intervals-0.11.0`, 20 customers
+and 12 months per suite. Recorded in
+[`evaluation/baselines/stress-0.11.0-report.json`](evaluation/baselines/stress-0.11.0-report.json).
 
-Both held-out suites expose real weakness. The noisy suite carries the only nonzero realized error,
-now timing rather than classification: a reversal's corrected re-post that has not arrived by the
-request cutoff carries income the estimator cannot yet see. The high-volatility suite is the worst
-sustainable error, and both held-out suites under-cover badly, at `0.491` and `0.125` against a
-nominal `0.80`. The interval is calibrated on `income_diverse`, `life_events`, and
-`incomplete_observation`, and its guarantee does not reach conditions outside them.
+| suite | in training | realized WAPE | sustainable WAPE | intervals published | interval coverage | mean confidence |
+|---|---|---|---|---|---|---|
+| clean | no | 0.000 | contract below 1.3 | — | — | 0.733 |
+| normal | yes | 0.000 | 0.127 | 240/240 | 0.758 | 0.694 |
+| partial_consent | yes | 0.000 | 0.007 | 240/240 | 0.958 | 0.661 |
+| life_events | yes | 0.000 | 0.021 | 240/240 | 0.975 | 0.706 |
+| noisy | no | 0.017 | 0.030 | 224/240 | 0.348 | 0.744 |
+| high_volatility | no | 0.000 | 0.410 | 234/240 | 0.158 | 0.546 |
+
+The held-out suites expose real weakness, and the support envelope does not currently repair it.
+The noisy suite carries the only nonzero realized error, now timing rather than classification: a
+reversal's corrected re-post that has not arrived by the request cutoff carries income the estimator
+cannot yet see. The high-volatility suite is the worst sustainable error. Both under-cover badly, at
+`0.348` and `0.158` against a nominal `0.80`, while still publishing `93%` and `98%` of their
+intervals. Every withheld row is withheld for `OUT_OF_CALIBRATED_SUPPORT` and for no other reason,
+so the envelope works as built and is simply far too permissive here: nine independent range checks
+let a row be nothing like the calibration population while sitting inside all nine. Nor does
+confidence fall to match — the noisy suite averages `0.744` confidence while covering `0.348`. A
+high-confidence, low-coverage row is a contradiction the current confidence score cannot express.
+
+The interval is calibrated on `income_diverse`, `life_events`, and `incomplete_observation`, and its
+guarantee does not reach conditions outside them. Repairing this is open work, not a solved
+problem; the limits are written down in
+[ADR 0008](../docs/adr/0008-conditional-selector-promotion-and-abstention.md#known-limits).
 
 No suite produced a single false-income month: the estimator never invented income where truth was
 zero.
@@ -457,7 +492,7 @@ one input-contract file and prints either view:
 income-estimator request.json
 income-estimator --audit request.json
 income-estimator --features request.json
-income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.8.0.json request.json
+income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.11.0.json request.json
 income-estimator --baseline-0.1 request.json
 income-estimator --model training/artifacts/transaction-classifier-0.3.0.json request.json
 ```
@@ -478,7 +513,7 @@ finances-simulator generate-batch \
 
 Frozen held-out results and chart live in
 [`evaluation/baselines`](evaluation/baselines/README.md). On 1,200 incomplete-observation
-customer-months, MAE falls from `151532.4` to `4000.0` minor units (`97.36%`) without increasing
+customer-months, MAE falls from `133416.96` to `1000.0` minor units (`99.25%`) without increasing
 false-income classifications. Complete income-diverse and life-event suites do not regress.
 
 Target semantics are fixed in
