@@ -81,3 +81,50 @@ def transaction() -> Callable[..., dict[str, object]]:
         }
 
     return build
+
+
+@pytest.fixture
+def request_v1_2() -> dict[str, object]:
+    """A twelve-month contract-1.2 request with a plain monthly salary.
+
+    Hand-built rather than generated, so the bundle tests need neither the simulator nor pyarrow.
+    Product collections stay empty on purpose: contract 1.2 makes every one of them optional, and a
+    consent scope that omits a domain is the ordinary case rather than an edge one.
+    """
+
+    transactions = [
+        {
+            "schema_version": "1.2",
+            "transaction_id": f"txn-{index:02d}",
+            "customer_id": "customer-bundle",
+            "account_id": "checking",
+            "posted_at": f"2025-{index:02d}-05",
+            "observed_at": f"2025-{index:02d}-05",
+            "direction": "CREDIT",
+            "amount_minor": 640_000,
+            "currency": "BRL",
+            "description": "MONTHLY PAYROLL CREDIT ACME",
+        }
+        for index in range(1, 13)
+    ]
+    return {
+        "schema_version": "1.2",
+        "source_contract_schema_version": "1.6",
+        "run_id": "run-bundle",
+        "customer_id": "customer-bundle",
+        "currency": "BRL",
+        "window_start": "2025-01-01",
+        "window_end": "2025-12-31",
+        "months": 12,
+        "accounts": [
+            {
+                "schema_version": "1.2",
+                "customer_id": "customer-bundle",
+                "account_id": "checking",
+                "institution_id": "bank-a",
+                "currency": "BRL",
+            }
+        ],
+        "transactions": transactions,
+        "coverage": [],
+    }

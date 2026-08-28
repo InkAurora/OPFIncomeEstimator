@@ -49,8 +49,100 @@ This is a research baseline, not a production release. Every number below was me
 synthetic simulator. Nothing here has been validated against real consented client data, and no
 provider adapter exists yet.
 
-Sections below are the milestone record, oldest first. Realized income still comes from the `0.2`
-reconstruction, so its pipeline is unchanged:
+## Deployment bundle (contract 1.0)
+
+The command above names two artifacts and trusts whoever typed it. A deployment should not. A
+**bundle** is one directory holding the promoted artifacts, the evidence that promoted them, and a
+manifest pinning every file by SHA-256:
+
+```text
+bundles/production-0.11.0/
+|-- manifest.json                                   bundle contract 1.0
+|-- artifacts/
+|   |-- capacity-estimator-0.6.0.json               read at inference
+|   `-- quantile-calibration-0.11.0.json            read at inference
+`-- provenance/
+    |-- capacity-estimator-0.6.0-report.json        why this model
+    |-- quantile-calibration-0.11.0-report.json     why this calibration
+    |-- lockbox-...-0.11.0-report.json              RELEASE_CONFIRMED, promoted bytes
+    `-- lockbox-...-0.11.0-release-report.json      RELEASE_CONFIRMED, these bytes
+```
+
+The two lockbox readings measured different artifacts. The first promoted the calibration; the
+support envelope was added afterwards, so the second was taken against exactly what this bundle
+ships. It confirms, having withheld `14` of `8,640` rows and altered no published bound.
+
+The bundle's identity is the SHA-256 of `manifest.json`. Because the manifest pins every other file
+by digest, that one number covers the whole directory, and it is what the result reports.
+
+```bash
+income-estimator request.json --bundle bundles/production-0.11.0
+income-estimator request.json --bundle bundles/production-0.11.0 --explain
+```
+
+Both emit production result contract `1.0`: an unmodified output `1.1` estimate or explanation `1.0`
+report, wrapped in an envelope carrying the bundle identity that produced it. Output `1.1` is frozen,
+so the identity is added around it rather than inside it.
+
+```json
+{
+  "schema_version": "1.0",
+  "bundle_id": "production-0.11.0",
+  "bundle_digest": "4405227b717fb6e26006ed89ea637a8da2bb1cd43e44afe4bf7ee4f647aa36a5",
+  "estimator_package_version": "0.11.0",
+  "model_versions": ["capacity-gbdt-stumps-0.6.0", "conditional-selector-intervals-0.11.0"],
+  "estimate": { "schema_version": "1.1", "...": "..." }
+}
+```
+
+```python
+from pathlib import Path
+
+from income_estimator import ProductionIncomeEstimator
+
+estimator = ProductionIncomeEstimator.from_bundle(Path("bundles/production-0.11.0"))
+result = estimator.estimate_production(request)
+result.bundle_digest
+```
+
+### It fails closed
+
+`EnsembleIncomeEstimator` answers with whatever it can load and records the shortfall in the routing
+reasons. That is right for a laboratory and wrong for a deployment: a caller holding a number cannot
+tell that the capacity model failed to load and the answer came from `recurring-streams-0.2.0`
+instead. `from_bundle` refuses instead, and there is no partial success. Checks run cheapest-first
+and stop at the first failure, so an operator gets one actionable error:
+
+| Refusal | Raised when |
+|---|---|
+| `BundleManifestError` | the directory, manifest, or bundle contract version is wrong |
+| `BundleIntegrityError` | a pinned file is missing, or one byte of it changed |
+| `BundleCompatibilityError` | the artifacts, feature set, contracts, or package version disagree |
+
+Provenance is pinned too, so a bundle whose evidence was edited is not that bundle. The feature set
+is checked exactly, by name **and** by schema fingerprint: the capacity model looks features up by
+name and splits on binned values, so a renamed or re-binned feature does not fail loudly, it changes
+what the model is scoring while every version string still agrees. The package version is a floor
+rather than an equality check, so a newer loader keeps reading an older bundle.
+
+### Building one
+
+```bash
+python -m release.build_bundle --output bundles/production-0.11.0
+```
+
+Deterministic: two builds from the same artifacts produce byte-identical output, and a test asserts
+the committed bundle is exactly what the builder emits. It refuses to assemble a pair whose
+calibration was not fitted against the capacity bytes being bundled.
+
+The wheel does not contain the bundle, and a test asserts that. Code and models have different
+lifecycles: the wheel supplies the loader, the deployment supplies the bytes. A release archive may
+carry both, but the estimator never resolves a model through a repository-relative path.
+
+## Milestone record
+
+Oldest first. Realized income still comes from the `0.2` reconstruction, so its pipeline is
+unchanged:
 
 ```text
 Observed transactions

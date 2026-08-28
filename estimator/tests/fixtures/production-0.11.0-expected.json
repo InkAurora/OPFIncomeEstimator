@@ -1,0 +1,170 @@
+{
+  "bundle_digest": "86474d2b23916f69484548910267e3c9ed4d8de868875b7054f9b9cd668d692d",
+  "bundle_id": "production-0.11.0",
+  "estimator_version": "ensemble-0.6.0",
+  "feature_set_version": "customer-month-features-1.2.0",
+  "model_versions": [
+    "capacity-gbdt-stumps-0.6.0",
+    "conditional-selector-intervals-0.11.0"
+  ],
+  "months": [
+    {
+      "confidence_score_basis_points": 4277,
+      "month": "2025-01",
+      "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
+      "realized_income_estimate_minor": 640000,
+      "routing_reason_codes": [
+        "CAPACITY_MODEL_SELECTED",
+        "COVERAGE_UNDECLARED",
+        "VOLATILITY_UNKNOWN"
+      ],
+      "sustainable_income_p10_minor": null,
+      "sustainable_income_p50_minor": 691890,
+      "sustainable_income_p90_minor": null
+    },
+    {
+      "confidence_score_basis_points": 4555,
+      "month": "2025-02",
+      "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
+      "realized_income_estimate_minor": 640000,
+      "routing_reason_codes": [
+        "STABLE_INCOME_PREFERS_CASH_FLOW",
+        "PARTIAL_OR_UNDECLARED_COVERAGE"
+      ],
+      "sustainable_income_p10_minor": null,
+      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p90_minor": null
+    },
+    {
+      "confidence_score_basis_points": 4833,
+      "month": "2025-03",
+      "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
+      "realized_income_estimate_minor": 640000,
+      "routing_reason_codes": [
+        "STABLE_INCOME_PREFERS_CASH_FLOW",
+        "PARTIAL_OR_UNDECLARED_COVERAGE"
+      ],
+      "sustainable_income_p10_minor": null,
+      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p90_minor": null
+    },
+    {
+      "confidence_score_basis_points": 5111,
+      "month": "2025-04",
+      "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
+      "realized_income_estimate_minor": 640000,
+      "routing_reason_codes": [
+        "STABLE_INCOME_PREFERS_CASH_FLOW",
+        "PARTIAL_OR_UNDECLARED_COVERAGE"
+      ],
+      "sustainable_income_p10_minor": null,
+      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p90_minor": null
+    },
+    {
+      "confidence_score_basis_points": 5388,
+      "month": "2025-05",
+      "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
+      "realized_income_estimate_minor": 640000,
+      "routing_reason_codes": [
+        "STABLE_INCOME_PREFERS_CASH_FLOW",
+        "PARTIAL_OR_UNDECLARED_COVERAGE"
+      ],
+      "sustainable_income_p10_minor": null,
+      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p90_minor": null
+    },
+    {
+      "confidence_score_basis_points": 5666,
+      "month": "2025-06",
+      "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
+      "realized_income_estimate_minor": 640000,
+      "routing_reason_codes": [
+        "STABLE_INCOME_PREFERS_CASH_FLOW",
+        "PARTIAL_OR_UNDECLARED_COVERAGE"
+      ],
+      "sustainable_income_p10_minor": null,
+      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p90_minor": null
+    },
+    {
+      "confidence_score_basis_points": 5944,
+      "month": "2025-07",
+      "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
+      "realized_income_estimate_minor": 640000,
+      "routing_reason_codes": [
+        "STABLE_INCOME_PREFERS_CASH_FLOW",
+        "PARTIAL_OR_UNDECLARED_COVERAGE"
+      ],
+      "sustainable_income_p10_minor": null,
+      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p90_minor": null
+    },
+    {
+      "confidence_score_basis_points": 6222,
+      "month": "2025-08",
+      "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
+      "realized_income_estimate_minor": 640000,
+      "routing_reason_codes": [
+        "STABLE_INCOME_PREFERS_CASH_FLOW",
+        "PARTIAL_OR_UNDECLARED_COVERAGE"
+      ],
+      "sustainable_income_p10_minor": null,
+      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p90_minor": null
+    },
+    {
+      "confidence_score_basis_points": 6500,
+      "month": "2025-09",
+      "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
+      "realized_income_estimate_minor": 640000,
+      "routing_reason_codes": [
+        "STABLE_INCOME_PREFERS_CASH_FLOW",
+        "PARTIAL_OR_UNDECLARED_COVERAGE"
+      ],
+      "sustainable_income_p10_minor": null,
+      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p90_minor": null
+    },
+    {
+      "confidence_score_basis_points": 6777,
+      "month": "2025-10",
+      "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
+      "realized_income_estimate_minor": 640000,
+      "routing_reason_codes": [
+        "STABLE_INCOME_PREFERS_CASH_FLOW",
+        "PARTIAL_OR_UNDECLARED_COVERAGE"
+      ],
+      "sustainable_income_p10_minor": null,
+      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p90_minor": null
+    },
+    {
+      "confidence_score_basis_points": 7055,
+      "month": "2025-11",
+      "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
+      "realized_income_estimate_minor": 640000,
+      "routing_reason_codes": [
+        "STABLE_INCOME_PREFERS_CASH_FLOW",
+        "PARTIAL_OR_UNDECLARED_COVERAGE"
+      ],
+      "sustainable_income_p10_minor": null,
+      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p90_minor": null
+    },
+    {
+      "confidence_score_basis_points": 7333,
+      "month": "2025-12",
+      "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
+      "realized_income_estimate_minor": 640000,
+      "routing_reason_codes": [
+        "STABLE_INCOME_PREFERS_CASH_FLOW",
+        "PARTIAL_OR_UNDECLARED_COVERAGE"
+      ],
+      "sustainable_income_p10_minor": null,
+      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p90_minor": null
+    }
+  ],
+  "result_sha256": "0ea8d75b6341b890b64de2fdfb2749f2ddbe5220f134d3dcf12c6a09f8c111c2"
+}

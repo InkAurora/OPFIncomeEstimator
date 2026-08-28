@@ -11,6 +11,9 @@ The project aims to transform consented financial data into explainable income e
 |-- demo_app/              # Single-process Streamlit demo of the whole flow
 |-- docs/                  # Architecture and implementation plans
 |-- estimator/             # Income-estimation logic and interfaces
+|   |-- bundles/           # Immutable deployment bundles, pinned by digest
+|   |-- release/           # Bundle assembly and release gates
+|   `-- training/          # Isolated training zone and frozen artifacts
 `-- finances_simulator/    # Synthetic financial-data generation
 ```
 
@@ -83,6 +86,16 @@ It accepts input contracts `1.0` through `1.2`, returns output contract `1.1`, a
 under explanation contract `1.0`. The capacity and calibration artifacts are a bound pair: the
 calibration records the capacity `model_version` and the SHA-256 of its exact bytes, and the runtime
 refuses any other combination.
+
+Deployment loads that pair as one immutable **bundle** rather than as two paths on a command line.
+`estimator/bundles/production-0.11.0/` holds the artifacts, the reports that promoted them, and a
+manifest pinning every file by digest; `ProductionIncomeEstimator.from_bundle` verifies all of it
+and raises rather than degrading, and every result it returns carries the bundle digest. The wheel
+supplies the loader and never the model bytes, because code and models have different lifecycles.
+
+```bash
+income-estimator request.json --bundle bundles/production-0.11.0
+```
 
 Measured on held-out synthetic populations: realized-income reconstruction improves
 incomplete-observation MAE `99.25%` over the frozen `0.1` rule baseline with no complete-data

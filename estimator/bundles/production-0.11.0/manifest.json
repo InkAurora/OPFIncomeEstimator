@@ -1,0 +1,46 @@
+{
+  "accepted_input_contract_versions": [
+    "1.0",
+    "1.1",
+    "1.2"
+  ],
+  "bundle_id": "production-0.11.0",
+  "bundle_version": "0.11.0",
+  "calibration": {
+    "path": "artifacts/quantile-calibration-0.11.0.json",
+    "sha256": "1484faf5e30abadd1a02cf532612fae6742d16f1c390fbc926407bbe47ac292b",
+    "version": "conditional-selector-intervals-0.11.0"
+  },
+  "capacity": {
+    "path": "artifacts/capacity-estimator-0.6.0.json",
+    "sha256": "4ee9c3a6df62025754e47bafdf8a181250dd99e4840acef2d01a8b899f8b8e6a",
+    "version": "capacity-gbdt-stumps-0.6.0"
+  },
+  "estimator_package_version": "0.11.0",
+  "estimator_version": "ensemble-0.6.0",
+  "explanation_contract_version": "1.0",
+  "feature_schema_fingerprint": "e54e70affc30a6fad10282e62463a936",
+  "feature_set_version": "customer-month-features-1.2.0",
+  "output_contract_version": "1.1",
+  "provenance": {
+    "calibration_report": {
+      "path": "provenance/quantile-calibration-0.11.0-report.json",
+      "sha256": "59493edc14bd8a7274519a55499f7f34b7383289d4a833d03df89a07da6f1ab5"
+    },
+    "capacity_report": {
+      "path": "provenance/capacity-estimator-0.6.0-report.json",
+      "sha256": "37ea1e33864c0e0efbfdc736bb6c38a04c64915c3fb2935dd1ba65dd6b5f6d0c"
+    },
+    "decision_record": "docs/adr/0008-conditional-selector-promotion-and-abstention.md",
+    "lockbox_report": {
+      "path": "provenance/lockbox-conditional-selector-intervals-0.11.0-report.json",
+      "sha256": "185ab38e3ead14ecb0d5d3bafb67ebf81439934573010da2c2cba531f38643f6"
+    },
+    "release_lockbox_report": {
+      "path": "provenance/lockbox-conditional-selector-intervals-0.11.0-release-report.json",
+      "sha256": "0f1a7bcbae328385b181b3554c90361159b100031674f7e079a52e68b19cdf63"
+    }
+  },
+  "schema_version": "1.0",
+  "support_envelope_version": "1.0"
+}

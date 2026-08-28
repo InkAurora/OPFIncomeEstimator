@@ -5,3 +5,8 @@ finances_simulator/examples/generated/**/*.jsonl text eol=lf
 # rewrites their line endings breaks the promotion tests. Pin them the same way the reference runs
 # above are pinned.
 estimator/training/artifacts/*.json text eol=lf
+
+# A deployment bundle is identified by the SHA-256 of its manifest, which pins every other file by
+# digest. A checkout that rewrote line endings would change every one of those digests and make the
+# committed bundle fail its own integrity check.
+estimator/bundles/**/*.json text eol=lf

@@ -7,6 +7,13 @@ from income_estimator.contracts.audit import (
     MonthlyReconstructionAudit,
     TransactionDecision,
 )
+from income_estimator.contracts.bundle_v1 import (
+    BUNDLE_CONTRACT_VERSION,
+    BundleArtifactRefV1,
+    BundleFileRefV1,
+    BundleManifestV1,
+    BundleProvenanceV1,
+)
 from income_estimator.contracts.features_v1 import (
     CUSTOMER_MONTH_FEATURE_CONTRACT_VERSION,
     CustomerMonthFeatureRowV1,
@@ -22,6 +29,10 @@ from income_estimator.contracts.output_v1_1 import (
     IncomeEstimateV11,
     IncomeStreamSummaryV11,
     MonthlyIncomeEstimateV11,
+)
+from income_estimator.contracts.production_v1 import (
+    PRODUCTION_RESULT_CONTRACT_VERSION,
+    ProductionResultV1,
 )
 from income_estimator.contracts.v1 import (
     ESTIMATOR_CONTRACT_VERSION,
@@ -65,6 +76,13 @@ from income_estimator.contracts.v1_2 import (
 )
 
 __all__ = [
+    "ProductionResultV1",
+    "BundleProvenanceV1",
+    "BundleManifestV1",
+    "BundleFileRefV1",
+    "BundleArtifactRefV1",
+    "PRODUCTION_RESULT_CONTRACT_VERSION",
+    "BUNDLE_CONTRACT_VERSION",
     "CUSTOMER_MONTH_FEATURE_CONTRACT_VERSION",
     "ESTIMATOR_CONTRACT_VERSION",
     "ESTIMATOR_INPUT_CONTRACT_VERSION",
