@@ -89,6 +89,13 @@ except DemoConfigurationError as error:
     st.error(f"The demo cannot start: {error}", icon="🚫")
     st.stop()
 
+st.success(
+    f"Verified promotion `{estimator.manifest.bundle_id}` · "
+    f"income-estimator `{estimator.manifest.estimator_package_version}` · "
+    f"bundle digest `{estimator.bundle_digest[:12]}…`",
+    icon="✅",
+)
+
 # ---------------------------------------------------------------------------------------------
 # 1. Controls
 # ---------------------------------------------------------------------------------------------
@@ -801,8 +808,13 @@ with how_tab:
         pd.DataFrame(
             {
                 "Component": [
+                    "Promotion bundle",
+                    "Bundle digest (SHA-256)",
+                    "Bundle contract",
+                    "Production result contract",
+                    "Estimator package",
                     "Scenario contract",
-                    "Estimator",
+                    "Estimator algorithm",
                     "Feature set",
                     "Estimator input contract",
                     "Estimator output contract",
@@ -810,6 +822,11 @@ with how_tab:
                     *[f"Model {index + 1}" for index in range(len(result.model_versions))],
                 ],
                 "Version": [
+                    result.bundle_id,
+                    result.bundle_digest,
+                    result.bundle_contract_version,
+                    result.production_result_contract_version,
+                    result.estimator_package_version,
                     result.scenario_schema_version,
                     result.estimator_version,
                     result.feature_version,

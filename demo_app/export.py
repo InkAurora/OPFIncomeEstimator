@@ -14,7 +14,7 @@ from typing import Any
 
 from demo_app.service import DemoResult
 
-EVIDENCE_SCHEMA_VERSION = "1.0"
+EVIDENCE_SCHEMA_VERSION = "1.1"
 
 TRUTH_DISCLAIMER = (
     "Simulator ground truth. Projected from the hidden simulation after inference finished and "
@@ -52,6 +52,14 @@ def build_evidence(result: DemoResult) -> dict[str, Any]:
             "explanation_contract_version": result.explanation.schema_version,
             "model_versions": list(result.model_versions),
             "component_versions": list(result.component_versions),
+        },
+        "promotion_bundle": {
+            "bundle_id": result.bundle_id,
+            "bundle_version": result.bundle_version,
+            "bundle_digest": result.bundle_digest,
+            "bundle_contract_version": result.bundle_contract_version,
+            "production_result_contract_version": result.production_result_contract_version,
+            "estimator_package_version": result.estimator_package_version,
         },
         "estimator_request_record_counts": dict(result.request_record_counts),
         "estimate": result.estimate.model_dump(mode="json"),

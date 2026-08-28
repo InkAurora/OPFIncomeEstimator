@@ -8,16 +8,17 @@ same numbers.
 from __future__ import annotations
 
 import json
+import shutil
 import time
 
 import pytest
 from demo_app.export import build_evidence, evidence_json
 from demo_app.profiles import PROFILES, get_profile, supported_months
 from demo_app.service import (
-    ARTIFACT_DIRECTORY,
-    CAPACITY_ARTIFACT_PATH,
+    EXPECTED_BUNDLE_ID,
     EXPECTED_MODEL_VERSIONS,
     PRIVATE_FIELD_NAMES,
+    PROMOTED_BUNDLE_PATH,
     DemoConfigurationError,
     build_request,
     generate_world,
@@ -27,6 +28,7 @@ from demo_app.service import (
     run_demo,
     run_inference,
 )
+from income_estimator.production import ProductionIncomeEstimator
 
 ALL_PROFILE_KEYS = [profile.key for profile in PROFILES]
 
@@ -143,13 +145,23 @@ def test_the_truth_is_joined_only_after_inference(estimator) -> None:
 
 
 def test_the_exact_promoted_pair_answers_and_is_named_in_the_output(estimator) -> None:
+    assert isinstance(estimator, ProductionIncomeEstimator)
+    assert estimator.manifest.bundle_id == EXPECTED_BUNDLE_ID
+    assert estimator.bundle_digest is not None
     assert estimator.model_versions == EXPECTED_MODEL_VERSIONS
 
     result = run_demo("mixed_income_professional", seed=1234, months=12)
     assert result.model_versions == EXPECTED_MODEL_VERSIONS
+    assert result.bundle_id == EXPECTED_BUNDLE_ID
+    assert result.bundle_version == "0.11.0"
+    assert result.estimator_package_version == "0.11.0"
+    assert result.bundle_digest == estimator.bundle_digest
     assert set(EXPECTED_MODEL_VERSIONS) <= set(result.explanation.model_versions)
 
     evidence = build_evidence(result)
+    assert evidence["evidence_schema_version"] == "1.1"
+    assert evidence["promotion_bundle"]["bundle_id"] == EXPECTED_BUNDLE_ID
+    assert evidence["promotion_bundle"]["bundle_digest"] == estimator.bundle_digest
     assert evidence["artifact_versions"]["model_versions"] == list(EXPECTED_MODEL_VERSIONS)
     assert evidence["artifact_versions"]["estimator_version"] == "ensemble-0.6.0"
     assert evidence["artifact_versions"]["input_contract_version"] == "1.2"
@@ -180,36 +192,31 @@ def test_an_out_of_support_month_abstains_visibly() -> None:
     assert exported["data_quality"]["months_abstained"] == len(abstained)
 
 
-def test_an_unbound_calibration_is_refused_with_a_readable_message(monkeypatch) -> None:
-    """A calibration fitted against different capacity bytes must not load silently.
-
-    ``quantile-calibration-0.8.0.json`` was fitted against ``capacity-gbdt-stumps-0.5.0``. Paired
-    with the promoted 0.6.0 capacity model its offsets describe a residual nobody measured, so the
-    runtime rejects it and the demo turns that into a message a person can act on.
-    """
-
+def test_an_altered_bundle_is_refused_with_a_readable_message(
+    monkeypatch, tmp_path
+) -> None:
     import demo_app.service as service
 
-    monkeypatch.setattr(
-        service,
-        "CALIBRATION_ARTIFACT_PATH",
-        ARTIFACT_DIRECTORY / "quantile-calibration-0.8.0.json",
-    )
+    altered = tmp_path / EXPECTED_BUNDLE_ID
+    shutil.copytree(PROMOTED_BUNDLE_PATH, altered)
+    target = altered / "artifacts" / "quantile-calibration-0.11.0.json"
+    target.write_bytes(target.read_bytes() + b"\n")
+    monkeypatch.setattr(service, "PROMOTED_BUNDLE_PATH", altered)
     service.load_estimator.cache_clear()
     try:
-        with pytest.raises(DemoConfigurationError, match="not bound to"):
+        with pytest.raises(DemoConfigurationError, match="hashes to"):
             service.load_estimator()
     finally:
         service.load_estimator.cache_clear()
 
 
-def test_a_missing_artifact_is_refused_with_a_readable_message(monkeypatch, tmp_path) -> None:
+def test_a_missing_bundle_is_refused_with_a_readable_message(monkeypatch, tmp_path) -> None:
     import demo_app.service as service
 
-    monkeypatch.setattr(service, "CAPACITY_ARTIFACT_PATH", tmp_path / "absent.json")
+    monkeypatch.setattr(service, "PROMOTED_BUNDLE_PATH", tmp_path / "absent")
     service.load_estimator.cache_clear()
     try:
-        with pytest.raises(DemoConfigurationError, match="missing promoted artifact"):
+        with pytest.raises(DemoConfigurationError, match="bundle directory not found"):
             service.load_estimator()
     finally:
         service.load_estimator.cache_clear()
@@ -242,8 +249,12 @@ def test_supported_months_follows_the_scenario_configuration() -> None:
         assert max(allowed) <= configured
 
 
-def test_the_capacity_artifact_the_demo_names_is_the_promoted_one() -> None:
-    payload = json.loads(CAPACITY_ARTIFACT_PATH.read_text(encoding="utf-8"))
+def test_the_bundle_the_demo_names_is_the_promoted_one() -> None:
+    manifest = json.loads((PROMOTED_BUNDLE_PATH / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["bundle_id"] == EXPECTED_BUNDLE_ID
+    payload = json.loads(
+        (PROMOTED_BUNDLE_PATH / manifest["capacity"]["path"]).read_text(encoding="utf-8")
+    )
     assert payload["model_version"] == "capacity-gbdt-stumps-0.6.0"
 
 

@@ -1,7 +1,7 @@
 """Everything the demo does that is not rendering.
 
 The module is deliberately free of Streamlit imports. It owns the profile-to-scenario mapping, the
-promoted artifact binding, one inference call, and the join of that inference against the
+promoted bundle binding, one inference call, and the join of that inference against the
 simulator's private truth.
 
 The order of the four stages in :func:`run_demo` is the point of the file, not an implementation
@@ -27,19 +27,14 @@ from finances_simulator.ground_truth.income_targets import project_income_target
 from finances_simulator.integration.adapter import build_estimator_input_v1_2
 from income_estimator.contracts.explanation_v1 import EstimationExplanationV1
 from income_estimator.contracts.output_v1_1 import IncomeEstimateV11
-from income_estimator.models.quantiles import CalibrationBindingError
-from income_estimator.pipeline import EnsembleIncomeEstimator
+from income_estimator.production import BundleError, ProductionIncomeEstimator
 
 from demo_app.profiles import Profile, get_profile, supported_months
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
-ARTIFACT_DIRECTORY = REPOSITORY_ROOT / "estimator" / "training" / "artifacts"
-
-# The promoted pair. Both halves are named here because the runtime refuses to load a calibration
-# that was fitted against different capacity bytes, and the demo should fail loudly if that
-# promotion ever moves without this file moving with it.
-CAPACITY_ARTIFACT_PATH = ARTIFACT_DIRECTORY / "capacity-estimator-0.6.0.json"
-CALIBRATION_ARTIFACT_PATH = ARTIFACT_DIRECTORY / "quantile-calibration-0.11.0.json"
+BUNDLE_DIRECTORY = REPOSITORY_ROOT / "estimator" / "bundles"
+PROMOTED_BUNDLE_PATH = BUNDLE_DIRECTORY / "production-0.11.0"
+EXPECTED_BUNDLE_ID = "production-0.11.0"
 EXPECTED_MODEL_VERSIONS: tuple[str, ...] = (
     "capacity-gbdt-stumps-0.6.0",
     "conditional-selector-intervals-0.11.0",
@@ -206,6 +201,12 @@ class Inference:
     estimate: IncomeEstimateV11
     explanation: EstimationExplanationV1
     elapsed_seconds: float
+    production_result_contract_version: str
+    bundle_contract_version: str
+    bundle_id: str
+    bundle_version: str
+    bundle_digest: str
+    estimator_package_version: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -218,6 +219,12 @@ class DemoResult:
     run_id: str
     customer_id: str
     currency: str
+    production_result_contract_version: str
+    bundle_contract_version: str
+    bundle_id: str
+    bundle_version: str
+    bundle_digest: str
+    estimator_package_version: str
     estimator_version: str
     feature_version: str
     input_contract_version: str
@@ -300,31 +307,26 @@ def build_request(world: GeneratedScenario) -> Any:
 
 
 @lru_cache(maxsize=1)
-def load_estimator() -> EnsembleIncomeEstimator:
-    """Load the promoted pair once per process.
+def load_estimator() -> ProductionIncomeEstimator:
+    """Load and verify the promoted bundle once per process.
 
     Raises:
-        DemoConfigurationError: If an artifact is missing, or if the calibration was not fitted
-            against these capacity bytes. The second case is why both paths are named together:
-            loaded independently they would publish a p10/p90 label over an unmeasured quantity.
+        DemoConfigurationError: If the bundle is missing, altered, internally inconsistent, or
+            incompatible with the installed estimator package.
     """
 
-    for path in (CAPACITY_ARTIFACT_PATH, CALIBRATION_ARTIFACT_PATH):
-        if not path.exists():
-            raise DemoConfigurationError(f"missing promoted artifact: {path}")
     try:
-        estimator = EnsembleIncomeEstimator(
-            CAPACITY_ARTIFACT_PATH,
-            calibration_path=CALIBRATION_ARTIFACT_PATH,
-        )
-    except CalibrationBindingError as error:
+        estimator = ProductionIncomeEstimator.from_bundle(PROMOTED_BUNDLE_PATH)
+    except (BundleError, OSError) as error:
         raise DemoConfigurationError(
-            "the configured calibration artifact is not bound to the configured capacity model, "
-            f"so its intervals would be meaningless: {error}"
+            f"could not load promoted bundle {EXPECTED_BUNDLE_ID!r}: {error}"
         ) from error
-    except (OSError, ValueError) as error:
-        raise DemoConfigurationError(f"could not load the promoted artifacts: {error}") from error
 
+    if estimator.manifest is None or estimator.manifest.bundle_id != EXPECTED_BUNDLE_ID:
+        loaded = estimator.manifest.bundle_id if estimator.manifest is not None else None
+        raise DemoConfigurationError(
+            f"expected promoted bundle {EXPECTED_BUNDLE_ID!r}, loaded {loaded!r}"
+        )
     if estimator.model_versions != EXPECTED_MODEL_VERSIONS:
         raise DemoConfigurationError(
             f"expected the promoted pair {EXPECTED_MODEL_VERSIONS}, "
@@ -338,16 +340,41 @@ def load_estimator() -> EnsembleIncomeEstimator:
 # ---------------------------------------------------------------------------------------------
 
 
-def run_inference(estimator: EnsembleIncomeEstimator, request: Any) -> Inference:
+def run_inference(estimator: ProductionIncomeEstimator, request: Any) -> Inference:
     """Estimate and explain from the request alone."""
 
     started = time.perf_counter()
-    estimate = estimator.estimate_v1_1(request)
-    explanation = estimator.explain_estimate(request)
+    estimate_result = estimator.estimate_production(request)
+    explanation_result = estimator.explain_production(request)
+    identity_fields = (
+        "schema_version",
+        "bundle_contract_version",
+        "bundle_id",
+        "bundle_version",
+        "bundle_digest",
+        "estimator_package_version",
+        "estimator_version",
+        "feature_set_version",
+        "model_versions",
+    )
+    estimate_identity = tuple(getattr(estimate_result, name) for name in identity_fields)
+    explanation_identity = tuple(getattr(explanation_result, name) for name in identity_fields)
+    if estimate_identity != explanation_identity:
+        raise DemoConfigurationError(
+            "estimate and explanation came from different bundle identities"
+        )
+    if estimate_result.estimate is None or explanation_result.explanation is None:
+        raise DemoConfigurationError("production estimator returned an incomplete result envelope")
     return Inference(
-        estimate=estimate,
-        explanation=explanation,
+        estimate=estimate_result.estimate,
+        explanation=explanation_result.explanation,
         elapsed_seconds=time.perf_counter() - started,
+        production_result_contract_version=estimate_result.schema_version,
+        bundle_contract_version=estimate_result.bundle_contract_version,
+        bundle_id=estimate_result.bundle_id,
+        bundle_version=estimate_result.bundle_version,
+        bundle_digest=estimate_result.bundle_digest,
+        estimator_package_version=estimate_result.estimator_package_version,
     )
 
 
@@ -540,6 +567,12 @@ def join_truth(
         run_id=inference.estimate.run_id,
         customer_id=inference.estimate.customer_id,
         currency=inference.estimate.currency,
+        production_result_contract_version=inference.production_result_contract_version,
+        bundle_contract_version=inference.bundle_contract_version,
+        bundle_id=inference.bundle_id,
+        bundle_version=inference.bundle_version,
+        bundle_digest=inference.bundle_digest,
+        estimator_package_version=inference.estimator_package_version,
         estimator_version=inference.estimate.estimator_version,
         feature_version=inference.estimate.feature_version,
         input_contract_version=inference.estimate.input_contract_version,
@@ -586,10 +619,10 @@ def run_demo(profile_key: str, *, seed: int, months: int) -> DemoResult:
 
 
 __all__ = [
-    "ARTIFACT_DIRECTORY",
-    "CALIBRATION_ARTIFACT_PATH",
-    "CAPACITY_ARTIFACT_PATH",
+    "BUNDLE_DIRECTORY",
+    "EXPECTED_BUNDLE_ID",
     "EXPECTED_MODEL_VERSIONS",
+    "PROMOTED_BUNDLE_PATH",
     "PRIVATE_FIELD_NAMES",
     "BalanceRow",
     "CoverageRow",
