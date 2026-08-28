@@ -9,7 +9,12 @@ reader accepts `1.0` through `1.5` and the writer emits only `1.5`.
   adjustments, the conditional selector, the support envelope, and the capacity artifact hash it was
   fitted against;
 - `quantile-calibration-0.11.0-report.json` records every gate on the validation population;
-- `lockbox-conditional-selector-intervals-0.11.0-report.json` records the release lockbox read;
+- `lockbox-conditional-selector-intervals-0.11.0-report.json` records the release lockbox read that
+  promoted the calibration, taken on artifact `21e248f5…`, before the support envelope was added;
+- `lockbox-conditional-selector-intervals-0.11.0-release-report.json` records the same lockbox read
+  against the exact bytes now shipped, artifact `1484faf5…`. `RELEASE_CONFIRMED`, no failures. The
+  envelope withheld `14` of `8,640` rows and altered no published bound, so coverage on published
+  rows moved `0.911574` to `0.911894`. That is the second and final read of these seeds;
 - `conditioner-preregistration.json` records how the selector's conditioner was chosen, and what it
   beat, before the selector was built.
 

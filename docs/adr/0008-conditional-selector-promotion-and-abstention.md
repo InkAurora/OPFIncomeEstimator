@@ -135,9 +135,12 @@ resolves and the runtime refuses to load it.
 
 - The lockbox was read before abstention was added. The promoted artifact differs from the one it
   measured by the added `support_envelope` and the schema bump alone, with every offset, adjustment,
-  cell policy and tree identical, and nothing in the offset path reads the envelope. For any
-  in-support row the published bounds are the bounds that were measured. Whether any lockbox row now
-  falls outside the envelope is untested, and could only remove intervals, never change one.
+  cell policy and tree identical, and nothing in the offset path reads the envelope. **This is now
+  measured rather than argued**: the released bytes were read against the same lockbox and the
+  result is in `lockbox-conditional-selector-intervals-0.11.0-release-report.json`. The envelope
+  withheld `14` of `8,640` rows and changed no published bound; coverage on what remains moved
+  `0.911574` to `0.911894`, and the status is `RELEASE_CONFIRMED` with no failures. That is the
+  predicted behaviour — intervals removed, none altered.
 - `observed_domain_count` is integer-valued, so its quartile cuts collapse to three occupied buckets
   rather than four. No cell fell back, but the pre-registration guard should have caught that.
 - The conformal unit remains the customer-month, not the customer. This is empirical
@@ -156,7 +159,15 @@ model. Interval work stops here.
 
 ## Addendum: measured out-of-distribution behaviour
 
-The stress suites were run against the promoted pair after this ADR was accepted, and recorded in
+Two measurements were taken after this ADR was accepted.
+
+The first re-read the release lockbox against the exact bytes now shipped in
+`estimator/bundles/production-0.11.0`, closing the first known limit above. It confirms; the detail
+is in that bullet. The lockbox has therefore been read twice, which is worth stating plainly: the
+second read judged a frozen artifact that nothing was tuned against in between, and the
+pre-commitment was to record the result either way. It must not be read a third time.
+
+The second ran the stress suites against the promoted pair, recorded in
 `estimator/evaluation/baselines/stress-0.11.0-report.json`. On the two held-out income conditions
 the interval under-covers badly while publishing almost everything:
 

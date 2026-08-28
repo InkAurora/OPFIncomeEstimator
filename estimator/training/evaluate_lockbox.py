@@ -239,7 +239,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     path = output / f"lockbox-{artifact.calibration_version}-report.json"
-    path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
 
     print(f"Lockbox report: {path}")
     print(

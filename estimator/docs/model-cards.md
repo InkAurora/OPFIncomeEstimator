@@ -133,11 +133,11 @@ suite's baseline score; every suite passes by `7x`, `24x` and `19x`. Error bars 
 customers. Complete promotion means every supported row publishes.
 
 **Known failure modes.**
-- The lockbox was read before out-of-support abstention was added. The promoted artifact differs
-  from the one it measured by the added `support_envelope` and the schema bump alone, every other
-  field identical, and nothing in the offset path reads the envelope — so for any in-support row the
-  bounds are the ones that were measured. Whether any lockbox row now falls outside the envelope is
-  untested; it could only remove intervals, never change one.
+- The lockbox was read before out-of-support abstention was added, then read once more against the
+  exact released bytes to close that gap:
+  `training/artifacts/lockbox-conditional-selector-intervals-0.11.0-release-report.json`,
+  `RELEASE_CONFIRMED`. The envelope withheld `14` of `8,640` rows and altered no published bound;
+  coverage on published rows moved `0.911574` to `0.911894`.
 - **Out-of-distribution coverage is bad, and the envelope does not save it.** Measured on this
   artifact in `evaluation/baselines/stress-0.11.0-report.json`: the held-out `noisy` suite covers
   `0.348` on 224 of 240 published rows and `high_volatility` covers `0.158` on 234 of 240, both
