@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.13"
+
+jobs:
+  lint-and-test:
+    name: Lint and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      # The constraints file is the verified development environment; it pins the ruff whose rules
+      # the source is expected to satisfy. Installing the estimator afterwards must not move it,
+      # which is why the estimator install carries the same constraints.
+      - name: Install packages
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -c finances_simulator/constraints-dev.txt -e "finances_simulator[dev]"
+          python -m pip install -c finances_simulator/constraints-dev.txt -e "estimator[dev]"
+
+      - name: Ruff (simulator)
+        working-directory: finances_simulator
+        run: python -m ruff check .
+
+      - name: Ruff (estimator)
+        working-directory: estimator
+        run: python -m ruff check .
+
+      - name: Ruff (demo)
+        working-directory: demo_app
+        run: python -m ruff check .
+
+      - name: Simulator tests
+        working-directory: finances_simulator
+        run: python -m pytest -q
+
+      # Covers the release gates that live in the suite: bundle integrity, manifest refusals, the
+      # rebuild-is-byte-identical check, and the recorded output fixtures.
+      - name: Estimator tests
+        working-directory: estimator
+        run: python -m pytest -q
+
+      - name: Demo tests
+        working-directory: demo_app
+        run: python -m pytest -q
+
+  release-gates:
+    name: Release gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install packages
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -c finances_simulator/constraints-dev.txt -e "finances_simulator[dev]"
+          python -m pip install -c finances_simulator/constraints-dev.txt -e "estimator[dev]"
+
+      # A checkout that rewrote line endings would change every digest the manifest pins, so this
+      # fails loudly here rather than at whatever machine installs the bundle.
+      - name: Bundle integrity
+        working-directory: estimator
+        run: |
+          python -c "
+          from pathlib import Path
+          from income_estimator.production import verify_bundle
+          manifest, digest = verify_bundle(Path('bundles/production-0.11.0'))
+          print(f'{manifest.bundle_id} {digest}')
+          for reference in manifest.files():
+              print(f'  ok {reference.path}')
+          "
+
+      # Every income-estimator invocation in the README, extracted from the file rather than
+      # duplicated here, so a documented command cannot rot without failing.
+      - name: Documented CLI examples
+        working-directory: estimator
+        run: python -m release.check_documented_cli
+
+      # Builds a wheel, installs it into an empty interpreter, relocates the bundle outside the
+      # repository, and runs the console script from a neutral working directory.
+      - name: Wheel build and clean install
+        working-directory: estimator
+        env:
+          INCOME_ESTIMATOR_CLEAN_INSTALL_TEST: "1"
+        run: python -m pytest tests/test_clean_install.py -q
