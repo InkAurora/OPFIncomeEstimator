@@ -1,7 +1,6 @@
 """Project schema-1.4 observations without private transition or anomaly labels."""
 
 from dataclasses import dataclass
-from typing import TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -25,8 +24,6 @@ from finances_simulator.contracts.observed_v4 import (
 from finances_simulator.observations.projector_v3 import project_observations_v3
 from finances_simulator.simulation.engine import SimulationRun
 
-_RecordV4 = TypeVar("_RecordV4", bound=BaseModel)
-
 
 @dataclass(frozen=True, slots=True)
 class ObservationBundleV4:
@@ -48,7 +45,7 @@ class ObservationBundleV4:
     investment_balances: tuple[InvestmentBalanceV4, ...]
 
 
-def _upgrade(record: BaseModel, model: type[_RecordV4]) -> _RecordV4:
+def _upgrade[RecordV4: BaseModel](record: BaseModel, model: type[RecordV4]) -> RecordV4:
     return model.model_validate(record.model_dump(exclude={"schema_version"}))
 
 

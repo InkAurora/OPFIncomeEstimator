@@ -1,7 +1,6 @@
 """Project schema-1.3 observations without exposing factory truth."""
 
 from dataclasses import dataclass
-from typing import TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -25,8 +24,6 @@ from finances_simulator.contracts.observed_v3 import (
 from finances_simulator.observations.projector_v2 import project_observations_v2
 from finances_simulator.simulation.engine import SimulationRun
 
-_RecordV3 = TypeVar("_RecordV3", bound=BaseModel)
-
 
 @dataclass(frozen=True, slots=True)
 class ObservationBundleV3:
@@ -48,7 +45,7 @@ class ObservationBundleV3:
     investment_balances: tuple[InvestmentBalanceV3, ...]
 
 
-def _upgrade(record: BaseModel, model: type[_RecordV3]) -> _RecordV3:
+def _upgrade[RecordV3: BaseModel](record: BaseModel, model: type[RecordV3]) -> RecordV3:
     """Copy a field-compatible schema-1.2 record into schema 1.3."""
 
     return model.model_validate(record.model_dump(exclude={"schema_version"}))

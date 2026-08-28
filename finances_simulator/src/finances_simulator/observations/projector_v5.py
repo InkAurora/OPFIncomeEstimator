@@ -6,7 +6,6 @@ import hashlib
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from datetime import date, timedelta
-from typing import TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -34,9 +33,6 @@ from finances_simulator.observations.projector_v4 import project_observations_v4
 from finances_simulator.simulation.engine import SimulationRun
 from finances_simulator.simulation.primitives import deterministic_id
 
-_Record = TypeVar("_Record", bound=BaseModel)
-_OutputRecord = TypeVar("_OutputRecord", bound=BaseModel)
-
 
 @dataclass(frozen=True, slots=True)
 class ObservationBundleV5:
@@ -59,11 +55,11 @@ class ObservationBundleV5:
     observation_coverage: tuple[ObservationCoverageV5, ...]
 
 
-def _upgrade(
+def _upgrade[OutputRecord: BaseModel](
     record: BaseModel,
-    model: type[_OutputRecord],
+    model: type[OutputRecord],
     **updates: object,
-) -> _OutputRecord:
+) -> OutputRecord:
     return model.model_validate(
         {
             **record.model_dump(exclude={"schema_version"}),
@@ -80,10 +76,10 @@ def _target_count(size: int, basis_points: int) -> int:
     return (size * basis_points + 5_000) // 10_000
 
 
-def _pick_ids(
-    records: Iterable[_Record],
+def _pick_ids[Record: BaseModel](
+    records: Iterable[Record],
     *,
-    record_id: Callable[[_Record], str],
+    record_id: Callable[[Record], str],
     basis_points: int,
     namespace: UUID,
     label: str,
@@ -94,16 +90,16 @@ def _pick_ids(
     return {record_id(item) for item in ranked[:count]}
 
 
-def _filter_by_consent(
-    records: Iterable[_Record],
+def _filter_by_consent[Record: BaseModel](
+    records: Iterable[Record],
     *,
-    scope_id: Callable[[_Record], str],
-    record_id: Callable[[_Record], str],
+    scope_id: Callable[[Record], str],
+    record_id: Callable[[Record], str],
     coverage_basis_points: Callable[[str], int],
     namespace: UUID,
     label: str,
-) -> tuple[_Record, ...]:
-    grouped: dict[str, list[_Record]] = {}
+) -> tuple[Record, ...]:
+    grouped: dict[str, list[Record]] = {}
     for record in records:
         grouped.setdefault(scope_id(record), []).append(record)
     selected: set[str] = set()

@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass
 from datetime import date
-from typing import TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -26,8 +25,6 @@ from finances_simulator.ground_truth.projector_v3 import project_ground_truth_v3
 from finances_simulator.simulation.engine import SimulationRun
 from finances_simulator.simulation.primitives import month_end
 
-_RecordV4 = TypeVar("_RecordV4", bound=BaseModel)
-
 
 @dataclass(frozen=True, slots=True)
 class GroundTruthBundleV4:
@@ -45,7 +42,7 @@ class GroundTruthBundleV4:
     anomalies: tuple[AnomalyGroundTruthV4, ...]
 
 
-def _upgrade(record: BaseModel, model: type[_RecordV4]) -> _RecordV4:
+def _upgrade[RecordV4: BaseModel](record: BaseModel, model: type[RecordV4]) -> RecordV4:
     return model.model_validate(record.model_dump(exclude={"schema_version"}))
 
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Protocol, TypeVar
+from typing import Protocol
 
 from finances_simulator.config_v3 import CustomerFactorySettings
 from finances_simulator.domain.income import (
@@ -22,9 +22,6 @@ class _Weighted(Protocol):
     weight_basis_points: int
 
 
-_WeightedItem = TypeVar("_WeightedItem", bound=_Weighted)
-
-
 def _require_non_negative_int(name: str, value: int) -> None:
     if isinstance(value, bool) or not isinstance(value, int):
         raise TypeError(f"{name} must be an integer")
@@ -32,12 +29,12 @@ def _require_non_negative_int(name: str, value: int) -> None:
         raise ValueError(f"{name} must be non-negative")
 
 
-def _weighted_choice(
-    values: Sequence[_WeightedItem],
+def _weighted_choice[WeightedItem: _Weighted](
+    values: Sequence[WeightedItem],
     *,
     rng: DeterministicRandom,
-    stable_key: Callable[[_WeightedItem], str],
-) -> _WeightedItem:
+    stable_key: Callable[[WeightedItem], str],
+) -> WeightedItem:
     """Select from exact basis-point intervals in semantic-key order."""
 
     ordered = tuple(sorted(values, key=stable_key))

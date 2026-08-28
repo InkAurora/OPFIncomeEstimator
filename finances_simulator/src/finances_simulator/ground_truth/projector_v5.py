@@ -1,7 +1,6 @@
 """Project schema-1.5 truth as a field-identical upgrade from V4."""
 
 from dataclasses import dataclass
-from typing import TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -21,8 +20,6 @@ from finances_simulator.contracts.ground_truth_v5 import (
 from finances_simulator.ground_truth.projector_v4 import project_ground_truth_v4
 from finances_simulator.simulation.engine import SimulationRun
 
-_RecordV5 = TypeVar("_RecordV5", bound=BaseModel)
-
 
 @dataclass(frozen=True, slots=True)
 class GroundTruthBundleV5:
@@ -40,7 +37,7 @@ class GroundTruthBundleV5:
     anomalies: tuple[AnomalyGroundTruthV5, ...]
 
 
-def _upgrade(record: BaseModel, model: type[_RecordV5]) -> _RecordV5:
+def _upgrade[RecordV5: BaseModel](record: BaseModel, model: type[RecordV5]) -> RecordV5:
     return model.model_validate(record.model_dump(exclude={"schema_version"}))
 
 
