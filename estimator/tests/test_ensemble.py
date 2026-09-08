@@ -120,7 +120,7 @@ def test_ensemble_emits_both_targets_and_stays_1_0_readable(
     month = estimate.monthly_estimates[-1]
 
     assert isinstance(estimate, IncomeEstimateV11)
-    assert estimate.estimator_version == "ensemble-0.6.0"
+    assert estimate.estimator_version == "ensemble-0.7.0"
     assert ENSEMBLE_VERSION in estimate.component_versions
     assert estimate.model_versions == ("capacity-gbdt-stumps-0.6.0",)
     assert month.realized_income_estimate_minor == 500_000
@@ -167,11 +167,39 @@ def test_every_component_stays_visible_with_its_weight(
     assert sum(1 for value in weights.values() if value == 10_000) == 2
 
 
-def test_stable_income_routes_to_cash_flow_and_volatile_routes_to_the_model(
+def _with_coverage(payload: dict, basis_points: int | None) -> dict:
+    """Declare a consent coverage level, or leave it undeclared."""
+
+    payload = dict(payload)
+    payload["coverage"] = (
+        []
+        if basis_points is None
+        else [
+            {
+                "schema_version": "1.0",
+                "customer_id": "customer-test",
+                "account_id": "checking",
+                "configured_coverage_percent": basis_points // 100,
+                "eligible_record_count": 100,
+                "observed_original_record_count": basis_points // 100,
+                "effective_coverage_basis_points": basis_points,
+            }
+        ]
+    )
+    return payload
+
+
+def test_routing_fires_only_on_stable_income_under_declared_partial_coverage(
     request_payload,
     transaction,
 ) -> None:
-    """The one documented exception: stable income is already answered by last month."""
+    """The exception is narrower than it was, and the narrowing is what made routing pay.
+
+    Routing on stability alone lost to the capacity model it routed away from. Where coverage is
+    complete the model wins; where it is declared incomplete the reconstructed month has already
+    accounted for the gap the model has to infer. Undeclared coverage is neither, and does not
+    route.
+    """
 
     stable = _payload(request_payload, transaction)
     volatile = _payload(
@@ -181,12 +209,22 @@ def test_stable_income_routes_to_cash_flow_and_volatile_routes_to_the_model(
     )
     estimator = EnsembleIncomeEstimator(CAPACITY_MODEL_PATH)
 
-    stable_reasons = estimator.estimate_v1_1(stable).monthly_estimates[-1].routing_reason_codes
-    volatile_reasons = (
-        estimator.estimate_v1_1(volatile).monthly_estimates[-1].routing_reason_codes
-    )
+    def reasons(payload: dict) -> tuple[str, ...]:
+        return estimator.estimate_v1_1(payload).monthly_estimates[-1].routing_reason_codes
 
-    assert "STABLE_INCOME_PREFERS_CASH_FLOW" in stable_reasons
+    partial = reasons(_with_coverage(stable, 9_000))
+    complete = reasons(_with_coverage(stable, 10_000))
+    undeclared = reasons(_with_coverage(stable, None))
+    volatile_reasons = reasons(_with_coverage(volatile, 9_000))
+
+    assert "STABLE_INCOME_AND_PARTIAL_COVERAGE_PREFERS_CASH_FLOW" in partial
+
+    assert "CAPACITY_MODEL_SELECTED" in complete
+    assert "COMPLETE_COVERAGE" in complete
+
+    assert "CAPACITY_MODEL_SELECTED" in undeclared
+    assert "COVERAGE_UNDECLARED" in undeclared
+
     assert "CAPACITY_MODEL_SELECTED" in volatile_reasons
     assert "VOLATILE_INCOME" in volatile_reasons
 

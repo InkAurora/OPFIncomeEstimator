@@ -17,30 +17,33 @@ python -m evaluation.run_benchmark --workers 4
 
 # Routing benchmark
 
-`ensemble-0.6.0-report.json` is **historical** and does not describe the shipped model. It records
-`deterministic-routing-0.6.0` evaluated against `capacity-gbdt-stumps-0.5.0`, artifact
-`f58f13d5...`. The bundle ships `capacity-gbdt-stumps-0.6.0`, artifact `4ee9c3a6...`, so its
-`PROMOTED` status and its `21226.734` routed against `23236.3045` best-component MAE are a
-measurement of a pair that is no longer assembled by anything.
+`ensemble-0.7.0-report.json` is the current evidence: `deterministic-routing-0.7.0` against
+`capacity-gbdt-stumps-0.6.0`, `PROMOTED`. Routing now fires only where income is stable and consent
+coverage is declared incomplete.
 
-Re-running the same benchmark against its own current default, on the same seed ranges and 80
-customers per suite, reverses the result: routing scores `16064.1282` where the capacity model
-alone scores `14910.7821`, a `7.73%` regression, and only `months_under_6` and `partial_high`
-improve. The status is `NOT_PROMOTED`.
+`ensemble-0.6.0-report.json` is retained and is **historical**. It records the superseded rule
+evaluated against `capacity-gbdt-stumps-0.5.0`, artifact `f58f13d5…`, while the bundle of the day
+shipped `0.6.0`, artifact `4ee9c3a6…`. Re-run against the model it actually shipped, that rule
+scored `16064.13` where the capacity model alone scored `14910.78`: a `7.73%` regression reported as
+`NOT_PROMOTED`. Its `21226.734` versus `23236.3045` figures describe a pair nothing assembles.
 
-That failure is not fixed here. It is made visible: the benchmark now exits non-zero when the
-status is not `PROMOTED`, and CI runs it as a release gate, so the routing rule can no longer fail
-quietly while the bundle digests keep verifying. Changing routing changes the residual the
-intervals are calibrated against, so routing and calibration are revised together rather than
-separately, and this file is regenerated only once that pair has been re-evaluated.
+The reversal is the point. ADR 0008 recorded that conditioning routing on coverage had been measured
+and rejected; that measurement was taken against `0.5.0`, and against `0.6.0` it reverses. Digest
+checks protect files. They do not notice when a conclusion stops being true.
 
 ```bash
 cd estimator
-python -m evaluation.ensemble_benchmark --output ../output/local --workers 4
+python -m evaluation.ensemble_benchmark --workers 4
 ```
 
-The gate is on by default. `--no-gate` records a report for a routing rule that is still being
-worked on, without claiming it passed.
+The gate is on by default: a status other than `PROMOTED` exits non-zero, and release CI runs it.
+`--no-gate` records a report for a routing rule that is still being worked on, without claiming it
+passed. The report is named for the routing version it measures, so a run cannot overwrite a report
+about a different rule.
+
+Selection used the seeds above; the chosen rule was confirmed afterwards on seeds `910_000`-`930_000`,
+which no run had generated, over 71 customers and 852 rows. See
+[ADR 0009](../../../docs/adr/0009-routing-narrowed-and-recalibrated.md).
 
 # Stress suites
 
@@ -58,25 +61,35 @@ attributable to no coherent model pair. They are still the reason out-of-distrib
 an open question; they are not a measurement of any artifact in this repository.
 
 `stress_report.py` defaults to the promoted pair, `capacity-estimator-0.6.0.json` with
-`quantile-calibration-0.11.0.json`, and writes `stress-0.11.0-report.json`. That run was deferred
-until a candidate had cleared its in-distribution gates. `conditional-selector-intervals-0.11.0`
-has, so `stress-0.11.0-report.json` is now the current out-of-distribution evidence and the only
-stress report in this directory that is attributable to a reconstructible model pair.
+`quantile-calibration-0.12.0.json`, and writes `stress-0.12.0-report.json`. The report is named for
+the calibration it measured; the name was pinned at `0.11.0` while the default moved on, so a run of
+one pair could overwrite a report about another.
 
 ```bash
 cd estimator
 python -m evaluation.stress_report --population-size 20 --workers 4
 ```
 
-It reports what the in-distribution gates could not see. On the two held-out income conditions the
-promoted interval under-covers badly while still publishing almost every row: `noisy` covers
-`0.348` on 224 of 240 published rows, `high_volatility` covers `0.158` on 234 of 240, both against
-a nominal `0.80`. Every withheld row is withheld by the support envelope: the reason is
-`OUT_OF_CALIBRATED_SUPPORT` on 16 of 240 noisy rows and 6 of 240 high-volatility rows, and on
-nothing else. The envelope checks nine features one range at a time, so a row can be nothing like
-the calibration population and still sit inside all nine. Mean confidence does not fall to match
-either — `noisy` averages `0.744` confidence while covering `0.348`.
+`stress-0.12.0-report.json` is the current out-of-distribution evidence. Against `stress-0.11.0`,
+which measured the previous routing and calibration:
 
-This is a measurement of the promoted artifact, unlike the `0.8.0` report above, and it does not
-support a claim that intervals are trustworthy outside the calibration conditions. It is the
-evidence that they are not.
+| Suite | In distribution | `0.11.0` | `0.12.0` |
+| --- | --- | ---: | ---: |
+| `normal` | yes | `0.7583` | **`0.8042`** |
+| `partial_consent` | yes | `0.9583` | `0.9375` |
+| `life_events` | yes | `0.9750` | **`1.0000`** |
+| `noisy` | no | `0.3482` | **`0.0888`** |
+| `high_volatility` | no | `0.1581` | `0.1483` |
+
+Nominal is `0.80`. In distribution this is the best result recorded: `normal` lands on nominal rather
+than under it. Out of distribution `noisy` is materially worse, and the cost is attributed in
+[ADR 0009](../../../docs/adr/0009-routing-narrowed-and-recalibrated.md): routing alone takes it to
+`0.1786` and the refit around that routing takes it the rest of the way. It was accepted, not
+overlooked.
+
+`high_volatility` is unchanged by any of it. Those rows are not out of support and cannot be fenced
+into being: `4` of `240` fall outside any fenced range, and their joint distance from the calibration
+centre is lower than the `normal` suite's. What fails is conditional coverage, not support.
+
+`stress-0.11.0-report.json` is retained as the comparison above, and describes a pair the runtime now
+refuses to load.

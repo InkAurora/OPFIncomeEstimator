@@ -1,6 +1,8 @@
 # ADR 0008: Conditional selector promotion and out-of-calibration abstention
 
-- Status: Accepted
+- Status: Accepted; the routing rule and calibration it promoted are superseded by
+  [ADR 0009](0009-routing-narrowed-and-recalibrated.md). Paths below that name
+  `production-0.11.0` describe the bundle of the time and are not the current release.
 - Date: 2026-08-25
 - Supersedes: the calibration candidate of
   [ADR 0007](0007-complete-adaptive-interval-promotion.md), whose `adaptive-intervals-0.9.0` did not

@@ -9,6 +9,7 @@ from income_estimator.models.quantiles import (
     CalibrationBindingError,
     ConformalIntervalModel,
     require_capacity_binding,
+    require_routing_binding,
 )
 from income_estimator.models.recurring import reconstruct_recurring_income
 from income_estimator.models.transaction_classifier import (
@@ -26,4 +27,5 @@ __all__ = [
     "reconstruct_monthly_income",
     "reconstruct_recurring_income",
     "require_capacity_binding",
+    "require_routing_binding",
 ]

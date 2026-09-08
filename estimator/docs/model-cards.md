@@ -94,10 +94,57 @@ product output.
 
 ---
 
-## `conditional-selector-intervals-0.11.0` — sustainable income interval, promoted
+## `conditional-selector-intervals-0.12.0` — sustainable income interval, promoted
 
 **Status: PROMOTED.** Every gate passes on the validation population and on a release lockbox read
-once. See [ADR 0008](../../docs/adr/0008-conditional-selector-promotion-and-abstention.md).
+once. See [ADR 0009](../../docs/adr/0009-routing-narrowed-and-recalibrated.md).
+
+**Why a refit.** Residuals are taken around the estimate `combine_month` publishes, routing
+included. `deterministic-routing-0.7.0` narrowed routing to stable income under declared partial
+coverage, which moves the residual distribution whatever the model bytes do, so the calibration was
+refitted rather than re-pointed. The method is unchanged from `0.11.0`: same conditional cell
+selector, same pre-registered conditioner, same gates.
+
+**What changed in the artifact.** Schema `1.6` records `ensemble_version`, the routing rule the fit
+was taken around, and the runtime refuses a calibration that names a different one — or none, which
+every artifact before `1.6` does. A calibration fitted around one routing rule used to load silently
+under another.
+
+**Measured.** Validation, `720` customers no earlier stage used: `8,636` of `8,640` rows publish and
+`4` are refused as out of support. Coverage `0.9035` against nominal `0.80`. By band: high `0.9235`,
+medium `0.9036`, low `0.7912`, each against a floor of `0.7500`. By suite: `income_diverse` `0.8085`,
+`incomplete_observation` `0.9020`, `life_events` `1.0000`. Zero-truth `0.9983`. Overall tail miss
+rates `0.0515` and `0.0449` against `0.10`.
+
+Release lockbox, seeds `810_000`+, generated for the first time by that run and read once:
+`RELEASE_CONFIRMED`, coverage `0.9122` on `8,636` of `8,640` rows, empty failure list. One reading,
+not two: the envelope is written into the artifact before the lockbox is read, so the reading
+describes the released bytes exactly.
+
+**Known failure modes.**
+- **Out-of-distribution coverage is bad, and this release makes one case worse.** On
+  `evaluation/baselines/stress-0.12.0-report.json`, `noisy` covers `0.0888` against `0.3482` for the
+  previous pair, and `high_volatility` `0.1483` against `0.1581`, both against a nominal `0.80`. The
+  `noisy` cost is attributable: routing alone takes it to `0.1786`, refitting around that routing
+  takes it the rest of the way, and all of the point-estimate damage is routing's. Under partial
+  coverage the rule routes to last month's reconstruction, which on a feed carrying duplicates,
+  reversals and late arrivals is the least reliable number available. It was kept because it was
+  selected and confirmed on the distribution the model is for; narrowing it against these suites
+  would be selecting on the data meant to test it.
+- **The support envelope cannot fix `high_volatility`, and tightening it was rejected on evidence.**
+  Only `4` of `240` of those rows fall outside any fenced range, and their joint distance from the
+  calibration centre is lower than the `normal` suite's. Fencing `income_cv_12m` does not separate
+  them either: the calibration population spans it from `0` to `1.888`, and `2.3%` of
+  `high_volatility` rows fall outside that against `3.6%` of `normal` ones. What fails is conditional
+  coverage, not support. Conditioning the interval on volatility is open work.
+- Mean confidence does not fall to compensate, so it cannot be read as a warning.
+
+## `conditional-selector-intervals-0.11.0` — sustainable income interval, superseded
+
+**Status: superseded by `conditional-selector-intervals-0.12.0`.** It passed every gate it was
+judged against; it was fitted around `deterministic-routing-0.6.0`, which no longer exists, and the
+runtime now refuses it for exactly that reason. See
+[ADR 0008](../../docs/adr/0008-conditional-selector-promotion-and-abstention.md).
 
 **Task.** Turn the routed sustainable-income estimate into a `p10`/`p90` pair, or refuse.
 

@@ -72,14 +72,14 @@ selectable; every contract except `1.5` also carries a committed byte-stable ref
 
 ### Estimator
 
-Package `0.11.0`. One estimate is produced by three artifacts read together:
+Package `0.12.0`. One estimate is produced by three artifacts read together:
 
 | Role | Artifact | Version |
 |---|---|---|
 | Realized monthly income | frozen rules | `recurring-streams-0.2.0` |
 | Sustainable monthly income | `capacity-estimator-0.6.0.json` | `capacity-gbdt-stumps-0.6.0` |
-| Interval around it | `quantile-calibration-0.11.0.json` | `conditional-selector-intervals-0.11.0` |
-| Routing between them | deterministic | `ensemble-0.6.0` |
+| Interval around it | `quantile-calibration-0.12.0.json` | `conditional-selector-intervals-0.12.0` |
+| Routing between them | deterministic | `ensemble-0.7.0` |
 | Features | 104 point-in-time features | `customer-month-features-1.2.0` |
 
 It accepts input contracts `1.0` through `1.2`, returns output contract `1.1`, and explains itself
@@ -88,13 +88,13 @@ calibration records the capacity `model_version` and the SHA-256 of its exact by
 refuses any other combination.
 
 Deployment loads that pair as one immutable **bundle** rather than as two paths on a command line.
-`estimator/bundles/production-0.11.0/` holds the artifacts, the reports that promoted them, and a
+`estimator/bundles/production-0.12.0/` holds the artifacts, the reports that promoted them, and a
 manifest pinning every file by digest; `ProductionIncomeEstimator.from_bundle` verifies all of it
 and raises rather than degrading, and every result it returns carries the bundle digest. The wheel
 supplies the loader and never the model bytes, because code and models have different lifecycles.
 
 ```bash
-income-estimator request.json --bundle bundles/production-0.11.0
+income-estimator request.json --bundle bundles/production-0.12.0
 ```
 
 Measured on held-out synthetic populations: realized-income reconstruction improves
@@ -164,7 +164,7 @@ python -m streamlit run demo_app/app.py
 ```
 
 It runs the promoted pair exactly: capacity model `capacity-gbdt-stumps-0.6.0` and interval
-calibration `conditional-selector-intervals-0.11.0`, under estimator `ensemble-0.6.0`. Two of the
+calibration `conditional-selector-intervals-0.12.0`, under estimator `ensemble-0.7.0`. Two of the
 five profiles are the documented weak cases, and the page shows their interval coverage falling
 below nominal rather than hiding it. See [`demo_app/README.md`](demo_app/README.md).
 

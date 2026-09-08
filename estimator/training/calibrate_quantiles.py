@@ -39,7 +39,7 @@ from finances_simulator.batch import generate_population
 from finances_simulator.config import load_scenario_config
 
 from income_estimator.models.capacity import GradientBoostedCapacityModel
-from income_estimator.models.ensemble import combine_month
+from income_estimator.models.ensemble import ENSEMBLE_VERSION, combine_month
 from income_estimator.models.quantiles import (
     CALIBRATION_METHOD,
     CONFIDENCE_BAND_FLOORS,
@@ -71,8 +71,12 @@ from training.uncertainty_boosting import (
     tail_conformity_scores,
 )
 
-CALIBRATION_VERSION = "conditional-selector-intervals-0.11.0"
-ARTIFACT_STEM = "quantile-calibration-0.11.0"
+# `0.11.0` was fitted around `deterministic-routing-0.6.0`. Residuals here are taken around the
+# estimate `combine_month` publishes, routing included, so a routing change invalidates the fit
+# whatever the model bytes do. `0.7.0` narrowed routing to stable income under declared partial
+# coverage, so the calibration is refitted rather than re-pointed.
+CALIBRATION_VERSION = "conditional-selector-intervals-0.12.0"
+ARTIFACT_STEM = "quantile-calibration-0.12.0"
 DEFAULT_LOWER_QUANTILE = 0.1
 DEFAULT_UPPER_QUANTILE = 0.9
 ZERO_GATE_CERTAIN_BASIS_POINTS = 1_000
@@ -188,8 +192,11 @@ FINAL_TEST_ROLE = "validation-not-release-lockbox"
 # evaluator ran at all. Nothing was decided from it and every suite was below the gating threshold,
 # but a population that has been generated is no longer untouched, and "it barely counts" is the
 # reasoning a lockbox exists to refuse. That floor is spent; the release read uses a fresh one.
-SPENT_LOCKBOX_SEED_FLOORS: tuple[int, ...] = (610_000,)
-RELEASE_LOCKBOX_SEED_FLOOR = 710_000
+# `710_000` was read once, for the `0.11.0` release, and is spent. Routing `0.7.0` changed the
+# estimate the residuals are taken around, so `0.12.0` is a different calibration and needs a
+# lockbox that has never been generated, not a second look at one that has.
+SPENT_LOCKBOX_SEED_FLOORS: tuple[int, ...] = (610_000, 710_000)
+RELEASE_LOCKBOX_SEED_FLOOR = 810_000
 
 
 def _populations(
@@ -1235,6 +1242,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             calibration_version=(
                 CALIBRATION_VERSION if adaptive else f"{CALIBRATION_VERSION}-fixed-band-baseline"
             ),
+            ensemble_version=ENSEMBLE_VERSION,
             method=CALIBRATION_METHOD,
             capacity_model_version=capacity.artifact.model_version,
             capacity_artifact_sha256=hashlib.sha256(capacity_path.read_bytes()).hexdigest(),
@@ -1520,9 +1528,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
 
     report = {
-        "schema_version": "1.4",
+        # `1.5` adds `ensemble_version`: which routing rule the residuals were taken around.
+        "schema_version": "1.5",
         "artifact_schema_version": artifact.schema_version,
         "calibration_version": CALIBRATION_VERSION,
+        "ensemble_version": ENSEMBLE_VERSION,
         "method": CALIBRATION_METHOD,
         "protocol": "adr-0007-complete-adaptive-promotion",
         "dataset_version": CAPACITY_DATASET_VERSION,
@@ -1557,6 +1567,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "final_test_customers": len(final_customers),
             "final_test_role": FINAL_TEST_ROLE,
             "release_lockbox_seed_floor": RELEASE_LOCKBOX_SEED_FLOOR,
+            "spent_release_lockbox_seed_floors": list(SPENT_LOCKBOX_SEED_FLOORS),
             "shared_customers": 0,
         },
         "calibration": {

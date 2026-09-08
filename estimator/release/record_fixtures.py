@@ -26,11 +26,11 @@ from income_estimator.contracts.production_v1 import ProductionResultV1
 from income_estimator.production import ProductionIncomeEstimator
 
 ESTIMATOR_ROOT = Path(__file__).parents[1]
-BUNDLE_ROOT = ESTIMATOR_ROOT / "bundles" / "production-0.11.0"
+BUNDLE_ROOT = ESTIMATOR_ROOT / "bundles" / "production-0.12.0"
 FIXTURE_ROOT = ESTIMATOR_ROOT / "tests" / "fixtures"
 
-MINIMAL_FIXTURE = "production-0.11.0-expected.json"
-SIMULATOR_FIXTURE = "production-0.11.0-income-diverse-seed-42.json"
+MINIMAL_FIXTURE = "production-0.12.0-expected.json"
+SIMULATOR_FIXTURE = "production-0.12.0-income-diverse-seed-42.json"
 
 SIMULATOR_SCENARIO = "income_diverse.yaml"
 SIMULATOR_SEED = 42

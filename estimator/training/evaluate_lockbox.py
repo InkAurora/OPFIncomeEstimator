@@ -20,10 +20,12 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from income_estimator.models.capacity import GradientBoostedCapacityModel
+from income_estimator.models.ensemble import ENSEMBLE_VERSION
 from income_estimator.models.quantiles import (
     ConformalIntervalModel,
     confidence_band,
     require_capacity_binding,
+    require_routing_binding,
 )
 from training.calibrate_quantiles import (
     CAPACITY_DATASET_VERSION,
@@ -83,7 +85,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--calibration",
         type=Path,
-        default=Path(__file__).parent / "artifacts/quantile-calibration-0.11.0.json",
+        default=Path(__file__).parent / "artifacts/quantile-calibration-0.12.0.json",
     )
     parser.add_argument("--output", type=Path, default=Path(__file__).parent / "artifacts")
     parser.add_argument("--population-size-per-suite", type=int, default=240)
@@ -104,6 +106,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         capacity_model_version=capacity.artifact.model_version,
         capacity_artifact_sha256=capacity.artifact_sha256,
     )
+    # And the routing rule, which is the other half of the estimate the residuals were taken around.
+    require_routing_binding(artifact, ensemble_version=ENSEMBLE_VERSION)
     baseline = fixed_band_comparator(artifact)
 
     by_suite = _populations(

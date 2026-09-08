@@ -9,28 +9,31 @@ A bundle is identified by the SHA-256 of its `manifest.json`. The manifest pins 
 digest, so that one number covers the directory transitively, and it is what a production result
 reports back.
 
-## `production-0.11.0`
+## `production-0.12.0`
 
 | File | Role | Version |
 |---|---|---|
 | `artifacts/capacity-estimator-0.6.0.json` | sustainable-income point estimate | `capacity-gbdt-stumps-0.6.0` |
-| `artifacts/quantile-calibration-0.11.0.json` | its interval, or an abstention | `conditional-selector-intervals-0.11.0` |
+| `artifacts/quantile-calibration-0.12.0.json` | its interval, or an abstention | `conditional-selector-intervals-0.12.0` |
 | `provenance/capacity-estimator-0.6.0-report.json` | why that model | — |
-| `provenance/quantile-calibration-0.11.0-report.json` | every validation gate | — |
-| `provenance/lockbox-…-0.11.0-report.json` | `RELEASE_CONFIRMED` on the bytes that were promoted | — |
-| `provenance/lockbox-…-0.11.0-release-report.json` | `RELEASE_CONFIRMED` on the bytes shipped here | — |
+| `provenance/quantile-calibration-0.12.0-report.json` | every validation gate | — |
+| `provenance/lockbox-…-0.12.0-report.json` | `RELEASE_CONFIRMED` on these exact bytes | — |
 
-Two lockbox readings, because they measured different bytes. The promoted artifact gained a support
-envelope after the first reading, so the second was taken against exactly what this bundle ships: it
-confirms, having withheld `14` of `8,640` rows and altered no published bound. Only the second is a
-statement about what a deployment will actually run.
+One lockbox reading, of the bytes shipped here. `0.11.0` needed two, because its support envelope
+was attached after the first reading, so the report that promoted it described bytes no deployment
+ran. `0.12.0` is written with its envelope in place: seeds `810_000`+, generated for the first time
+by that run and read once, `RELEASE_CONFIRMED`, coverage `0.9122` on `8,636` of `8,640` rows against
+a `0.75` floor and a `0.80` nominal, empty failure list.
 
-Requires feature set `customer-month-features-1.2.0` and `income-estimator` `0.11.0` or newer.
-Accepts input contracts `1.0` through `1.2`; emits output `1.1` and explanation `1.0`.
+Requires feature set `customer-month-features-1.2.0` and `income-estimator` `0.12.0` or newer.
+Accepts input contracts `1.0` through `1.2`; emits output `1.2` and explanation `1.0`. Output `1.2`
+publishes `qualified_sustainable_income_minor` only where a month's evidence is assessed
+`SUPPORTED`; a consumer still on `1.1` calls `estimate_v1_1` and gets what it always got.
 
-The promotion decision is [ADR 0008](../../docs/adr/0008-conditional-selector-promotion-and-abstention.md).
-Read its known limits before deploying anything: the intervals hold in the calibration conditions
-and are measured failing badly outside them.
+The promotion decision is [ADR 0009](../../docs/adr/0009-routing-narrowed-and-recalibrated.md).
+Read its known limits before deploying anything: the intervals hold in the calibration conditions,
+are measured failing badly outside them, and this release makes the `noisy` suite worse rather than
+better. That cost is attributed in the ADR and was accepted deliberately.
 
 ## Why the artifacts are copied rather than referenced
 
@@ -42,12 +45,13 @@ verified anywhere.
 
 ```bash
 cd estimator
-python -m release.build_bundle --output bundles/production-0.11.0
+python -m release.build_bundle --output bundles/production-0.12.0
 ```
 
 Deterministic. `tests/test_release.py` asserts the committed bundle is byte-identical to what the
 builder emits, so a hand-edited manifest fails the suite. The builder also refuses to assemble a
-pair whose calibration was not fitted against the capacity bytes being bundled.
+pair whose calibration was not fitted against the capacity bytes being bundled, or one whose
+promotion reports do not record a passing, failure-free run over those exact bytes.
 
 ## Line endings
 
@@ -59,7 +63,7 @@ integrity check on Windows.
 
 ```bash
 cd estimator
-python -c "from pathlib import Path; from income_estimator.production import verify_bundle; print(verify_bundle(Path('bundles/production-0.11.0'))[1])"
+python -c "from pathlib import Path; from income_estimator.production import verify_bundle; print(verify_bundle(Path('bundles/production-0.12.0'))[1])"
 ```
 
 `verify_bundle` checks presence and digests without constructing a model.

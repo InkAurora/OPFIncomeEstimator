@@ -1,0 +1,43 @@
+{
+  "accepted_input_contract_versions": [
+    "1.0",
+    "1.1",
+    "1.2"
+  ],
+  "bundle_id": "production-0.12.0",
+  "bundle_version": "0.12.0",
+  "calibration": {
+    "path": "artifacts/quantile-calibration-0.12.0.json",
+    "sha256": "9f472c805afa60dffb706462a83b649a8f6b8f9a087490501c45034286e2789b",
+    "version": "conditional-selector-intervals-0.12.0"
+  },
+  "capacity": {
+    "path": "artifacts/capacity-estimator-0.6.0.json",
+    "sha256": "4ee9c3a6df62025754e47bafdf8a181250dd99e4840acef2d01a8b899f8b8e6a",
+    "version": "capacity-gbdt-stumps-0.6.0"
+  },
+  "estimator_package_version": "0.12.0",
+  "estimator_version": "ensemble-0.7.0",
+  "explanation_contract_version": "1.0",
+  "feature_schema_fingerprint": "e54e70affc30a6fad10282e62463a936",
+  "feature_set_version": "customer-month-features-1.2.0",
+  "output_contract_version": "1.2",
+  "provenance": {
+    "calibration_report": {
+      "path": "provenance/quantile-calibration-0.12.0-report.json",
+      "sha256": "79a71841017820e50d964d5ed9f1541ace6b76f7484c69d17bedaf42d27b7dab"
+    },
+    "capacity_report": {
+      "path": "provenance/capacity-estimator-0.6.0-report.json",
+      "sha256": "37ea1e33864c0e0efbfdc736bb6c38a04c64915c3fb2935dd1ba65dd6b5f6d0c"
+    },
+    "decision_record": "docs/adr/0009-routing-narrowed-and-recalibrated.md",
+    "lockbox_report": null,
+    "release_lockbox_report": {
+      "path": "provenance/lockbox-conditional-selector-intervals-0.12.0-report.json",
+      "sha256": "328244d0c8a4dff056b9e0c59e19a8f987092e6c585c6171396ea54e5df48b9a"
+    }
+  },
+  "schema_version": "1.0",
+  "support_envelope_version": "1.0"
+}

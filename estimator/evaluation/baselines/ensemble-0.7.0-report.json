@@ -1,0 +1,867 @@
+{
+  "capacity_artifact_sha256": "4ee9c3a6df62025754e47bafdf8a181250dd99e4840acef2d01a8b899f8b8e6a",
+  "capacity_model_version": "capacity-gbdt-stumps-0.6.0",
+  "customer_count": 26,
+  "dataset_version": "synthetic-customer-months-1.0.0",
+  "ensemble_version": "deterministic-routing-0.7.0",
+  "mean_sustainable_truth_minor": 547286.6859,
+  "months": 12,
+  "population_size_per_suite": 80,
+  "promotion": {
+    "best_component": "capacity_model",
+    "best_component_mae_minor": 14910.7821,
+    "failures": [],
+    "improved_segments": [
+      "middle",
+      "months_12_plus",
+      "months_6_to_11",
+      "months_under_6",
+      "partial_high",
+      "stable"
+    ],
+    "routed_mae_minor": 12179.1026,
+    "status": "PROMOTED"
+  },
+  "results": {
+    "capacity_model": {
+      "overall": {
+        "count": 312,
+        "error_over_mean_income": 0.02724492,
+        "mean_absolute_error_minor": 14910.7821,
+        "mean_prediction_minor": 546103.1859,
+        "mean_truth_minor": 547286.6859,
+        "median_absolute_error_minor": 5177.0,
+        "root_mean_squared_error_minor": 31367.0118,
+        "smape": 0.03659183,
+        "wape": 0.02724492
+      },
+      "segments": {
+        "consent_coverage": {
+          "complete": {
+            "count": 204,
+            "error_over_mean_income": 0.03410988,
+            "mean_absolute_error_minor": 17715.9755,
+            "mean_prediction_minor": 515511.8873,
+            "mean_truth_minor": 519379.6373,
+            "median_absolute_error_minor": 4992.0,
+            "root_mean_squared_error_minor": 37545.2265,
+            "smape": 0.04752666,
+            "wape": 0.03410988
+          },
+          "partial_high": {
+            "count": 108,
+            "error_over_mean_income": 0.01602014,
+            "mean_absolute_error_minor": 9612.0833,
+            "mean_prediction_minor": 603886.75,
+            "mean_truth_minor": 600000.0,
+            "median_absolute_error_minor": 5520.0,
+            "root_mean_squared_error_minor": 13404.7115,
+            "smape": 0.01593715,
+            "wape": 0.01602014
+          }
+        },
+        "history_length": {
+          "months_12_plus": {
+            "count": 26,
+            "error_over_mean_income": 0.01896338,
+            "mean_absolute_error_minor": 12073.6923,
+            "mean_prediction_minor": 630766.3846,
+            "mean_truth_minor": 636684.4615,
+            "median_absolute_error_minor": 5084.5,
+            "root_mean_squared_error_minor": 18303.8825,
+            "smape": 0.02070599,
+            "wape": 0.01896338
+          },
+          "months_6_to_11": {
+            "count": 156,
+            "error_over_mean_income": 0.0191143,
+            "mean_absolute_error_minor": 9987.4872,
+            "mean_prediction_minor": 522586.7692,
+            "mean_truth_minor": 522513.7692,
+            "median_absolute_error_minor": 4280.0,
+            "root_mean_squared_error_minor": 19056.8401,
+            "smape": 0.02258137,
+            "wape": 0.0191143
+          },
+          "months_under_6": {
+            "count": 130,
+            "error_over_mean_income": 0.03824867,
+            "mean_absolute_error_minor": 21386.1538,
+            "mean_prediction_minor": 557390.2462,
+            "mean_truth_minor": 559134.6308,
+            "median_absolute_error_minor": 6561.5,
+            "root_mean_squared_error_minor": 43110.6997,
+            "smape": 0.05658154,
+            "wape": 0.03824867
+          }
+        },
+        "income_volatility": {
+          "moderate": {
+            "count": 11,
+            "error_over_mean_income": null,
+            "mean_absolute_error_minor": 0.0,
+            "mean_prediction_minor": 0.0,
+            "mean_truth_minor": 0.0,
+            "median_absolute_error_minor": 0.0,
+            "root_mean_squared_error_minor": 0.0,
+            "smape": 0.0,
+            "wape": null
+          },
+          "stable": {
+            "count": 210,
+            "error_over_mean_income": 0.02088356,
+            "mean_absolute_error_minor": 12851.5286,
+            "mean_prediction_minor": 612841.3667,
+            "mean_truth_minor": 615389.6381,
+            "median_absolute_error_minor": 6349.0,
+            "root_mean_squared_error_minor": 22521.955,
+            "smape": 0.02190934,
+            "wape": 0.02088356
+          },
+          "unknown": {
+            "count": 26,
+            "error_over_mean_income": 0.07133085,
+            "mean_absolute_error_minor": 39268.9231,
+            "mean_prediction_minor": 539903.0769,
+            "mean_truth_minor": 550518.0769,
+            "median_absolute_error_minor": 13126.0,
+            "root_mean_squared_error_minor": 68872.8511,
+            "smape": 0.09728947,
+            "wape": 0.07133085
+          },
+          "volatile": {
+            "count": 65,
+            "error_over_mean_income": 0.03426734,
+            "mean_absolute_error_minor": 14343.8615,
+            "mean_prediction_minor": 425385.0308,
+            "mean_truth_minor": 418586.9538,
+            "median_absolute_error_minor": 401.0,
+            "root_mean_squared_error_minor": 34445.7693,
+            "smape": 0.06594096,
+            "wape": 0.03426734
+          }
+        },
+        "sustainable_income_range": {
+          "high": {
+            "count": 12,
+            "error_over_mean_income": 0.04403474,
+            "mean_absolute_error_minor": 37605.6667,
+            "mean_prediction_minor": 819681.1667,
+            "mean_truth_minor": 854000.0,
+            "median_absolute_error_minor": 19317.0,
+            "root_mean_squared_error_minor": 60945.8486,
+            "smape": 0.04678819,
+            "wape": 0.04403474
+          },
+          "low": {
+            "count": 24,
+            "error_over_mean_income": 0.28568057,
+            "mean_absolute_error_minor": 50584.4583,
+            "mean_prediction_minor": 199298.125,
+            "mean_truth_minor": 177066.5,
+            "median_absolute_error_minor": 32042.0,
+            "root_mean_squared_error_minor": 72147.313,
+            "smape": 0.24690455,
+            "wape": 0.28568057
+          },
+          "middle": {
+            "count": 254,
+            "error_over_mean_income": 0.01911525,
+            "mean_absolute_error_minor": 11759.3268,
+            "mean_prediction_minor": 613247.5,
+            "mean_truth_minor": 615180.5118,
+            "median_absolute_error_minor": 5177.0,
+            "root_mean_squared_error_minor": 23264.5781,
+            "smape": 0.01940741,
+            "wape": 0.01911525
+          },
+          "zero": {
+            "count": 22,
+            "error_over_mean_income": null,
+            "mean_absolute_error_minor": 0.0,
+            "mean_prediction_minor": 0.0,
+            "mean_truth_minor": 0.0,
+            "median_absolute_error_minor": 0.0,
+            "root_mean_squared_error_minor": 0.0,
+            "smape": 0.0,
+            "wape": null
+          }
+        }
+      }
+    },
+    "cash_flow_last_month": {
+      "overall": {
+        "count": 312,
+        "error_over_mean_income": 0.07583741,
+        "mean_absolute_error_minor": 41504.8045,
+        "mean_prediction_minor": 558971.125,
+        "mean_truth_minor": 547286.6859,
+        "median_absolute_error_minor": 9167.0,
+        "root_mean_squared_error_minor": 90632.0976,
+        "smape": 0.13512476,
+        "wape": 0.07583741
+      },
+      "segments": {
+        "consent_coverage": {
+          "complete": {
+            "count": 204,
+            "error_over_mean_income": 0.12221876,
+            "mean_absolute_error_minor": 63477.9363,
+            "mean_prediction_minor": 537249.9559,
+            "mean_truth_minor": 519379.6373,
+            "median_absolute_error_minor": 12833.0,
+            "root_mean_squared_error_minor": 112084.1609,
+            "smape": 0.2066614,
+            "wape": 0.12221876
+          },
+          "partial_high": {
+            "count": 108,
+            "error_over_mean_income": 0.0,
+            "mean_absolute_error_minor": 0.0,
+            "mean_prediction_minor": 600000.0,
+            "mean_truth_minor": 600000.0,
+            "median_absolute_error_minor": 0.0,
+            "root_mean_squared_error_minor": 0.0,
+            "smape": 0.0,
+            "wape": 0.0
+          }
+        },
+        "history_length": {
+          "months_12_plus": {
+            "count": 26,
+            "error_over_mean_income": 0.1893666,
+            "mean_absolute_error_minor": 120566.7692,
+            "mean_prediction_minor": 730010.2308,
+            "mean_truth_minor": 636684.4615,
+            "median_absolute_error_minor": 156428.0,
+            "root_mean_squared_error_minor": 153519.147,
+            "smape": 0.2846739,
+            "wape": 0.1893666
+          },
+          "months_6_to_11": {
+            "count": 156,
+            "error_over_mean_income": 0.08670694,
+            "mean_absolute_error_minor": 45305.5705,
+            "mean_prediction_minor": 535803.5321,
+            "mean_truth_minor": 522513.7692,
+            "median_absolute_error_minor": 1332.0,
+            "root_mean_squared_error_minor": 101493.454,
+            "smape": 0.13173853,
+            "wape": 0.08670694
+          },
+          "months_under_6": {
+            "count": 130,
+            "error_over_mean_income": 0.03779321,
+            "mean_absolute_error_minor": 21131.4923,
+            "mean_prediction_minor": 552564.4154,
+            "mean_truth_minor": 559134.6308,
+            "median_absolute_error_minor": 9167.0,
+            "root_mean_squared_error_minor": 51374.0589,
+            "smape": 0.10927842,
+            "wape": 0.03779321
+          }
+        },
+        "income_volatility": {
+          "moderate": {
+            "count": 11,
+            "error_over_mean_income": null,
+            "mean_absolute_error_minor": 0.0,
+            "mean_prediction_minor": 0.0,
+            "mean_truth_minor": 0.0,
+            "median_absolute_error_minor": 0.0,
+            "root_mean_squared_error_minor": 0.0,
+            "smape": 0.0,
+            "wape": null
+          },
+          "stable": {
+            "count": 210,
+            "error_over_mean_income": 0.02366805,
+            "mean_absolute_error_minor": 14565.0714,
+            "mean_prediction_minor": 609656.881,
+            "mean_truth_minor": 615389.6381,
+            "median_absolute_error_minor": 5284.0,
+            "root_mean_squared_error_minor": 30427.4007,
+            "smape": 0.02500373,
+            "wape": 0.02366805
+          },
+          "unknown": {
+            "count": 26,
+            "error_over_mean_income": 0.04428346,
+            "mean_absolute_error_minor": 24378.8462,
+            "mean_prediction_minor": 546622.5385,
+            "mean_truth_minor": 550518.0769,
+            "median_absolute_error_minor": 9167.0,
+            "root_mean_squared_error_minor": 59901.4398,
+            "smape": 0.08506119,
+            "wape": 0.04428346
+          },
+          "volatile": {
+            "count": 65,
+            "error_over_mean_income": 0.34022833,
+            "mean_absolute_error_minor": 142415.1385,
+            "mean_prediction_minor": 494751.6923,
+            "mean_truth_minor": 418586.9538,
+            "median_absolute_error_minor": 143333.0,
+            "root_mean_squared_error_minor": 187087.265,
+            "smape": 0.53379311,
+            "wape": 0.34022833
+          }
+        },
+        "sustainable_income_range": {
+          "high": {
+            "count": 12,
+            "error_over_mean_income": 0.03705572,
+            "mean_absolute_error_minor": 31645.5833,
+            "mean_prediction_minor": 851289.5833,
+            "mean_truth_minor": 854000.0,
+            "median_absolute_error_minor": 26894.0,
+            "root_mean_squared_error_minor": 53361.5731,
+            "smape": 0.03587589,
+            "wape": 0.03705572
+          },
+          "low": {
+            "count": 24,
+            "error_over_mean_income": 0.84480031,
+            "mean_absolute_error_minor": 149585.8333,
+            "mean_prediction_minor": 138680.5833,
+            "mean_truth_minor": 177066.5,
+            "median_absolute_error_minor": 143333.0,
+            "root_mean_squared_error_minor": 162118.0999,
+            "smape": 1.25137369,
+            "wape": 0.84480031
+          },
+          "middle": {
+            "count": 254,
+            "error_over_mean_income": 0.05746788,
+            "mean_absolute_error_minor": 35353.1181,
+            "mean_prediction_minor": 633288.1181,
+            "mean_truth_minor": 615180.5118,
+            "median_absolute_error_minor": 9167.0,
+            "root_mean_squared_error_minor": 86440.5283,
+            "smape": 0.04604507,
+            "wape": 0.05746788
+          },
+          "zero": {
+            "count": 22,
+            "error_over_mean_income": null,
+            "mean_absolute_error_minor": 0.0,
+            "mean_prediction_minor": 0.0,
+            "mean_truth_minor": 0.0,
+            "median_absolute_error_minor": 0.0,
+            "root_mean_squared_error_minor": 0.0,
+            "smape": 0.0,
+            "wape": null
+          }
+        }
+      }
+    },
+    "historical_median_12m": {
+      "overall": {
+        "count": 312,
+        "error_over_mean_income": 0.14354525,
+        "mean_absolute_error_minor": 78560.4038,
+        "mean_prediction_minor": 543334.9487,
+        "mean_truth_minor": 547286.6859,
+        "median_absolute_error_minor": 12258.0,
+        "root_mean_squared_error_minor": 154491.6374,
+        "smape": 0.28625882,
+        "wape": 0.14354525
+      },
+      "segments": {
+        "consent_coverage": {
+          "complete": {
+            "count": 204,
+            "error_over_mean_income": 0.231336,
+            "mean_absolute_error_minor": 120151.2059,
+            "mean_prediction_minor": 513335.8039,
+            "mean_truth_minor": 519379.6373,
+            "median_absolute_error_minor": 60083.0,
+            "root_mean_squared_error_minor": 191058.8632,
+            "smape": 0.43780761,
+            "wape": 0.231336
+          },
+          "partial_high": {
+            "count": 108,
+            "error_over_mean_income": 0.0,
+            "mean_absolute_error_minor": 0.0,
+            "mean_prediction_minor": 600000.0,
+            "mean_truth_minor": 600000.0,
+            "median_absolute_error_minor": 0.0,
+            "root_mean_squared_error_minor": 0.0,
+            "smape": 0.0,
+            "wape": 0.0
+          }
+        },
+        "history_length": {
+          "months_12_plus": {
+            "count": 26,
+            "error_over_mean_income": 0.12608709,
+            "mean_absolute_error_minor": 80277.6923,
+            "mean_prediction_minor": 556417.9231,
+            "mean_truth_minor": 636684.4615,
+            "median_absolute_error_minor": 58751.5,
+            "root_mean_squared_error_minor": 112998.3527,
+            "smape": 0.21228369,
+            "wape": 0.12608709
+          },
+          "months_6_to_11": {
+            "count": 156,
+            "error_over_mean_income": 0.23281855,
+            "mean_absolute_error_minor": 121650.8974,
+            "mean_prediction_minor": 545052.7949,
+            "mean_truth_minor": 522513.7692,
+            "median_absolute_error_minor": 56386.5,
+            "root_mean_squared_error_minor": 209038.2954,
+            "smape": 0.45007933,
+            "wape": 0.23281855
+          },
+          "months_under_6": {
+            "count": 130,
+            "error_over_mean_income": 0.04740961,
+            "mean_absolute_error_minor": 26508.3538,
+            "mean_prediction_minor": 538656.9385,
+            "mean_truth_minor": 559134.6308,
+            "median_absolute_error_minor": 9167.0,
+            "root_mean_squared_error_minor": 47877.575,
+            "smape": 0.10446923,
+            "wape": 0.04740961
+          }
+        },
+        "income_volatility": {
+          "moderate": {
+            "count": 11,
+            "error_over_mean_income": null,
+            "mean_absolute_error_minor": 522250.0,
+            "mean_prediction_minor": 522250.0,
+            "mean_truth_minor": 0.0,
+            "median_absolute_error_minor": 522250.0,
+            "root_mean_squared_error_minor": 522250.0,
+            "smape": 2.0,
+            "wape": null
+          },
+          "stable": {
+            "count": 210,
+            "error_over_mean_income": 0.03365898,
+            "mean_absolute_error_minor": 20713.3857,
+            "mean_prediction_minor": 594762.2048,
+            "mean_truth_minor": 615389.6381,
+            "median_absolute_error_minor": 1938.0,
+            "root_mean_squared_error_minor": 36194.396,
+            "smape": 0.03832406,
+            "wape": 0.03365898
+          },
+          "unknown": {
+            "count": 26,
+            "error_over_mean_income": 0.04428346,
+            "mean_absolute_error_minor": 24378.8462,
+            "mean_prediction_minor": 546622.5385,
+            "mean_truth_minor": 550518.0769,
+            "median_absolute_error_minor": 9167.0,
+            "root_mean_squared_error_minor": 59901.4398,
+            "smape": 0.08506119,
+            "wape": 0.04428346
+          },
+          "volatile": {
+            "count": 65,
+            "error_over_mean_income": 0.50655535,
+            "mean_absolute_error_minor": 212037.4615,
+            "mean_prediction_minor": 379438.5385,
+            "mean_truth_minor": 418586.9538,
+            "median_absolute_error_minor": 168333.0,
+            "root_mean_squared_error_minor": 250480.0365,
+            "smape": 0.87774014,
+            "wape": 0.50655535
+          }
+        },
+        "sustainable_income_range": {
+          "high": {
+            "count": 12,
+            "error_over_mean_income": 0.03029508,
+            "mean_absolute_error_minor": 25872.0,
+            "mean_prediction_minor": 828128.0,
+            "mean_truth_minor": 854000.0,
+            "median_absolute_error_minor": 26894.0,
+            "root_mean_squared_error_minor": 25982.2499,
+            "smape": 0.03076513,
+            "wape": 0.03029508
+          },
+          "low": {
+            "count": 24,
+            "error_over_mean_income": 0.71128103,
+            "mean_absolute_error_minor": 125944.0417,
+            "mean_prediction_minor": 82882.5417,
+            "mean_truth_minor": 177066.5,
+            "median_absolute_error_minor": 123742.0,
+            "root_mean_squared_error_minor": 131446.8912,
+            "smape": 1.18497821,
+            "wape": 0.71128103
+          },
+          "middle": {
+            "count": 254,
+            "error_over_mean_income": 0.06356866,
+            "mean_absolute_error_minor": 39106.2008,
+            "mean_prediction_minor": 576177.311,
+            "mean_truth_minor": 615180.5118,
+            "median_absolute_error_minor": 9167.0,
+            "root_mean_squared_error_minor": 70814.6171,
+            "smape": 0.06497675,
+            "wape": 0.06356866
+          },
+          "zero": {
+            "count": 22,
+            "error_over_mean_income": null,
+            "mean_absolute_error_minor": 511125.0,
+            "mean_prediction_minor": 511125.0,
+            "mean_truth_minor": 0.0,
+            "median_absolute_error_minor": 511125.0,
+            "root_mean_squared_error_minor": 511246.0574,
+            "smape": 2.0,
+            "wape": null
+          }
+        }
+      }
+    },
+    "recurring_stream_mean_3m": {
+      "overall": {
+        "count": 312,
+        "error_over_mean_income": 0.11282329,
+        "mean_absolute_error_minor": 61746.6827,
+        "mean_prediction_minor": 542118.1891,
+        "mean_truth_minor": 547286.6859,
+        "median_absolute_error_minor": 9167.0,
+        "root_mean_squared_error_minor": 130575.5868,
+        "smape": 0.23312803,
+        "wape": 0.11282329
+      },
+      "segments": {
+        "consent_coverage": {
+          "complete": {
+            "count": 204,
+            "error_over_mean_income": 0.18182481,
+            "mean_absolute_error_minor": 94436.1029,
+            "mean_prediction_minor": 511474.8775,
+            "mean_truth_minor": 519379.6373,
+            "median_absolute_error_minor": 38662.5,
+            "root_mean_squared_error_minor": 161482.0297,
+            "smape": 0.35654875,
+            "wape": 0.18182481
+          },
+          "partial_high": {
+            "count": 108,
+            "error_over_mean_income": 0.0,
+            "mean_absolute_error_minor": 0.0,
+            "mean_prediction_minor": 600000.0,
+            "mean_truth_minor": 600000.0,
+            "median_absolute_error_minor": 0.0,
+            "root_mean_squared_error_minor": 0.0,
+            "smape": 0.0,
+            "wape": 0.0
+          }
+        },
+        "history_length": {
+          "months_12_plus": {
+            "count": 26,
+            "error_over_mean_income": 0.1339343,
+            "mean_absolute_error_minor": 85273.8846,
+            "mean_prediction_minor": 714493.3462,
+            "mean_truth_minor": 636684.4615,
+            "median_absolute_error_minor": 52067.5,
+            "root_mean_squared_error_minor": 118251.5816,
+            "smape": 0.12493416,
+            "wape": 0.1339343
+          },
+          "months_6_to_11": {
+            "count": 156,
+            "error_over_mean_income": 0.18050238,
+            "mean_absolute_error_minor": 94314.9808,
+            "mean_prediction_minor": 509411.2628,
+            "mean_truth_minor": 522513.7692,
+            "median_absolute_error_minor": 20278.5,
+            "root_mean_squared_error_minor": 175004.7495,
+            "smape": 0.39917149,
+            "wape": 0.18050238
+          },
+          "months_under_6": {
+            "count": 130,
+            "error_over_mean_income": 0.03211979,
+            "mean_absolute_error_minor": 17959.2846,
+            "mean_prediction_minor": 546891.4692,
+            "mean_truth_minor": 559134.6308,
+            "median_absolute_error_minor": 9167.0,
+            "root_mean_squared_error_minor": 37030.7869,
+            "smape": 0.05551465,
+            "wape": 0.03211979
+          }
+        },
+        "income_volatility": {
+          "moderate": {
+            "count": 11,
+            "error_over_mean_income": null,
+            "mean_absolute_error_minor": 383167.0,
+            "mean_prediction_minor": 383167.0,
+            "mean_truth_minor": 0.0,
+            "median_absolute_error_minor": 383167.0,
+            "root_mean_squared_error_minor": 383167.0,
+            "smape": 2.0,
+            "wape": null
+          },
+          "stable": {
+            "count": 210,
+            "error_over_mean_income": 0.02280277,
+            "mean_absolute_error_minor": 14032.5857,
+            "mean_prediction_minor": 603970.0238,
+            "mean_truth_minor": 615389.6381,
+            "median_absolute_error_minor": 4115.0,
+            "root_mean_squared_error_minor": 23925.6396,
+            "smape": 0.02612693,
+            "wape": 0.02280277
+          },
+          "unknown": {
+            "count": 26,
+            "error_over_mean_income": 0.04428346,
+            "mean_absolute_error_minor": 24378.8462,
+            "mean_prediction_minor": 546622.5385,
+            "mean_truth_minor": 550518.0769,
+            "median_absolute_error_minor": 9167.0,
+            "root_mean_squared_error_minor": 59901.4398,
+            "smape": 0.08506119,
+            "wape": 0.04428346
+          },
+          "volatile": {
+            "count": 65,
+            "error_over_mean_income": 0.42154407,
+            "mean_absolute_error_minor": 176452.8462,
+            "mean_prediction_minor": 367386.8769,
+            "mean_truth_minor": 418586.9538,
+            "median_absolute_error_minor": 178500.0,
+            "root_mean_squared_error_minor": 231752.6588,
+            "smape": 0.66211843,
+            "wape": 0.42154407
+          }
+        },
+        "sustainable_income_range": {
+          "high": {
+            "count": 12,
+            "error_over_mean_income": 0.02505816,
+            "mean_absolute_error_minor": 21399.6667,
+            "mean_prediction_minor": 840486.0,
+            "mean_truth_minor": 854000.0,
+            "median_absolute_error_minor": 21994.0,
+            "root_mean_squared_error_minor": 23904.2488,
+            "smape": 0.02520135,
+            "wape": 0.02505816
+          },
+          "low": {
+            "count": 24,
+            "error_over_mean_income": 0.31065212,
+            "mean_absolute_error_minor": 55006.0833,
+            "mean_prediction_minor": 153138.9167,
+            "mean_truth_minor": 177066.5,
+            "median_absolute_error_minor": 23000.0,
+            "root_mean_squared_error_minor": 82677.4718,
+            "smape": 0.32749726,
+            "wape": 0.31065212
+          },
+          "middle": {
+            "count": 254,
+            "error_over_mean_income": 0.07344804,
+            "mean_absolute_error_minor": 45183.8031,
+            "mean_prediction_minor": 587277.0551,
+            "mean_truth_minor": 615180.5118,
+            "median_absolute_error_minor": 9167.0,
+            "root_mean_squared_error_minor": 111738.8207,
+            "smape": 0.0809984,
+            "wape": 0.07344804
+          },
+          "zero": {
+            "count": 22,
+            "error_over_mean_income": null,
+            "mean_absolute_error_minor": 282333.5,
+            "mean_prediction_minor": 282333.5,
+            "mean_truth_minor": 0.0,
+            "median_absolute_error_minor": 282333.5,
+            "root_mean_squared_error_minor": 299799.2661,
+            "smape": 2.0,
+            "wape": null
+          }
+        }
+      }
+    },
+    "routed_ensemble": {
+      "overall": {
+        "count": 312,
+        "error_over_mean_income": 0.02225361,
+        "mean_absolute_error_minor": 12179.1026,
+        "mean_prediction_minor": 545353.3526,
+        "mean_truth_minor": 547286.6859,
+        "median_absolute_error_minor": 965.0,
+        "root_mean_squared_error_minor": 30628.226,
+        "smape": 0.03204564,
+        "wape": 0.02225361
+      },
+      "segments": {
+        "consent_coverage": {
+          "complete": {
+            "count": 204,
+            "error_over_mean_income": 0.03410988,
+            "mean_absolute_error_minor": 17715.9755,
+            "mean_prediction_minor": 515511.8873,
+            "mean_truth_minor": 519379.6373,
+            "median_absolute_error_minor": 4992.0,
+            "root_mean_squared_error_minor": 37545.2265,
+            "smape": 0.04752666,
+            "wape": 0.03410988
+          },
+          "partial_high": {
+            "count": 108,
+            "error_over_mean_income": 0.00286761,
+            "mean_absolute_error_minor": 1720.5648,
+            "mean_prediction_minor": 601720.5648,
+            "mean_truth_minor": 600000.0,
+            "median_absolute_error_minor": 0.0,
+            "root_mean_squared_error_minor": 6882.7107,
+            "smape": 0.00280372,
+            "wape": 0.00286761
+          }
+        },
+        "history_length": {
+          "months_12_plus": {
+            "count": 26,
+            "error_over_mean_income": 0.01331386,
+            "mean_absolute_error_minor": 8476.7308,
+            "mean_prediction_minor": 632045.9615,
+            "mean_truth_minor": 636684.4615,
+            "median_absolute_error_minor": 4992.0,
+            "root_mean_squared_error_minor": 16837.2782,
+            "smape": 0.01466983,
+            "wape": 0.01331386
+          },
+          "months_6_to_11": {
+            "count": 156,
+            "error_over_mean_income": 0.01369575,
+            "mean_absolute_error_minor": 7156.2179,
+            "mean_prediction_minor": 521965.4615,
+            "mean_truth_minor": 522513.7692,
+            "median_absolute_error_minor": 383.0,
+            "root_mean_squared_error_minor": 17720.1538,
+            "smape": 0.01786551,
+            "wape": 0.01369575
+          },
+          "months_under_6": {
+            "count": 130,
+            "error_over_mean_income": 0.03388636,
+            "mean_absolute_error_minor": 18947.0385,
+            "mean_prediction_minor": 556080.3,
+            "mean_truth_minor": 559134.6308,
+            "median_absolute_error_minor": 2606.0,
+            "root_mean_squared_error_minor": 42636.9364,
+            "smape": 0.05253696,
+            "wape": 0.03388636
+          }
+        },
+        "income_volatility": {
+          "moderate": {
+            "count": 11,
+            "error_over_mean_income": null,
+            "mean_absolute_error_minor": 0.0,
+            "mean_prediction_minor": 0.0,
+            "mean_truth_minor": 0.0,
+            "median_absolute_error_minor": 0.0,
+            "root_mean_squared_error_minor": 0.0,
+            "smape": 0.0,
+            "wape": null
+          },
+          "stable": {
+            "count": 210,
+            "error_over_mean_income": 0.01428856,
+            "mean_absolute_error_minor": 8793.0333,
+            "mean_prediction_minor": 611727.3286,
+            "mean_truth_minor": 615389.6381,
+            "median_absolute_error_minor": 965.0,
+            "root_mean_squared_error_minor": 20956.8833,
+            "smape": 0.01515501,
+            "wape": 0.01428856
+          },
+          "unknown": {
+            "count": 26,
+            "error_over_mean_income": 0.07133085,
+            "mean_absolute_error_minor": 39268.9231,
+            "mean_prediction_minor": 539903.0769,
+            "mean_truth_minor": 550518.0769,
+            "median_absolute_error_minor": 13126.0,
+            "root_mean_squared_error_minor": 68872.8511,
+            "smape": 0.09728947,
+            "wape": 0.07133085
+          },
+          "volatile": {
+            "count": 65,
+            "error_over_mean_income": 0.03426734,
+            "mean_absolute_error_minor": 14343.8615,
+            "mean_prediction_minor": 425385.0308,
+            "mean_truth_minor": 418586.9538,
+            "median_absolute_error_minor": 401.0,
+            "root_mean_squared_error_minor": 34445.7693,
+            "smape": 0.06594096,
+            "wape": 0.03426734
+          }
+        },
+        "sustainable_income_range": {
+          "high": {
+            "count": 12,
+            "error_over_mean_income": 0.04403474,
+            "mean_absolute_error_minor": 37605.6667,
+            "mean_prediction_minor": 819681.1667,
+            "mean_truth_minor": 854000.0,
+            "median_absolute_error_minor": 19317.0,
+            "root_mean_squared_error_minor": 60945.8486,
+            "smape": 0.04678819,
+            "wape": 0.04403474
+          },
+          "low": {
+            "count": 24,
+            "error_over_mean_income": 0.28568057,
+            "mean_absolute_error_minor": 50584.4583,
+            "mean_prediction_minor": 199298.125,
+            "mean_truth_minor": 177066.5,
+            "median_absolute_error_minor": 32042.0,
+            "root_mean_squared_error_minor": 72147.313,
+            "smape": 0.24690455,
+            "wape": 0.28568057
+          },
+          "middle": {
+            "count": 254,
+            "error_over_mean_income": 0.01366083,
+            "mean_absolute_error_minor": 8403.878,
+            "mean_prediction_minor": 612326.4449,
+            "mean_truth_minor": 615180.5118,
+            "median_absolute_error_minor": 965.0,
+            "root_mean_squared_error_minor": 22022.2807,
+            "smape": 0.01382312,
+            "wape": 0.01366083
+          },
+          "zero": {
+            "count": 22,
+            "error_over_mean_income": null,
+            "mean_absolute_error_minor": 0.0,
+            "mean_prediction_minor": 0.0,
+            "mean_truth_minor": 0.0,
+            "median_absolute_error_minor": 0.0,
+            "root_mean_squared_error_minor": 0.0,
+            "smape": 0.0,
+            "wape": null
+          }
+        }
+      }
+    }
+  },
+  "routing_reason_counts": {
+    "CAPACITY_MODEL_SELECTED": 213,
+    "COMPLETE_COVERAGE": 204,
+    "PARTIAL_COVERAGE": 9,
+    "STABLE_INCOME_AND_PARTIAL_COVERAGE_PREFERS_CASH_FLOW": 99,
+    "VOLATILE_INCOME": 76,
+    "VOLATILITY_UNKNOWN": 26
+  },
+  "row_count": 312,
+  "schema_version": "1.0"
+}

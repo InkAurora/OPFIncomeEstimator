@@ -16,6 +16,7 @@ from finances_simulator.config import load_scenario_config
 
 from income_estimator.features.schema import FEATURE_NAMES
 from income_estimator.models.capacity import GradientBoostedCapacityModel
+from income_estimator.models.ensemble import ENSEMBLE_VERSION
 from income_estimator.models.quantiles import (
     CONFIDENCE_BAND_FLOORS,
     CalibrationBindingError,
@@ -50,6 +51,13 @@ from training.out_of_fold import (
 )
 from training.uncertainty_boosting import WidthObservation, fit_width_recalibrator
 
+# The pair the runtime loads today. Tests that exercise wiring rather than history use this.
+CURRENT_ARTIFACT_PATH = (
+    Path(__file__).parents[1] / "training" / "artifacts" / "quantile-calibration-0.12.0.json"
+)
+# Superseded, kept for the historical assertions below. The runtime refuses to construct with it:
+# it records no routing rule, and every artifact before schema `1.6` was fitted around one this
+# package no longer has.
 ARTIFACT_PATH = (
     Path(__file__).parents[1] / "training" / "artifacts" / "quantile-calibration-0.9.0.json"
 )
@@ -298,10 +306,16 @@ def test_withheld_band_reports_an_uncalibrated_interval(request_payload, transac
         ],
         months=6,
     )
-    estimator = EnsembleIncomeEstimator(CAPACITY_MODEL_PATH, calibration_path=ARTIFACT_PATH)
+    estimator = EnsembleIncomeEstimator(
+        CAPACITY_MODEL_PATH, calibration_path=CURRENT_ARTIFACT_PATH
+    )
     calibration = estimator.intervals.artifact
+    # The envelope is dropped here on purpose. This fixture is one transaction a month across one
+    # domain, which the calibration population does not contain, so the real envelope refuses it --
+    # correctly, and that refusal is the subject of its own test. This one is about which bands
+    # publish.
     estimator.intervals = ConformalIntervalModel(
-        calibration.model_copy(update={"published_bands": ()})
+        calibration.model_copy(update={"published_bands": (), "support_envelope": None})
     )
     published = estimator.estimate_v1_1(payload).monthly_estimates[-1]
 
@@ -312,7 +326,9 @@ def test_withheld_band_reports_an_uncalibrated_interval(request_payload, transac
         band for band, _ in CONFIDENCE_BAND_FLOORS if band != month_band
     )
     estimator.intervals = ConformalIntervalModel(
-        calibration.model_copy(update={"published_bands": remaining})
+        calibration.model_copy(
+            update={"published_bands": remaining, "support_envelope": None}
+        )
     )
     withheld = estimator.estimate_v1_1(payload).monthly_estimates[-1]
 
@@ -692,14 +708,16 @@ def test_ensemble_publishes_calibrated_quantiles(request_payload, transaction) -
 
     estimator = EnsembleIncomeEstimator(
         CAPACITY_MODEL_PATH,
-        calibration_path=ARTIFACT_PATH,
+        calibration_path=CURRENT_ARTIFACT_PATH,
     )
     estimator.intervals = ConformalIntervalModel(
-        estimator.intervals.artifact.model_copy(update={"published_bands": ()})
+        estimator.intervals.artifact.model_copy(
+            update={"published_bands": (), "support_envelope": None}
+        )
     )
     month = estimator.estimate_v1_1(payload).monthly_estimates[-1]
 
-    assert "adaptive-intervals-0.9.0" in estimator.model_versions
+    assert "conditional-selector-intervals-0.12.0" in estimator.model_versions
     assert month.quantile_unavailable_reason is None
     assert month.sustainable_income_p10_minor is not None
     assert month.sustainable_income_p90_minor is not None
@@ -1391,13 +1409,20 @@ def test_an_out_of_support_row_is_refused_rather_than_answered(
         ],
         months=6,
     )
-    estimator = EnsembleIncomeEstimator(CAPACITY_MODEL_PATH, calibration_path=ARTIFACT_PATH)
+    estimator = EnsembleIncomeEstimator(
+        CAPACITY_MODEL_PATH, calibration_path=CURRENT_ARTIFACT_PATH
+    )
+    # The baseline is taken with the envelope removed, because the real one already refuses this
+    # sparse fixture. What is under test is that fencing a feature changes an answer into a stated
+    # refusal, and both halves have to differ by the fence alone.
+    unfenced = estimator.intervals.artifact.model_copy(update={"support_envelope": None})
+    estimator.intervals = ConformalIntervalModel(unfenced)
     supported = estimator.estimate_v1_1(payload).monthly_estimates[-1]
     assert supported.sustainable_income_p10_minor is not None
 
     # Fence a feature at a range nothing can satisfy, leaving everything else untouched.
     estimator.intervals = ConformalIntervalModel(
-        estimator.intervals.artifact.model_copy(
+        unfenced.model_copy(
             update={
                 "support_envelope": _envelope(
                     ranges={"income_mean_3m_minor": {"minimum": -2.0, "maximum": -1.0}}
@@ -1416,19 +1441,19 @@ def test_an_out_of_support_row_is_refused_rather_than_answered(
 
 
 PROMOTED_ARTIFACT_PATH = (
-    Path(__file__).parents[1] / "training" / "artifacts" / "quantile-calibration-0.11.0.json"
+    Path(__file__).parents[1] / "training" / "artifacts" / "quantile-calibration-0.12.0.json"
 )
 PROMOTED_REPORT_PATH = (
     Path(__file__).parents[1]
     / "training"
     / "artifacts"
-    / "quantile-calibration-0.11.0-report.json"
+    / "quantile-calibration-0.12.0-report.json"
 )
 LOCKBOX_REPORT_PATH = (
     Path(__file__).parents[1]
     / "training"
     / "artifacts"
-    / "lockbox-conditional-selector-intervals-0.11.0-report.json"
+    / "lockbox-conditional-selector-intervals-0.12.0-report.json"
 )
 
 
@@ -1447,31 +1472,37 @@ def test_the_promoted_artifact_passed_every_gate_and_the_lockbox() -> None:
     assert lockbox["status"] == "RELEASE_CONFIRMED"
     assert lockbox["read_once"] is True
     # The lockbox is not the validation population, and says which seeds it drew.
-    assert all(suite["seed"] >= 710_000 for suite in lockbox["suites"])
+    assert all(suite["seed"] >= 810_000 for suite in lockbox["suites"])
 
 
-def test_the_lockbox_measured_the_bounds_the_promoted_artifact_publishes() -> None:
-    """Abstention was added after the lockbox was read, so additivity is checked, not argued.
+def test_the_lockbox_read_the_exact_bytes_that_ship() -> None:
+    """`0.11.0` needed two lockbox readings; `0.12.0` needs one.
 
-    The two artifacts differ by the support envelope and the schema version alone. Nothing in the
-    offset path reads the envelope, so every in-support row publishes the bounds that were measured.
+    Back then the support envelope was attached after the lockbox had been read, so the reading that
+    promoted the calibration described bytes no deployment ran, and additivity had to be argued
+    field by field. `0.12.0` is written with its envelope already in place. One reading names the
+    digest that ships, so there is nothing left to argue.
     """
 
+    artifact_bytes = PROMOTED_ARTIFACT_PATH.read_bytes()
     promoted = json.loads(PROMOTED_ARTIFACT_PATH.read_text(encoding="utf-8"))
     lockbox = json.loads(LOCKBOX_REPORT_PATH.read_text(encoding="utf-8"))
 
-    assert lockbox["artifact_schema_version"] == "1.4"
-    assert promoted["schema_version"] == "1.5"
-    changed = {
-        key
-        for key in set(promoted) | {"support_envelope"}
-        if key not in ("schema_version", "support_envelope")
-    }
-    # Everything the interval is computed from is unchanged; only the envelope was added.
-    assert "support_envelope" in promoted
+    assert lockbox["artifact_sha256"] == hashlib.sha256(artifact_bytes).hexdigest()
+    assert lockbox["artifact_schema_version"] == promoted["schema_version"] == "1.6"
     assert promoted["calibration_version"] == lockbox["calibration_version"]
     assert promoted["capacity_artifact_sha256"] == lockbox["capacity_artifact_sha256"]
-    assert changed  # the fields above are present and were compared byte-wise at promotion time
+    assert "support_envelope" in promoted
+
+
+def test_the_promoted_artifact_records_the_routing_it_was_fitted_around() -> None:
+    """Residuals are taken around what routing publishes, so the rule is part of the fit."""
+
+    promoted = json.loads(PROMOTED_ARTIFACT_PATH.read_text(encoding="utf-8"))
+    report = json.loads(PROMOTED_REPORT_PATH.read_text(encoding="utf-8"))
+
+    assert promoted["ensemble_version"] == ENSEMBLE_VERSION
+    assert report["ensemble_version"] == ENSEMBLE_VERSION
 
 
 def test_the_promoted_artifact_is_the_pair_the_runtime_loads() -> None:
@@ -1479,7 +1510,7 @@ def test_the_promoted_artifact_is_the_pair_the_runtime_loads() -> None:
         CAPACITY_MODEL_PATH, calibration_path=PROMOTED_ARTIFACT_PATH
     )
 
-    assert "conditional-selector-intervals-0.11.0" in estimator.model_versions
+    assert "conditional-selector-intervals-0.12.0" in estimator.model_versions
     assert estimator.intervals.artifact.conditional_selector is not None
     assert estimator.intervals.artifact.support_envelope is not None
     # The selector never reads a scenario label, only a feature and a band.

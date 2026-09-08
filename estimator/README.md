@@ -31,17 +31,17 @@ contract changes, milestones, evaluation metrics, and acceptance criteria.
 Estimator `0.11` is the promoted milestone. One answer is produced by three artifacts read
 together: realized income from the frozen `recurring-streams-0.2.0` reconstruction, sustainable
 income from capacity model `capacity-gbdt-stumps-0.6.0`, and that estimate's interval from
-calibration `conditional-selector-intervals-0.11.0`, routed by `ensemble-0.6.0` over feature set
+calibration `conditional-selector-intervals-0.12.0`, routed by `ensemble-0.7.0` over feature set
 `customer-month-features-1.2.0`. Input contracts `1.0` through `1.2` are accepted; the estimate is
 output contract `1.1` and the explanation is contract `1.0`.
 
 ```bash
-income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.11.0.json request.json
+income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.12.0.json request.json
 ```
 
 The two artifacts are a bound pair. The calibration records the capacity `model_version` and the
 SHA-256 of its exact bytes, and the runtime refuses any other combination when the estimator is
-constructed. `capacity-estimator-0.6.0.json` with `quantile-calibration-0.11.0.json` is the only
+constructed. `capacity-estimator-0.6.0.json` with `quantile-calibration-0.12.0.json` is the only
 pair in this repository whose binding resolves; `quantile-calibration-0.8.0.json` names capacity
 bytes that no longer exist here and cannot be loaded against anything.
 
@@ -56,16 +56,15 @@ The command above names two artifacts and trusts whoever typed it. A deployment 
 manifest pinning every file by SHA-256:
 
 ```text
-bundles/production-0.11.0/
+bundles/production-0.12.0/
 |-- manifest.json                                   bundle contract 1.0
 |-- artifacts/
 |   |-- capacity-estimator-0.6.0.json               read at inference
-|   `-- quantile-calibration-0.11.0.json            read at inference
+|   `-- quantile-calibration-0.12.0.json            read at inference
 `-- provenance/
     |-- capacity-estimator-0.6.0-report.json        why this model
-    |-- quantile-calibration-0.11.0-report.json     why this calibration
-    |-- lockbox-...-0.11.0-report.json              RELEASE_CONFIRMED, promoted bytes
-    `-- lockbox-...-0.11.0-release-report.json      RELEASE_CONFIRMED, these bytes
+    |-- quantile-calibration-0.12.0-report.json     why this calibration
+    `-- lockbox-...-0.12.0-report.json              RELEASE_CONFIRMED, these exact bytes
 ```
 
 The two lockbox readings measured different artifacts. The first promoted the calibration; the
@@ -76,8 +75,8 @@ The bundle's identity is the SHA-256 of `manifest.json`. Because the manifest pi
 by digest, that one number covers the whole directory, and it is what the result reports.
 
 ```bash
-income-estimator request.json --bundle bundles/production-0.11.0
-income-estimator request.json --bundle bundles/production-0.11.0 --explain
+income-estimator request.json --bundle bundles/production-0.12.0
+income-estimator request.json --bundle bundles/production-0.12.0 --explain
 ```
 
 Both emit production result contract `1.0`: an unmodified output `1.2` estimate or explanation `1.0`
@@ -93,10 +92,10 @@ got before.
 ```json
 {
   "schema_version": "1.0",
-  "bundle_id": "production-0.11.0",
-  "bundle_digest": "d856811cee0982186a6dcf4a81869d89d12bf7cc49048687c5c37032d5df2785",
-  "estimator_package_version": "0.11.0",
-  "model_versions": ["capacity-gbdt-stumps-0.6.0", "conditional-selector-intervals-0.11.0"],
+  "bundle_id": "production-0.12.0",
+  "bundle_digest": "1f4f8fe3a59eb23ac96568f328c87ee20f5fb4ea90f3fa6b90ae839795f73787",
+  "estimator_package_version": "0.12.0",
+  "model_versions": ["capacity-gbdt-stumps-0.6.0", "conditional-selector-intervals-0.12.0"],
   "estimate": { "schema_version": "1.2", "assessment_status": "SUPPORTED", "...": "..." }
 }
 ```
@@ -106,7 +105,7 @@ from pathlib import Path
 
 from income_estimator import ProductionIncomeEstimator
 
-estimator = ProductionIncomeEstimator.from_bundle(Path("bundles/production-0.11.0"))
+estimator = ProductionIncomeEstimator.from_bundle(Path("bundles/production-0.12.0"))
 result = estimator.estimate_production(request)
 result.bundle_digest
 ```
@@ -134,7 +133,7 @@ rather than an equality check, so a newer loader keeps reading an older bundle.
 ### Building one
 
 ```bash
-python -m release.build_bundle --output bundles/production-0.11.0
+python -m release.build_bundle --output bundles/production-0.12.0
 ```
 
 Deterministic: two builds from the same artifacts produce byte-identical output, and a test asserts
@@ -274,7 +273,7 @@ row.missing_features
 
 ```bash
 income-estimator --features request.json
-income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.11.0.json request.json
+income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.12.0.json request.json
 ```
 
 The default estimator is promoted `0.2`. The rejected `0.3` classifier stays optional and is
@@ -486,7 +485,7 @@ from income_estimator import EnsembleIncomeEstimator
 
 estimator = EnsembleIncomeEstimator(
     Path("training/artifacts/capacity-estimator-0.6.0.json"),
-    calibration_path=Path("training/artifacts/quantile-calibration-0.11.0.json"),
+    calibration_path=Path("training/artifacts/quantile-calibration-0.12.0.json"),
 )
 month = estimator.estimate_v1_1(request).monthly_estimates[-1]
 month.sustainable_income_p10_minor, month.sustainable_income_p90_minor
@@ -509,7 +508,7 @@ remainder folded into a single entry, so the printed decomposition still reconst
 prediction. The contract rejects one that does not.
 
 ```bash
-income-estimator --explain --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.11.0.json request.json
+income-estimator --explain --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.12.0.json request.json
 ```
 
 [Model cards](docs/model-cards.md) cover every promoted artifact, each with its measured results and
@@ -525,9 +524,9 @@ they measure generalization to new conditions rather than to new customers.
 python -m evaluation.stress_report --population-size 20 --workers 4
 ```
 
-Measured on `capacity-gbdt-stumps-0.6.0` with `conditional-selector-intervals-0.11.0`, 20 customers
+Measured on `capacity-gbdt-stumps-0.6.0` with `conditional-selector-intervals-0.12.0`, 20 customers
 and 12 months per suite. Recorded in
-[`evaluation/baselines/stress-0.11.0-report.json`](evaluation/baselines/stress-0.11.0-report.json).
+[`evaluation/baselines/stress-0.12.0-report.json`](evaluation/baselines/stress-0.12.0-report.json).
 
 | suite | in training | realized WAPE | sustainable WAPE | intervals published | interval coverage | mean confidence |
 |---|---|---|---|---|---|---|
@@ -590,7 +589,7 @@ one input-contract file and prints either view:
 income-estimator request.json
 income-estimator --audit request.json
 income-estimator --features request.json
-income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.11.0.json request.json
+income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.12.0.json request.json
 income-estimator --baseline-0.1 request.json
 income-estimator --model training/artifacts/transaction-classifier-0.3.0.json request.json
 ```

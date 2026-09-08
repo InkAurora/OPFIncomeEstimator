@@ -153,8 +153,8 @@ def test_the_exact_promoted_pair_answers_and_is_named_in_the_output(estimator) -
     result = run_demo("mixed_income_professional", seed=1234, months=12)
     assert result.model_versions == EXPECTED_MODEL_VERSIONS
     assert result.bundle_id == EXPECTED_BUNDLE_ID
-    assert result.bundle_version == "0.11.0"
-    assert result.estimator_package_version == "0.11.0"
+    assert result.bundle_version == "0.12.0"
+    assert result.estimator_package_version == "0.12.0"
     assert result.bundle_digest == estimator.bundle_digest
     assert set(EXPECTED_MODEL_VERSIONS) <= set(result.explanation.model_versions)
 
@@ -163,7 +163,7 @@ def test_the_exact_promoted_pair_answers_and_is_named_in_the_output(estimator) -
     assert evidence["promotion_bundle"]["bundle_id"] == EXPECTED_BUNDLE_ID
     assert evidence["promotion_bundle"]["bundle_digest"] == estimator.bundle_digest
     assert evidence["artifact_versions"]["model_versions"] == list(EXPECTED_MODEL_VERSIONS)
-    assert evidence["artifact_versions"]["estimator_version"] == "ensemble-0.6.0"
+    assert evidence["artifact_versions"]["estimator_version"] == "ensemble-0.7.0"
     assert evidence["artifact_versions"]["input_contract_version"] == "1.2"
     assert evidence["artifact_versions"]["output_contract_version"] == "1.2"
 
@@ -199,7 +199,7 @@ def test_an_altered_bundle_is_refused_with_a_readable_message(
 
     altered = tmp_path / EXPECTED_BUNDLE_ID
     shutil.copytree(PROMOTED_BUNDLE_PATH, altered)
-    target = altered / "artifacts" / "quantile-calibration-0.11.0.json"
+    target = altered / "artifacts" / "quantile-calibration-0.12.0.json"
     target.write_bytes(target.read_bytes() + b"\n")
     monkeypatch.setattr(service, "PROMOTED_BUNDLE_PATH", altered)
     service.load_estimator.cache_clear()

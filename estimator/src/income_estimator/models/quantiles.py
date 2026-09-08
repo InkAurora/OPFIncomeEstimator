@@ -85,11 +85,17 @@ class BandAdjustment(QuantileModel):
 
 
 class ConformalCalibrationArtifact(QuantileModel):
-    schema_version: Literal["1.0", "1.1", "1.2", "1.3", "1.4", "1.5"] = "1.5"
+    schema_version: Literal["1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6"] = "1.6"
     calibration_version: str = Field(min_length=1)
     method: Literal["split-conformal-log-residual"] = CALIBRATION_METHOD
     capacity_model_version: str = Field(min_length=1)
     capacity_artifact_sha256: str = Field(min_length=64, max_length=64)
+    # Residuals are taken around the estimate `combine_month` publishes, routing included, so the
+    # routing rule is part of what this artifact was fitted to. Until `1.6` nothing recorded that:
+    # a calibration fitted around one routing rule loaded silently under another, which is the same
+    # failure as evidence outliving its pipeline, one level down. Optional only so that artifacts
+    # written before `1.6` still parse; the loader refuses one that names a different rule.
+    ensemble_version: str | None = Field(default=None, min_length=1)
     out_of_fold_version: str = Field(min_length=1)
     fold_count: int = Field(ge=2)
     nominal_lower_quantile: float = Field(gt=0, lt=1)
@@ -295,6 +301,33 @@ def require_capacity_binding(
             f"{artifact.capacity_model_version} with sha256 "
             f"{artifact.capacity_artifact_sha256}, but the artifact in hand hashes to "
             f"{capacity_artifact_sha256}"
+        )
+
+
+def require_routing_binding(
+    artifact: ConformalCalibrationArtifact,
+    *,
+    ensemble_version: str,
+) -> None:
+    """Fail unless the routing rule in hand is the one the calibration was fitted around.
+
+    The offsets correct residuals taken around what `combine_month` publishes, and what it publishes
+    depends on which component routing selected. Change the rule and the residual distribution moves
+    under a calibration that still parses, still verifies its digests, and is quietly wrong.
+
+    An artifact written before schema `1.6` names no rule. Those are refused rather than trusted:
+    every one of them was fitted around a rule this package no longer has.
+    """
+
+    if artifact.ensemble_version is None:
+        raise CalibrationBindingError(
+            f"calibration {artifact.calibration_version} records no routing version, so nothing "
+            f"establishes it was fitted around {ensemble_version}; refit it under schema 1.6"
+        )
+    if artifact.ensemble_version != ensemble_version:
+        raise CalibrationBindingError(
+            f"calibration {artifact.calibration_version} was fitted around routing "
+            f"{artifact.ensemble_version}, not {ensemble_version}"
         )
 
 

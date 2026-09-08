@@ -33,11 +33,11 @@ from demo_app.profiles import Profile, get_profile, supported_months
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 BUNDLE_DIRECTORY = REPOSITORY_ROOT / "estimator" / "bundles"
-PROMOTED_BUNDLE_PATH = BUNDLE_DIRECTORY / "production-0.11.0"
-EXPECTED_BUNDLE_ID = "production-0.11.0"
+PROMOTED_BUNDLE_PATH = BUNDLE_DIRECTORY / "production-0.12.0"
+EXPECTED_BUNDLE_ID = "production-0.12.0"
 EXPECTED_MODEL_VERSIONS: tuple[str, ...] = (
     "capacity-gbdt-stumps-0.6.0",
-    "conditional-selector-intervals-0.11.0",
+    "conditional-selector-intervals-0.12.0",
 )
 
 # Field names that exist only inside the simulator's private layers. The demo asserts none of them

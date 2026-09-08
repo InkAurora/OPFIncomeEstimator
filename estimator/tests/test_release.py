@@ -22,7 +22,7 @@ from release.build_bundle import build_bundle
 from release.check_documented_cli import check_documented_commands, documented_commands
 from release.record_fixtures import record
 
-BUNDLE_ROOT = Path(__file__).parents[1] / "bundles" / "production-0.11.0"
+BUNDLE_ROOT = Path(__file__).parents[1] / "bundles" / "production-0.12.0"
 FIXTURE_ROOT = Path(__file__).parent / "fixtures"
 
 
@@ -31,11 +31,11 @@ def test_committed_bundle_is_what_the_builder_produces(tmp_path: Path) -> None:
 
     from income_estimator import __version__ as package_version
 
-    rebuilt = tmp_path / "production-0.11.0"
+    rebuilt = tmp_path / "production-0.12.0"
     build_bundle(
         rebuilt,
-        bundle_id="production-0.11.0",
-        bundle_version="0.11.0",
+        bundle_id="production-0.12.0",
+        bundle_version="0.12.0",
         package_version=package_version,
     )
 
@@ -63,8 +63,8 @@ def test_bundle_build_is_deterministic(tmp_path: Path) -> None:
         target = tmp_path / name
         build_bundle(
             target,
-            bundle_id="production-0.11.0",
-            bundle_version="0.11.0",
+            bundle_id="production-0.12.0",
+            bundle_version="0.12.0",
             package_version=package_version,
         )
         digests.append(hashlib.sha256((target / "manifest.json").read_bytes()).hexdigest())
@@ -74,7 +74,7 @@ def test_bundle_build_is_deterministic(tmp_path: Path) -> None:
 
 def test_minimal_request_output_has_not_drifted(request_v1_2: dict[str, object]) -> None:
     expected = json.loads(
-        (FIXTURE_ROOT / "production-0.11.0-expected.json").read_text(encoding="utf-8")
+        (FIXTURE_ROOT / "production-0.12.0-expected.json").read_text(encoding="utf-8")
     )
     result = ProductionIncomeEstimator.from_bundle(BUNDLE_ROOT).estimate_production(request_v1_2)
 
@@ -127,7 +127,7 @@ def test_simulator_request_output_has_not_drifted() -> None:
     from finances_simulator.integration import build_estimator_input_v1_2
 
     expected = json.loads(
-        (FIXTURE_ROOT / "production-0.11.0-income-diverse-seed-42.json").read_text(
+        (FIXTURE_ROOT / "production-0.12.0-income-diverse-seed-42.json").read_text(
             encoding="utf-8"
         )
     )
@@ -190,7 +190,7 @@ REJECTED_EVIDENCE_CASES = (
     ("RELEASE_LOCKBOX_REPORT_SOURCE", {"failures": ["empirical coverage below floor"]}),
     ("RELEASE_LOCKBOX_REPORT_SOURCE", {"artifact_sha256": "0" * 64}),
     ("RELEASE_LOCKBOX_REPORT_SOURCE", {"failures": "none"}),
-    ("LOCKBOX_REPORT_SOURCE", {"capacity_model_version": "capacity-gbdt-stumps-0.5.0"}),
+    ("RELEASE_LOCKBOX_REPORT_SOURCE", {"capacity_model_version": "capacity-gbdt-stumps-0.5.0"}),
     ("CAPACITY_REPORT_SOURCE", {"promotion": {"status": "NOT_PROMOTED", "failures": []}}),
     ("CAPACITY_REPORT_SOURCE", {"artifact_sha256": "f" * 64}),
     ("CALIBRATION_REPORT_SOURCE", {"promotion": {"status": "REJECTED", "failures": ["x"]}}),
@@ -239,8 +239,8 @@ def test_bundle_refuses_evidence_of_a_run_that_did_not_pass(
     with pytest.raises(ValueError):
         build_bundle_module.build_bundle(
             tmp_path / "bundle",
-            bundle_id="production-0.11.0",
-            bundle_version="0.11.0",
+            bundle_id="production-0.12.0",
+            bundle_version="0.12.0",
             package_version="0.0.0",
         )
 
@@ -253,8 +253,8 @@ def test_untouched_promotion_evidence_still_builds(
 
     manifest = build_bundle_module.build_bundle(
         tmp_path / "bundle",
-        bundle_id="production-0.11.0",
-        bundle_version="0.11.0",
+        bundle_id="production-0.12.0",
+        bundle_version="0.12.0",
         package_version="0.0.0",
     )
     assert manifest.capacity.version == "capacity-gbdt-stumps-0.6.0"

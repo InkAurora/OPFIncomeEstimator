@@ -29,7 +29,7 @@ def request_file(tmp_path: Path, request_payload, transaction) -> Path:
         (("--baseline-0.1",), "rule-based-0.1.0"),
         (("--audit",), "transaction_decisions"),
         (("--features",), "customer-month-features-1.2.0"),
-        (("--ensemble",), "ensemble-0.6.0"),
+        (("--ensemble",), "ensemble-0.7.0"),
         (("--explain",), "monthly_explanations"),
     ],
 )

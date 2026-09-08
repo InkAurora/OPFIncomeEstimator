@@ -1,11 +1,11 @@
 {
-  "bundle_digest": "d856811cee0982186a6dcf4a81869d89d12bf7cc49048687c5c37032d5df2785",
-  "bundle_id": "production-0.11.0",
-  "estimator_version": "ensemble-0.6.0",
+  "bundle_digest": "1f4f8fe3a59eb23ac96568f328c87ee20f5fb4ea90f3fa6b90ae839795f73787",
+  "bundle_id": "production-0.12.0",
+  "estimator_version": "ensemble-0.7.0",
   "feature_set_version": "customer-month-features-1.2.0",
   "model_versions": [
     "capacity-gbdt-stumps-0.6.0",
-    "conditional-selector-intervals-0.11.0"
+    "conditional-selector-intervals-0.12.0"
   ],
   "months": [
     {
@@ -28,11 +28,11 @@
       "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
       "realized_income_estimate_minor": 640000,
       "routing_reason_codes": [
-        "STABLE_INCOME_PREFERS_CASH_FLOW",
-        "PARTIAL_OR_UNDECLARED_COVERAGE"
+        "CAPACITY_MODEL_SELECTED",
+        "COVERAGE_UNDECLARED"
       ],
       "sustainable_income_p10_minor": null,
-      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p50_minor": 675890,
       "sustainable_income_p90_minor": null
     },
     {
@@ -41,11 +41,11 @@
       "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
       "realized_income_estimate_minor": 640000,
       "routing_reason_codes": [
-        "STABLE_INCOME_PREFERS_CASH_FLOW",
-        "PARTIAL_OR_UNDECLARED_COVERAGE"
+        "CAPACITY_MODEL_SELECTED",
+        "COVERAGE_UNDECLARED"
       ],
       "sustainable_income_p10_minor": null,
-      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p50_minor": 669509,
       "sustainable_income_p90_minor": null
     },
     {
@@ -54,11 +54,11 @@
       "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
       "realized_income_estimate_minor": 640000,
       "routing_reason_codes": [
-        "STABLE_INCOME_PREFERS_CASH_FLOW",
-        "PARTIAL_OR_UNDECLARED_COVERAGE"
+        "CAPACITY_MODEL_SELECTED",
+        "COVERAGE_UNDECLARED"
       ],
       "sustainable_income_p10_minor": null,
-      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p50_minor": 673213,
       "sustainable_income_p90_minor": null
     },
     {
@@ -67,11 +67,11 @@
       "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
       "realized_income_estimate_minor": 640000,
       "routing_reason_codes": [
-        "STABLE_INCOME_PREFERS_CASH_FLOW",
-        "PARTIAL_OR_UNDECLARED_COVERAGE"
+        "CAPACITY_MODEL_SELECTED",
+        "COVERAGE_UNDECLARED"
       ],
       "sustainable_income_p10_minor": null,
-      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p50_minor": 715596,
       "sustainable_income_p90_minor": null
     },
     {
@@ -80,11 +80,11 @@
       "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
       "realized_income_estimate_minor": 640000,
       "routing_reason_codes": [
-        "STABLE_INCOME_PREFERS_CASH_FLOW",
-        "PARTIAL_OR_UNDECLARED_COVERAGE"
+        "CAPACITY_MODEL_SELECTED",
+        "COVERAGE_UNDECLARED"
       ],
       "sustainable_income_p10_minor": null,
-      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p50_minor": 715596,
       "sustainable_income_p90_minor": null
     },
     {
@@ -93,11 +93,11 @@
       "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
       "realized_income_estimate_minor": 640000,
       "routing_reason_codes": [
-        "STABLE_INCOME_PREFERS_CASH_FLOW",
-        "PARTIAL_OR_UNDECLARED_COVERAGE"
+        "CAPACITY_MODEL_SELECTED",
+        "COVERAGE_UNDECLARED"
       ],
       "sustainable_income_p10_minor": null,
-      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p50_minor": 715596,
       "sustainable_income_p90_minor": null
     },
     {
@@ -106,11 +106,11 @@
       "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
       "realized_income_estimate_minor": 640000,
       "routing_reason_codes": [
-        "STABLE_INCOME_PREFERS_CASH_FLOW",
-        "PARTIAL_OR_UNDECLARED_COVERAGE"
+        "CAPACITY_MODEL_SELECTED",
+        "COVERAGE_UNDECLARED"
       ],
       "sustainable_income_p10_minor": null,
-      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p50_minor": 719265,
       "sustainable_income_p90_minor": null
     },
     {
@@ -119,11 +119,11 @@
       "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
       "realized_income_estimate_minor": 640000,
       "routing_reason_codes": [
-        "STABLE_INCOME_PREFERS_CASH_FLOW",
-        "PARTIAL_OR_UNDECLARED_COVERAGE"
+        "CAPACITY_MODEL_SELECTED",
+        "COVERAGE_UNDECLARED"
       ],
       "sustainable_income_p10_minor": null,
-      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p50_minor": 711947,
       "sustainable_income_p90_minor": null
     },
     {
@@ -132,11 +132,11 @@
       "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
       "realized_income_estimate_minor": 640000,
       "routing_reason_codes": [
-        "STABLE_INCOME_PREFERS_CASH_FLOW",
-        "PARTIAL_OR_UNDECLARED_COVERAGE"
+        "CAPACITY_MODEL_SELECTED",
+        "COVERAGE_UNDECLARED"
       ],
       "sustainable_income_p10_minor": null,
-      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p50_minor": 711947,
       "sustainable_income_p90_minor": null
     },
     {
@@ -145,11 +145,11 @@
       "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
       "realized_income_estimate_minor": 640000,
       "routing_reason_codes": [
-        "STABLE_INCOME_PREFERS_CASH_FLOW",
-        "PARTIAL_OR_UNDECLARED_COVERAGE"
+        "CAPACITY_MODEL_SELECTED",
+        "COVERAGE_UNDECLARED"
       ],
       "sustainable_income_p10_minor": null,
-      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p50_minor": 711947,
       "sustainable_income_p90_minor": null
     },
     {
@@ -158,13 +158,13 @@
       "quantile_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
       "realized_income_estimate_minor": 640000,
       "routing_reason_codes": [
-        "STABLE_INCOME_PREFERS_CASH_FLOW",
-        "PARTIAL_OR_UNDECLARED_COVERAGE"
+        "CAPACITY_MODEL_SELECTED",
+        "COVERAGE_UNDECLARED"
       ],
       "sustainable_income_p10_minor": null,
-      "sustainable_income_p50_minor": 640000,
+      "sustainable_income_p50_minor": 711947,
       "sustainable_income_p90_minor": null
     }
   ],
-  "result_sha256": "5e7b150629ab1958299099d01b6960cf3a25bc17b3dfad7329f5aad20b43f889"
+  "result_sha256": "49e6e3a511223e3421f190cd4cd4452fee53faaeb001a829bfb736abb5bd1d22"
 }

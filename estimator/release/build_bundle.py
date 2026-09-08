@@ -10,7 +10,7 @@ be a bundle only on this machine.
 
 Run from the estimator directory:
 
-    python -m release.build_bundle --output bundles/production-0.11.0
+    python -m release.build_bundle --output bundles/production-0.12.0
 """
 
 from __future__ import annotations
@@ -35,32 +35,24 @@ ARTIFACT_ROOT = Path(__file__).parents[1] / "training" / "artifacts"
 CRLF = bytes((13, 10))
 
 CAPACITY_SOURCE = ARTIFACT_ROOT / "capacity-estimator-0.6.0.json"
-CALIBRATION_SOURCE = ARTIFACT_ROOT / "quantile-calibration-0.11.0.json"
+CALIBRATION_SOURCE = ARTIFACT_ROOT / "quantile-calibration-0.12.0.json"
 CAPACITY_REPORT_SOURCE = ARTIFACT_ROOT / "capacity-estimator-0.6.0-report.json"
-CALIBRATION_REPORT_SOURCE = ARTIFACT_ROOT / "quantile-calibration-0.11.0-report.json"
-LOCKBOX_REPORT_SOURCE = (
-    ARTIFACT_ROOT / "lockbox-conditional-selector-intervals-0.11.0-report.json"
-)
+CALIBRATION_REPORT_SOURCE = ARTIFACT_ROOT / "quantile-calibration-0.12.0-report.json"
+
+# `0.11.0` needed two lockbox readings because the support envelope was attached after the first
+# one, so the report that promoted the calibration described bytes the bundle did not ship.
+# `0.12.0` is written with its envelope already attached, so one reading describes the released
+# bytes exactly and there is no earlier reading to keep beside it.
 RELEASE_LOCKBOX_REPORT_SOURCE = (
-    ARTIFACT_ROOT / "lockbox-conditional-selector-intervals-0.11.0-release-report.json"
+    ARTIFACT_ROOT / "lockbox-conditional-selector-intervals-0.12.0-report.json"
 )
 
-DECISION_RECORD = "docs/adr/0008-conditional-selector-promotion-and-abstention.md"
+DECISION_RECORD = "docs/adr/0009-routing-narrowed-and-recalibrated.md"
 
 ACCEPTED_INPUT_CONTRACT_VERSIONS = ("1.0", "1.1", "1.2")
 
 TRAINING_PROMOTED_STATUS = "PROMOTED"
 LOCKBOX_CONFIRMED_STATUS = "RELEASE_CONFIRMED"
-
-# The lockbox is read once, before the support envelope is attached to the calibration artifact, so
-# its report legitimately names bytes that are not the ones shipped. That is why it alone is not
-# checked against the bundled calibration digest. Leaving it unchecked instead would make it a
-# report about nothing, so the digest it is allowed to name is pinned here, reviewed in this file,
-# and changed only when a new lockbox read is promoted. The release report that follows the envelope
-# must describe the final bytes exactly, and is checked that way below.
-PRE_ENVELOPE_CALIBRATION_SHA256 = (
-    "21e248f58864a9f95c1bbd326f6a70c904f1b2ec161f5ce7f29270e8e329f807"
-)
 
 
 def _digest(path: Path) -> str:
@@ -189,18 +181,6 @@ def _validate_promotion_evidence(
         },
     )
     _check_promotion(
-        LOCKBOX_REPORT_SOURCE,
-        status_at=("status",),
-        expected_status=LOCKBOX_CONFIRMED_STATUS,
-        failures_at=("failures",),
-        pins={
-            ("artifact_sha256",): PRE_ENVELOPE_CALIBRATION_SHA256,
-            ("calibration_version",): calibration.calibration_version,
-            ("capacity_artifact_sha256",): capacity_digest,
-            ("capacity_model_version",): capacity.model_version,
-        },
-    )
-    _check_promotion(
         RELEASE_LOCKBOX_REPORT_SOURCE,
         status_at=("status",),
         expected_status=LOCKBOX_CONFIRMED_STATUS,
@@ -228,7 +208,6 @@ def build_bundle(
         CALIBRATION_SOURCE,
         CAPACITY_REPORT_SOURCE,
         CALIBRATION_REPORT_SOURCE,
-        LOCKBOX_REPORT_SOURCE,
         RELEASE_LOCKBOX_REPORT_SOURCE,
     ):
         if not source.is_file():
@@ -281,7 +260,6 @@ def build_bundle(
     calibration_relative = f"artifacts/{CALIBRATION_SOURCE.name}"
     capacity_report_relative = f"provenance/{CAPACITY_REPORT_SOURCE.name}"
     calibration_report_relative = f"provenance/{CALIBRATION_REPORT_SOURCE.name}"
-    lockbox_relative = f"provenance/{LOCKBOX_REPORT_SOURCE.name}"
     release_lockbox_relative = f"provenance/{RELEASE_LOCKBOX_REPORT_SOURCE.name}"
 
     manifest = BundleManifestV1(
@@ -321,10 +299,6 @@ def build_bundle(
                     CALIBRATION_REPORT_SOURCE, directory / calibration_report_relative
                 ),
             },
-            "lockbox_report": {
-                "path": lockbox_relative,
-                "sha256": _copy(LOCKBOX_REPORT_SOURCE, directory / lockbox_relative),
-            },
             "release_lockbox_report": {
                 "path": release_lockbox_relative,
                 "sha256": _copy(
@@ -348,11 +322,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path(__file__).parents[1] / "bundles" / "production-0.11.0",
+        default=Path(__file__).parents[1] / "bundles" / "production-0.12.0",
         help="Bundle directory to write; replaced if it already exists",
     )
-    parser.add_argument("--bundle-id", default="production-0.11.0")
-    parser.add_argument("--bundle-version", default="0.11.0")
+    parser.add_argument("--bundle-id", default="production-0.12.0")
+    parser.add_argument("--bundle-version", default="0.12.0")
     args = parser.parse_args(argv)
 
     from income_estimator import __version__ as package_version

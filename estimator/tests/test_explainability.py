@@ -22,7 +22,7 @@ CAPACITY_MODEL_PATH = (
     Path(__file__).parents[1] / "training" / "artifacts" / "capacity-estimator-0.6.0.json"
 )
 CALIBRATION_PATH = (
-    Path(__file__).parents[1] / "training" / "artifacts" / "quantile-calibration-0.11.0.json"
+    Path(__file__).parents[1] / "training" / "artifacts" / "quantile-calibration-0.12.0.json"
 )
 
 PRIVATE_TRUTH_FIELDS = (
@@ -162,10 +162,10 @@ def test_explanation_traces_every_decision_and_version(
     )
 
     assert isinstance(explanation, EstimationExplanationV1)
-    assert explanation.estimator_version == "ensemble-0.6.0"
+    assert explanation.estimator_version == "ensemble-0.7.0"
     assert explanation.output_contract_version == "1.2"
     assert "capacity-gbdt-stumps-0.6.0" in explanation.model_versions
-    assert "conditional-selector-intervals-0.11.0" in explanation.model_versions
+    assert "conditional-selector-intervals-0.12.0" in explanation.model_versions
     assert explanation.income_streams
 
     assert [item.transaction_id for item in february.included_transactions] == ["salary-02"]
@@ -234,7 +234,7 @@ def test_every_readable_artifact_has_a_model_card() -> None:
         "capacity-gbdt-stumps-0.6.0",
         "conformal-intervals-0.8.0",
         "adaptive-intervals-0.9.0",
-        "conditional-selector-intervals-0.11.0",
+        "conditional-selector-intervals-0.12.0",
     ):
         assert version in card_text
         section = card_text.split(version, 1)[1]

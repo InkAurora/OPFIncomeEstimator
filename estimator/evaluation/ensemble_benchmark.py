@@ -190,7 +190,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
-    path = output / "ensemble-0.6.0-report.json"
+    # Named for the routing version it measures, so a report cannot outlive the rule it
+    # describes by being overwritten under a stale name.
+    path = output / f"ensemble-{ENSEMBLE_VERSION.rsplit(chr(45), 1)[-1]}-report.json"
     path.write_text(
         json.dumps(report, indent=2, sort_keys=True, default=list) + "\n",
         encoding="utf-8",

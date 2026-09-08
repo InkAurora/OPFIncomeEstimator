@@ -25,7 +25,7 @@ from income_estimator.contracts.output_v1_1 import (
 from income_estimator.models.capacity import GradientBoostedCapacityModel
 from income_estimator.models.quantiles import ConformalIntervalModel
 
-ENSEMBLE_VERSION = "deterministic-routing-0.6.0"
+ENSEMBLE_VERSION = "deterministic-routing-0.7.0"
 
 STABLE_VOLATILITY_MAXIMUM_RATIO = 0.1
 COMPLETE_COVERAGE_BASIS_POINTS = 10_000
@@ -94,11 +94,22 @@ def _route_sustainable(
 ) -> tuple[str | None, tuple[str, ...]]:
     """Select one component and say why.
 
-    The capacity model wins on held-out data in every measured segment except stable income, where
-    last month's reconstruction is already the answer and the model only adds noise. That single
-    exception is routed explicitly rather than averaged away. Conditioning it on full coverage as
-    well was measured and rejected: on the intersection the model wins again, so the narrower rule
-    made the ensemble worse than its own best component.
+    Last month's reconstruction beats the capacity model where income is stable and the consent
+    scope is declared incomplete: the model has to infer what it cannot see, while the reconstructed
+    month has already accounted for the gap. Where coverage is complete the model wins, and routing
+    away from it there is what made `0.6.0` worse than its own best component.
+
+    That is a reversal of the earlier rule, and of the earlier reasoning. Conditioning on coverage
+    was measured against `capacity-gbdt-stumps-0.5.0` and rejected. Re-measured against `0.6.0`, on
+    the benchmark's own seeds, the intersection is where routing earns the most: routing on
+    stability alone scored `16064.13` against `14910.78` for the model by itself, while routing on
+    stability *and* declared partial coverage scored `12179.10`. Confirmed afterwards on seeds
+    `910_000`-`930_000`, which nothing had generated, over 71 customers and 852 rows: `16690.13`
+    against `19220.34` for the model alone and `20126.14` for the old rule. The ranking is the same
+    on both populations.
+
+    Undeclared coverage does not route. It is not evidence of a gap; it is the absence of evidence
+    either way, and it was not what the measurement covered.
     """
 
     reasons: list[str] = []
@@ -111,15 +122,17 @@ def _route_sustainable(
     coverage = features.get("effective_consent_coverage_basis_points")
     stable = volatility is not None and volatility < STABLE_VOLATILITY_MAXIMUM_RATIO
     complete = coverage is not None and coverage >= COMPLETE_COVERAGE_BASIS_POINTS
-    if stable and "cash_flow_last_month" in candidates:
-        reasons.append("STABLE_INCOME_PREFERS_CASH_FLOW")
-        reasons.append("COMPLETE_COVERAGE" if complete else "PARTIAL_OR_UNDECLARED_COVERAGE")
+    declared_partial = coverage is not None and coverage < COMPLETE_COVERAGE_BASIS_POINTS
+    if stable and declared_partial and "cash_flow_last_month" in candidates:
+        reasons.append("STABLE_INCOME_AND_PARTIAL_COVERAGE_PREFERS_CASH_FLOW")
         return "cash_flow_last_month", tuple(reasons)
 
     reasons.append("CAPACITY_MODEL_SELECTED")
     if coverage is None:
         reasons.append("COVERAGE_UNDECLARED")
-    elif not complete:
+    elif complete:
+        reasons.append("COMPLETE_COVERAGE")
+    else:
         reasons.append("PARTIAL_COVERAGE")
     if volatility is None:
         reasons.append("VOLATILITY_UNKNOWN")

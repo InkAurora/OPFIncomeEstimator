@@ -28,7 +28,7 @@ from pathlib import Path
 import pytest
 
 ESTIMATOR_ROOT = Path(__file__).parents[1]
-BUNDLE_ROOT = ESTIMATOR_ROOT / "bundles" / "production-0.11.0"
+BUNDLE_ROOT = ESTIMATOR_ROOT / "bundles" / "production-0.12.0"
 FIXTURE_ROOT = Path(__file__).parent / "fixtures"
 
 pytestmark = pytest.mark.skipif(
@@ -110,7 +110,7 @@ def test_installed_wheel_imports_without_the_repository(clean_environment: Path)
     )
 
     assert completed.returncode == 0, completed.stderr
-    assert completed.stdout.strip() == "0.11.0"
+    assert completed.stdout.strip() == "0.12.0"
 
 
 def test_console_script_runs_a_relocated_bundle(
@@ -138,7 +138,7 @@ def test_console_script_runs_a_relocated_bundle(
     assert completed.returncode == 0, completed.stderr
 
     expected = json.loads(
-        (FIXTURE_ROOT / "production-0.11.0-expected.json").read_text(encoding="utf-8")
+        (FIXTURE_ROOT / "production-0.12.0-expected.json").read_text(encoding="utf-8")
     )
     payload = json.loads(completed.stdout)
     assert payload["bundle_digest"] == expected["bundle_digest"]

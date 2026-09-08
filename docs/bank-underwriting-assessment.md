@@ -1,5 +1,11 @@
 # Bank underwriting and credit-limit assessment
 
+> **Superseded evidence.** Citations below point at the `production-0.11.0` bundle and the
+> `0.11.0` calibration. That release has been replaced by `production-0.12.0` under
+> [ADR 0009](adr/0009-routing-narrowed-and-recalibrated.md), which narrows routing, refits the
+> calibration around it, and records different out-of-distribution numbers. The findings here
+> still hold; the file paths and figures are the ones that were current when it was written.
+
 Assessment date: 2026-09-05. Repository baseline: `896ebc4`. Primary use case: Brazilian retail loan underwriting and credit limits, as confirmed by the project owner.
 
 ## Recommendation

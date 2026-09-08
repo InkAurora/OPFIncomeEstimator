@@ -278,7 +278,7 @@ def test_months_must_match_the_window_it_describes(request_payload, transaction)
         RecurringIncomeEstimator().explain(payload)
 
 
-BUNDLE_ROOT = Path(__file__).parents[1] / "bundles" / "production-0.11.0"
+BUNDLE_ROOT = Path(__file__).parents[1] / "bundles" / "production-0.12.0"
 
 
 @pytest.fixture(scope="module")

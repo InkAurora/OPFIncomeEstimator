@@ -36,6 +36,7 @@ from income_estimator.models.ensemble import ENSEMBLE_VERSION, combine_month
 from income_estimator.models.quantiles import (
     ConformalIntervalModel,
     require_capacity_binding,
+    require_routing_binding,
 )
 from income_estimator.models.transaction_classifier import MODEL_FEATURE_VERSION
 from income_estimator.transaction_intelligence import (
@@ -50,7 +51,7 @@ ESTIMATOR_VERSION = "rule-based-0.1.0"
 RECURRING_ESTIMATOR_VERSION = "recurring-streams-0.2.0"
 RECURRING_FEATURE_VERSION = "income-stream-features-1.0.0"
 SUPERVISED_ESTIMATOR_VERSION = "supervised-transactions-0.3.0"
-ENSEMBLE_ESTIMATOR_VERSION = "ensemble-0.6.0"
+ENSEMBLE_ESTIMATOR_VERSION = "ensemble-0.7.0"
 
 
 def _baseline_reconstruction_audit(
@@ -212,6 +213,9 @@ class EnsembleIncomeEstimator(RecurringIncomeEstimator):
                     self.capacity.artifact_sha256 if self.capacity is not None else None
                 ),
             )
+            # Routing is the other half of what the residuals were taken around, and until schema
+            # 1.6 nothing recorded it.
+            require_routing_binding(self.intervals.artifact, ensemble_version=ENSEMBLE_VERSION)
         versions: list[str] = []
         if self.capacity is not None:
             versions.append(self.capacity.artifact.model_version)

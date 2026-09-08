@@ -204,7 +204,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--calibration",
         type=Path,
-        default=Path(__file__).parents[1] / "training/artifacts/quantile-calibration-0.11.0.json",
+        default=Path(__file__).parents[1] / "training/artifacts/quantile-calibration-0.12.0.json",
     )
     parser.add_argument("--output", type=Path, default=Path(__file__).parent / "baselines")
     parser.add_argument("--population-size", type=int, default=20)
@@ -242,7 +242,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     }
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
-    path = output / "stress-0.11.0-report.json"
+    # Named for the calibration it measured. The name was fixed at `0.11.0` while the default
+    # calibration moved on, so a run of one pair overwrote a report about another.
+    version = estimator.intervals.artifact.calibration_version.rsplit("-", 1)[-1]
+    path = output / f"stress-{version}-report.json"
     path.write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
