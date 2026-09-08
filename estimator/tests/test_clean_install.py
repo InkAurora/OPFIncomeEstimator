@@ -8,6 +8,11 @@ shows.
 
 Opt-in. It builds a wheel and creates a virtual environment, which is too slow for the inner loop
 and needs a package index for ``pydantic``. CI sets ``INCOME_ESTIMATOR_CLEAN_INSTALL_TEST=1``.
+
+Opting in is the only choice this suite offers. Once the variable is set, a wheel that will not
+build, an environment that will not create, or an install that will not complete is the failure
+this suite exists to catch, so each one fails here rather than reporting a skip that CI reads as
+success.
 """
 
 from __future__ import annotations
@@ -59,20 +64,20 @@ def clean_environment(tmp_path_factory: pytest.TempPathFactory) -> Path:
         cwd=str(ESTIMATOR_ROOT),
     )
     if build.returncode != 0:
-        pytest.skip(f"could not build a wheel: {build.stderr[-2000:]}")
+        pytest.fail(f"could not build a wheel: {build.stderr[-2000:]}")
     wheels = sorted(wheelhouse.glob("income_estimator-*.whl"))
     assert wheels, "pip wheel produced no income_estimator wheel"
 
     environment = root / "venv"
     created = _run([sys.executable, "-m", "venv", str(environment)])
     if created.returncode != 0:
-        pytest.skip(f"could not create a virtual environment: {created.stderr[-2000:]}")
+        pytest.fail(f"could not create a virtual environment: {created.stderr[-2000:]}")
 
     installed = _run(
         [str(_venv_script(environment, "python")), "-m", "pip", "install", str(wheels[0])]
     )
     if installed.returncode != 0:
-        pytest.skip(f"could not install the wheel: {installed.stderr[-2000:]}")
+        pytest.fail(f"could not install the wheel: {installed.stderr[-2000:]}")
     return environment
 
 
@@ -85,7 +90,7 @@ def test_wheel_carries_no_artifacts(tmp_path: Path) -> None:
         cwd=str(ESTIMATOR_ROOT),
     )
     if build.returncode != 0:
-        pytest.skip(f"could not build a wheel: {build.stderr[-2000:]}")
+        pytest.fail(f"could not build a wheel: {build.stderr[-2000:]}")
     wheel = sorted(wheelhouse.glob("income_estimator-*.whl"))[0]
     names = zipfile.ZipFile(wheel).namelist()
 

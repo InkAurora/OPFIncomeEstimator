@@ -15,6 +15,33 @@ cd estimator
 python -m evaluation.run_benchmark --workers 4
 ```
 
+# Routing benchmark
+
+`ensemble-0.6.0-report.json` is **historical** and does not describe the shipped model. It records
+`deterministic-routing-0.6.0` evaluated against `capacity-gbdt-stumps-0.5.0`, artifact
+`f58f13d5...`. The bundle ships `capacity-gbdt-stumps-0.6.0`, artifact `4ee9c3a6...`, so its
+`PROMOTED` status and its `21226.734` routed against `23236.3045` best-component MAE are a
+measurement of a pair that is no longer assembled by anything.
+
+Re-running the same benchmark against its own current default, on the same seed ranges and 80
+customers per suite, reverses the result: routing scores `16064.1282` where the capacity model
+alone scores `14910.7821`, a `7.73%` regression, and only `months_under_6` and `partial_high`
+improve. The status is `NOT_PROMOTED`.
+
+That failure is not fixed here. It is made visible: the benchmark now exits non-zero when the
+status is not `PROMOTED`, and CI runs it as a release gate, so the routing rule can no longer fail
+quietly while the bundle digests keep verifying. Changing routing changes the residual the
+intervals are calibrated against, so routing and calibration are revised together rather than
+separately, and this file is regenerated only once that pair has been re-evaluated.
+
+```bash
+cd estimator
+python -m evaluation.ensemble_benchmark --output ../output/local --workers 4
+```
+
+The gate is on by default. `--no-gate` records a report for a routing rule that is still being
+worked on, without claiming it passed.
+
 # Stress suites
 
 `stress-0.8.0-report.json` is **void as evidence** and is retained only so the defect it exposed

@@ -19,7 +19,7 @@ import argparse
 import hashlib
 import json
 import shutil
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from income_estimator.contracts.bundle_v1 import BUNDLE_CONTRACT_VERSION, BundleManifestV1
@@ -49,6 +49,19 @@ DECISION_RECORD = "docs/adr/0008-conditional-selector-promotion-and-abstention.m
 
 ACCEPTED_INPUT_CONTRACT_VERSIONS = ("1.0", "1.1", "1.2")
 
+TRAINING_PROMOTED_STATUS = "PROMOTED"
+LOCKBOX_CONFIRMED_STATUS = "RELEASE_CONFIRMED"
+
+# The lockbox is read once, before the support envelope is attached to the calibration artifact, so
+# its report legitimately names bytes that are not the ones shipped. That is why it alone is not
+# checked against the bundled calibration digest. Leaving it unchecked instead would make it a
+# report about nothing, so the digest it is allowed to name is pinned here, reviewed in this file,
+# and changed only when a new lockbox read is promoted. The release report that follows the envelope
+# must describe the final bytes exactly, and is checked that way below.
+PRE_ENVELOPE_CALIBRATION_SHA256 = (
+    "21e248f58864a9f95c1bbd326f6a70c904f1b2ec161f5ce7f29270e8e329f807"
+)
+
 
 def _digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -77,6 +90,128 @@ def _copy(source: Path, destination: Path) -> str:
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(source, destination)
     return _digest(destination)
+
+
+def _dig(report: Mapping[str, object], source: Path, path: tuple[str, ...]) -> object:
+    """Read a nested field, treating an absent one as evidence of the wrong document."""
+
+    node: object = report
+    for key in path:
+        if not isinstance(node, Mapping) or key not in node:
+            raise ValueError(
+                f"{source.name} has no field {'.'.join(path)}; it is not the promotion evidence "
+                "this release requires"
+            )
+        node = node[key]
+    return node
+
+
+def _check_promotion(
+    source: Path,
+    *,
+    status_at: tuple[str, ...],
+    expected_status: str,
+    failures_at: tuple[str, ...],
+    pins: Mapping[tuple[str, ...], str],
+) -> None:
+    """Refuse a report unless it records a passing, failure-free run over the bytes shipped."""
+
+    payload = json.loads(source.read_text(encoding="utf-8"))
+    if not isinstance(payload, Mapping):
+        raise ValueError(f"{source.name} must be a JSON object")
+
+    status = _dig(payload, source, status_at)
+    if status != expected_status:
+        raise ValueError(
+            f"{source.name} records {'.'.join(status_at)}={status!r}, not {expected_status!r}; "
+            "a release cannot be assembled from evidence of a run that did not pass"
+        )
+
+    failures = _dig(payload, source, failures_at)
+    if not isinstance(failures, list):
+        raise ValueError(
+            f"{source.name} records {'.'.join(failures_at)}={failures!r}, which is not a list of "
+            "failures; an unreadable failure list is not an empty one"
+        )
+    if failures:
+        raise ValueError(
+            f"{source.name} lists {len(failures)} promotion failure(s) beside its "
+            f"{expected_status!r} status: {failures!r}"
+        )
+
+    for field, expected in pins.items():
+        actual = _dig(payload, source, field)
+        if actual != expected:
+            raise ValueError(
+                f"{source.name} names {'.'.join(field)}={actual!r}, but this bundle ships "
+                f"{expected!r}; the evidence describes something other than the bytes being bundled"
+            )
+
+
+def _validate_promotion_evidence(
+    capacity: CapacityEstimatorArtifact,
+    calibration: ConformalCalibrationArtifact,
+    *,
+    capacity_digest: str,
+    calibration_digest: str,
+) -> None:
+    """Refuse to bundle model bytes whose evidence does not record a passing release.
+
+    ``_copy`` and the manifest digests prove the bundle holds the bytes this build read. They prove
+    nothing about whether those bytes ever passed a gate: a report declaring ``RELEASE_REJECTED``
+    with an all-zero digest copies exactly as cleanly as one declaring success. The loader is an
+    integrity verifier by contract and deliberately reads no status either, so assembly is the only
+    place promotion can be enforced.
+    """
+
+    _check_promotion(
+        CAPACITY_REPORT_SOURCE,
+        status_at=("promotion", "status"),
+        expected_status=TRAINING_PROMOTED_STATUS,
+        failures_at=("promotion", "failures"),
+        pins={
+            ("artifact_sha256",): capacity_digest,
+            ("model_version",): capacity.model_version,
+            ("feature_version",): FEATURE_SET_VERSION,
+            ("feature_schema_fingerprint",): FEATURE_SCHEMA_FINGERPRINT,
+        },
+    )
+    _check_promotion(
+        CALIBRATION_REPORT_SOURCE,
+        status_at=("promotion", "status"),
+        expected_status=TRAINING_PROMOTED_STATUS,
+        failures_at=("promotion", "failures"),
+        pins={
+            ("artifact_sha256",): calibration_digest,
+            ("calibration_version",): calibration.calibration_version,
+            ("capacity_artifact_sha256",): capacity_digest,
+            ("capacity_model_version",): capacity.model_version,
+        },
+    )
+    _check_promotion(
+        LOCKBOX_REPORT_SOURCE,
+        status_at=("status",),
+        expected_status=LOCKBOX_CONFIRMED_STATUS,
+        failures_at=("failures",),
+        pins={
+            ("artifact_sha256",): PRE_ENVELOPE_CALIBRATION_SHA256,
+            ("calibration_version",): calibration.calibration_version,
+            ("capacity_artifact_sha256",): capacity_digest,
+            ("capacity_model_version",): capacity.model_version,
+        },
+    )
+    _check_promotion(
+        RELEASE_LOCKBOX_REPORT_SOURCE,
+        status_at=("status",),
+        expected_status=LOCKBOX_CONFIRMED_STATUS,
+        failures_at=("failures",),
+        pins={
+            ("artifact_sha256",): calibration_digest,
+            ("calibration_version",): calibration.calibration_version,
+            ("capacity_artifact_sha256",): capacity_digest,
+            ("capacity_model_version",): capacity.model_version,
+        },
+    )
 
 
 def build_bundle(
@@ -122,11 +257,20 @@ def build_bundle(
             f"calibration {calibration.calibration_version} was fitted against "
             f"{calibration.capacity_model_version}, not {capacity.model_version}"
         )
-    if calibration.capacity_artifact_sha256 != _digest(CAPACITY_SOURCE):
+    capacity_digest = _digest(CAPACITY_SOURCE)
+    calibration_digest = _digest(CALIBRATION_SOURCE)
+    if calibration.capacity_artifact_sha256 != capacity_digest:
         raise ValueError(
             f"calibration {calibration.calibration_version} pins capacity bytes "
             f"{calibration.capacity_artifact_sha256}, which are not the bytes being bundled"
         )
+
+    _validate_promotion_evidence(
+        capacity,
+        calibration,
+        capacity_digest=capacity_digest,
+        calibration_digest=calibration_digest,
+    )
 
     directory = Path(output)
     if directory.exists():

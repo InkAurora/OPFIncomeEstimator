@@ -12,6 +12,12 @@ exports/
 output/
 *.parquet
 
+# The committed reference populations are the expected bytes their byte-stability tests compare
+# against, and every one of those files is already pinned by SHA-256 inside the manifest committed
+# beside it. Excluding them left those tests comparing a full generated tree against two JSON files,
+# which can only fail. Re-included narrowly, ahead of nothing else.
+!finances_simulator/examples/generated/**/*.parquet
+
 # Common editor and operating-system files
 .idea/
 .vscode/

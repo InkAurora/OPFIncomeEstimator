@@ -11,11 +11,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 from pathlib import Path
 
 import pytest
 
 from income_estimator.production import ProductionIncomeEstimator
+from release import build_bundle as build_bundle_module
 from release.build_bundle import build_bundle
 from release.check_documented_cli import check_documented_commands, documented_commands
 from release.record_fixtures import record
@@ -181,3 +183,78 @@ def test_every_documented_cli_command_runs(tmp_path: Path) -> None:
     commands = documented_commands()
     assert len(commands) >= 10, "expected the README to document the full CLI surface"
     assert not check_documented_commands(request_path)
+
+
+REJECTED_EVIDENCE_CASES = (
+    ("RELEASE_LOCKBOX_REPORT_SOURCE", {"status": "RELEASE_REJECTED"}),
+    ("RELEASE_LOCKBOX_REPORT_SOURCE", {"failures": ["empirical coverage below floor"]}),
+    ("RELEASE_LOCKBOX_REPORT_SOURCE", {"artifact_sha256": "0" * 64}),
+    ("RELEASE_LOCKBOX_REPORT_SOURCE", {"failures": "none"}),
+    ("LOCKBOX_REPORT_SOURCE", {"capacity_model_version": "capacity-gbdt-stumps-0.5.0"}),
+    ("CAPACITY_REPORT_SOURCE", {"promotion": {"status": "NOT_PROMOTED", "failures": []}}),
+    ("CAPACITY_REPORT_SOURCE", {"artifact_sha256": "f" * 64}),
+    ("CALIBRATION_REPORT_SOURCE", {"promotion": {"status": "REJECTED", "failures": ["x"]}}),
+    ("CALIBRATION_REPORT_SOURCE", {"artifact_sha256": "f" * 64}),
+)
+
+
+@pytest.fixture
+def isolated_artifacts(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """A writable copy of the promoted artifacts, with the builder pointed at it."""
+
+    artifacts = tmp_path / "artifacts"
+    shutil.copytree(build_bundle_module.ARTIFACT_ROOT, artifacts)
+    monkeypatch.setattr(build_bundle_module, "ARTIFACT_ROOT", artifacts)
+    for name in dir(build_bundle_module):
+        if not name.endswith("_SOURCE"):
+            continue
+        source = getattr(build_bundle_module, name)
+        monkeypatch.setattr(build_bundle_module, name, artifacts / source.name)
+    return artifacts
+
+
+@pytest.mark.parametrize(("attribute", "patch"), REJECTED_EVIDENCE_CASES)
+def test_bundle_refuses_evidence_of_a_run_that_did_not_pass(
+    isolated_artifacts: Path,
+    tmp_path: Path,
+    attribute: str,
+    patch: dict[str, object],
+) -> None:
+    """Copying bytes faithfully is not the same as proving they were ever promoted.
+
+    Every digest in the manifest describes the file the builder read, so a report declaring
+    ``RELEASE_REJECTED`` used to be bundled as cleanly as one declaring success. The loader is an
+    integrity verifier by contract and reads no status, so assembly is the only gate there is.
+    """
+
+    target = getattr(build_bundle_module, attribute)
+    payload = json.loads(target.read_text(encoding="utf-8"))
+    payload.update(patch)
+    target.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    with pytest.raises(ValueError):
+        build_bundle_module.build_bundle(
+            tmp_path / "bundle",
+            bundle_id="production-0.11.0",
+            bundle_version="0.11.0",
+            package_version="0.0.0",
+        )
+
+
+def test_untouched_promotion_evidence_still_builds(
+    isolated_artifacts: Path,
+    tmp_path: Path,
+) -> None:
+    """The gate must reject failed evidence without rejecting the release it guards."""
+
+    manifest = build_bundle_module.build_bundle(
+        tmp_path / "bundle",
+        bundle_id="production-0.11.0",
+        bundle_version="0.11.0",
+        package_version="0.0.0",
+    )
+    assert manifest.capacity.version == "capacity-gbdt-stumps-0.6.0"

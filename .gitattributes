@@ -10,3 +10,8 @@ estimator/training/artifacts/*.json text eol=lf
 # digest. A checkout that rewrote line endings would change every one of those digests and make the
 # committed bundle fail its own integrity check.
 estimator/bundles/**/*.json text eol=lf
+
+# Recorded output fixtures are compared byte for byte against what the recorder writes today, and
+# the recorder writes LF. Without this pin a Windows checkout gets CRLF and the comparison fails on
+# line endings while every financial value in the file is correct.
+estimator/tests/fixtures/*.json text eol=lf

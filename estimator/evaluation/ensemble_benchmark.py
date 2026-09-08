@@ -170,6 +170,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--population-size-per-suite", type=int, default=80)
     parser.add_argument("--months", type=int, default=12)
     parser.add_argument("--workers", type=int, default=1)
+    # A benchmark that prints NOT_PROMOTED and exits successfully is not a gate, and CI reading only
+    # the exit status learned nothing from it. Failing is therefore the default; --no-gate exists so
+    # an exploratory run can record a report of a routing rule that is still being worked on.
+    parser.add_argument(
+        "--gate",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Exit non-zero when the promotion status is not PROMOTED (default: enabled)",
+    )
     args = parser.parse_args(argv)
 
     report = run_benchmark(
@@ -187,10 +196,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         encoding="utf-8",
         newline="\n",
     )
+    status = report["promotion"]["status"]
     print(f"Report: {path}")
-    print(f"Promotion: {report['promotion']['status']}")
+    print(f"Promotion: {status}")
     for failure in report["promotion"]["failures"]:
         print(f"  - {failure}")
+    if args.gate and status != "PROMOTED":
+        print("Routing did not earn its place against its own best component.")
+        return 1
     return 0
 
 

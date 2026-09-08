@@ -16,6 +16,16 @@ dependencies = [
     "income-estimator",
 ]
 
+# The package directory is also the project directory, so setuptools' flat-layout discovery sees
+# app.py, service.py and their siblings as five unrelated top-level modules and refuses to guess.
+# The layout is stated instead: one package, `demo_app`, rooted here, which is exactly how the tests
+# and `streamlit run` already import it.
+[tool.setuptools]
+packages = ["demo_app"]
+
+[tool.setuptools.package-dir]
+demo_app = "."
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8.3,<9",
