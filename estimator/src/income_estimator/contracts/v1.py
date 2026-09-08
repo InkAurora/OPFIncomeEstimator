@@ -12,10 +12,26 @@ ESTIMATOR_CONTRACT_VERSION = "1.0"
 
 
 def _parse_date(value: str, field_name: str) -> date:
+    """Parse a date, accepting only the extended form the rest of the package assumes.
+
+    ``date.fromisoformat`` also accepts the basic form, so ``20260105`` validates here and then
+    fails silently downstream: months are taken with ``value[:7]`` and windows are compared as
+    strings, both of which assume ``YYYY-MM-DD``. A basic-form date used to pass validation and
+    then earn zero income, which is worse than a refusal, because nothing said the date was the
+    reason. Rewriting the caller's date into the extended form would hide the same disagreement in
+    the audit trail, so the value is refused rather than repaired.
+    """
+
     try:
-        return date.fromisoformat(value)
+        parsed = date.fromisoformat(value)
     except ValueError as error:
         raise ValueError(f"{field_name} must be an ISO-8601 calendar date") from error
+    if value != parsed.isoformat():
+        raise ValueError(
+            f"{field_name} must be written as YYYY-MM-DD; {value!r} parses as "
+            f"{parsed.isoformat()} but is compared and sliced as text elsewhere"
+        )
+    return parsed
 
 
 class EstimatorContractModel(BaseModel):
@@ -108,6 +124,21 @@ class EstimatorInputV1(EstimatorContractModel):
         window_end = _parse_date(self.window_end, "window_end")
         if window_end < window_start:
             raise ValueError("window_end must not precede window_start")
+
+        # Reconstruction walks `months` forward from `window_start`, while feature construction
+        # stops at `window_end`. When the two disagree the extra months get an empty feature row and
+        # are scored anyway, which published a sustainable income for a month the request never
+        # observed. They describe one window, so they must agree.
+        spanned = (
+            (window_end.year - window_start.year) * 12
+            + (window_end.month - window_start.month)
+            + 1
+        )
+        if self.months != spanned:
+            raise ValueError(
+                f"months={self.months} does not match the window {self.window_start}..."
+                f"{self.window_end}, which spans {spanned} calendar month(s)"
+            )
 
         records = (
             *self.accounts,

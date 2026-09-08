@@ -32,6 +32,45 @@ def _active_months(
     return set(months[first : last + 1])
 
 
+def _month_index(month: str) -> int:
+    return int(month[:4]) * 12 + int(month[5:])
+
+
+# Months between consecutive payments, for each cadence the detector can actually establish.
+_CADENCE_MONTH_STEP: dict[str, int] = {
+    "WEEKLY": 1,
+    "BIWEEKLY": 1,
+    "MONTHLY": 1,
+    "QUARTERLY": 3,
+}
+
+
+def _due_months(stream: IncomeStream, active_months: set[str]) -> set[str]:
+    """Months inside the active span where this stream's cadence expected a payment.
+
+    Every unobserved month in the span used to count as a missing payment, whatever the cadence. A
+    quarterly source paying R$9,000 in January, April and July was therefore reported as paying
+    R$9,000 in all seven months, turning R$27,000 observed into R$63,000 reconstructed. A month is a
+    gap only if a payment was due in it.
+
+    Phase is read from the months that were actually observed. Quarterly payments that do not agree
+    on one phase leave the due months unknown, and a cadence the detector could not establish at all
+    -- irregular, or one-off -- states nothing about when the next payment was due. Both withhold
+    imputation rather than fall back on a monthly rhythm nothing measured.
+    """
+
+    step = _CADENCE_MONTH_STEP.get(stream.frequency)
+    if step is None:
+        return set()
+    if step == 1:
+        return set(active_months)
+    phases = {_month_index(month) % step for month in stream.observed_months}
+    if len(phases) != 1:
+        return set()
+    phase = next(iter(phases))
+    return {month for month in active_months if _month_index(month) % step == phase}
+
+
 def _supporting_ids(
     stream: IncomeStream,
     month: str,
@@ -68,6 +107,7 @@ def reconstruct_recurring_income(
             included_by_month[decision.posted_month].append(decision)
 
     eligible_streams: list[tuple[IncomeStream, set[str], int]] = []
+    withheld_months: set[str] = set()
     for stream in streams:
         stream_coverage = min(
             (coverage_by_account.get(account_id, 10_000) for account_id in stream.account_ids),
@@ -79,12 +119,16 @@ def reconstruct_recurring_income(
             and len(stream.observed_months) >= 3
             and stream_coverage < 10_000
         ):
-            eligible_streams.append(
-                (
-                    stream,
-                    _active_months(stream, months, has_incomplete_coverage=True),
-                    stream_coverage,
-                )
+            active = _active_months(stream, months, has_incomplete_coverage=True)
+            due = _due_months(stream, active)
+            eligible_streams.append((stream, due, stream_coverage))
+            # A month inside an eligible stream's span that its cadence does not call due is a
+            # non-payment month, not a hidden payment. Recording it keeps the difference between
+            # "nothing was due" and "nothing was found" visible to a reviewer.
+            withheld_months.update(
+                month
+                for month in active - due
+                if month not in stream.observed_months
             )
 
     estimates: list[MonthlyIncomeEstimateV1] = []
@@ -97,8 +141,8 @@ def reconstruct_recurring_income(
         imputed_stream_ids: list[str] = []
         imputation_uncertainty_basis_points: list[int] = []
 
-        for stream, active_months, stream_coverage in eligible_streams:
-            if month not in active_months or month in stream.observed_months:
+        for stream, due_months, stream_coverage in eligible_streams:
+            if month not in due_months or month in stream.observed_months:
                 continue
             imputed += stream.expected_monthly_amount_minor
             imputed_stream_ids.append(stream.stream_id)
@@ -125,6 +169,8 @@ def reconstruct_recurring_income(
             reason_codes.append("OBSERVED_INCOME")
         if imputed:
             reason_codes.append("RECURRING_STREAM_GAP_IMPUTED")
+        if month in withheld_months:
+            reason_codes.append("RECURRING_STREAM_NOT_DUE_THIS_MONTH")
         if not reason_codes:
             reason_codes.append("NO_INCOME_EVIDENCE")
 

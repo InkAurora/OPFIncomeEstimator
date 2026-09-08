@@ -59,7 +59,11 @@ def test_rules_are_precedence_ordered_and_auditable(request_payload, transaction
     assert decisions["refund"].classification == "EXCLUDED"
     assert decisions["mystery"].classification == "AMBIGUOUS"
     assert decisions["duplicate"].reason_codes == ("DUPLICATE_OBSERVATION",)
-    assert decisions["transfer-credit"].reason_codes == ("VISIBLE_OWN_TRANSFER_PAIR",)
+    # No counterparty evidence links the two legs, so the pairing is a coincidence. It still
+    # settles this credit, which carries no income evidence of its own beyond "PIX RECEIVED".
+    assert decisions["transfer-credit"].reason_codes == (
+        "UNLINKED_EQUAL_DEBIT_NO_INCOME_EVIDENCE",
+    )
     assert decisions["loan"].reason_codes == ("LOAN_DISBURSEMENT_LINK",)
     assert decisions["redemption"].reason_codes == ("INVESTMENT_REDEMPTION_LINK",)
     assert audit.estimate.monthly_estimates[0].contributing_transaction_ids == ("salary",)

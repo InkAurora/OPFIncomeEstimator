@@ -253,9 +253,25 @@ class EnsembleIncomeEstimator(RecurringIncomeEstimator):
                     decision.transaction_id
                 )
 
+        # An output month with no feature row was scored on `{}` and still published a sustainable
+        # income, so a request whose `months` ran past `window_end` produced an estimate for a month
+        # it never observed. The contract now refuses that request; this refuses to score the row
+        # regardless, because an empty feature mapping is indistinguishable from a real one here.
+        missing = [
+            estimate.month
+            for estimate in audit.estimate.monthly_estimates
+            if estimate.month not in features_by_month
+        ]
+        if missing:
+            raise ValueError(
+                "no feature row was built for output month(s) "
+                f"{', '.join(missing)}; every reconstructed month must be inside the observation "
+                "window that features are built from"
+            )
+
         monthly: list[MonthlyIncomeEstimateV11] = []
         for estimate in audit.estimate.monthly_estimates:
-            features = features_by_month.get(estimate.month, {})
+            features = features_by_month[estimate.month]
             result = combine_month(
                 estimate.estimated_income_minor,
                 features,
