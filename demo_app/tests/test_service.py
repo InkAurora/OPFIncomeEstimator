@@ -165,7 +165,7 @@ def test_the_exact_promoted_pair_answers_and_is_named_in_the_output(estimator) -
     assert evidence["artifact_versions"]["model_versions"] == list(EXPECTED_MODEL_VERSIONS)
     assert evidence["artifact_versions"]["estimator_version"] == "ensemble-0.6.0"
     assert evidence["artifact_versions"]["input_contract_version"] == "1.2"
-    assert evidence["artifact_versions"]["output_contract_version"] == "1.1"
+    assert evidence["artifact_versions"]["output_contract_version"] == "1.2"
 
 
 def test_an_out_of_support_month_abstains_visibly() -> None:

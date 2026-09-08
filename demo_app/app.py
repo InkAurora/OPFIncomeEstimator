@@ -185,9 +185,16 @@ estimate_columns[0].metric(
     help="What the estimator concludes actually landed in the client's accounts that month.",
 )
 estimate_columns[1].metric(
-    "Estimated sustainable income",
-    money_md(latest.sustainable_p50_minor, result.currency),
-    help="The level the estimator judges the client can rely on, not just what arrived once.",
+    "Sustainable income a policy may use",
+    (
+        money_md(latest.qualified_sustainable_minor, result.currency)
+        if latest.is_qualified
+        else "not qualified"
+    ),
+    help=(
+        "Published only when this month's evidence is assessed SUPPORTED. The research estimate "
+        "stays below under 'model estimate'; it is not an amount to lend against."
+    ),
 )
 if latest.has_interval:
     estimate_columns[2].metric(
@@ -203,6 +210,21 @@ estimate_columns[3].metric(
     basis_points(latest.confidence_score_basis_points),
     help="A weighted score over coverage, history length, stability, and component agreement.",
 )
+
+st.caption(
+    f"Model estimate for {latest.month}: "
+    f"{money_md(latest.sustainable_p50_minor, result.currency)} "
+    f"&nbsp;·&nbsp; assessment `{latest.assessment_status}` "
+    f"({', '.join(latest.assessment_reason_codes)})"
+)
+
+if not latest.is_qualified:
+    st.warning(
+        f"**This month is `{latest.assessment_status}`, so no amount is qualified for a lending "
+        "decision.** The model estimate above is research output. "
+        + ", ".join(latest.assessment_reason_codes),
+        icon="⚖️",
+    )
 
 if not latest.has_interval:
     st.warning(
@@ -488,7 +510,13 @@ with history_tab:
                     "Actual sustainable (truth)": money(
                         row.truth_sustainable_minor, result.currency
                     ),
-                    "Estimated sustainable": money(row.sustainable_p50_minor, result.currency),
+                    "Assessment": row.assessment_status,
+                    "Qualified sustainable": (
+                        money(row.qualified_sustainable_minor, result.currency)
+                        if row.is_qualified
+                        else "-"
+                    ),
+                    "Model estimate": money(row.sustainable_p50_minor, result.currency),
                     "P10": money(row.sustainable_p10_minor, result.currency),
                     "P90": money(row.sustainable_p90_minor, result.currency),
                     "Interval held": (

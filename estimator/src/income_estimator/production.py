@@ -45,9 +45,9 @@ from income_estimator.contracts.explanation_v1 import (
     ESTIMATOR_EXPLANATION_CONTRACT_VERSION,
     EstimationExplanationV1,
 )
-from income_estimator.contracts.output_v1_1 import (
+from income_estimator.contracts.output_v1_2 import (
     ESTIMATOR_OUTPUT_CONTRACT_VERSION,
-    IncomeEstimateV11,
+    IncomeEstimateV12,
 )
 from income_estimator.contracts.production_v1 import (
     PRODUCTION_RESULT_CONTRACT_VERSION,
@@ -300,7 +300,7 @@ class ProductionIncomeEstimator(EnsembleIncomeEstimator):
     def _envelope(
         self,
         *,
-        estimate: IncomeEstimateV11 | None = None,
+        estimate: IncomeEstimateV12 | None = None,
         explanation: EstimationExplanationV1 | None = None,
     ) -> ProductionResultV1:
         if self.manifest is None or self.bundle_digest is None:
@@ -325,9 +325,14 @@ class ProductionIncomeEstimator(EnsembleIncomeEstimator):
         )
 
     def estimate_production(self, request: Any) -> ProductionResultV1:
-        """Return an output ``1.1`` estimate stamped with this bundle's identity."""
+        """Return an output ``1.2`` estimate stamped with this bundle's identity.
 
-        return self._envelope(estimate=self.estimate_v1_1(request))
+        A caller that has not moved off ``1.1`` calls ``to_v1_1`` on the estimate, or
+        ``estimate_v1_1`` directly. The production envelope publishes the assessed version, because
+        the identity it stamps is worth least on the one field a policy must not read blind.
+        """
+
+        return self._envelope(estimate=self.estimate_v1_2(request))
 
     def explain_production(self, request: Any) -> ProductionResultV1:
         """Return an explanation ``1.0`` report stamped with this bundle's identity."""

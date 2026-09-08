@@ -19,7 +19,7 @@ from typing import Literal, Self
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from income_estimator.contracts.explanation_v1 import EstimationExplanationV1
-from income_estimator.contracts.output_v1_1 import IncomeEstimateV11
+from income_estimator.contracts.output_v1_2 import IncomeEstimateV12
 
 PRODUCTION_RESULT_CONTRACT_VERSION = "1.0"
 
@@ -40,7 +40,7 @@ class ProductionResultV1(BaseModel):
     estimator_version: str = Field(min_length=1)
     feature_set_version: str = Field(min_length=1)
     model_versions: tuple[str, ...] = Field(min_length=1)
-    estimate: IncomeEstimateV11 | None = None
+    estimate: IncomeEstimateV12 | None = None
     explanation: EstimationExplanationV1 | None = None
 
     @model_validator(mode="after")

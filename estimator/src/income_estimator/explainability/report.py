@@ -18,10 +18,8 @@ from income_estimator.contracts.explanation_v1 import (
     MonthlyExplanationV1,
     TransactionExplanationV1,
 )
-from income_estimator.contracts.output_v1_1 import (
-    ESTIMATOR_OUTPUT_CONTRACT_VERSION,
-    IncomeEstimateV11,
-)
+from income_estimator.contracts.output_v1_1 import IncomeEstimateV11
+from income_estimator.contracts.output_v1_2 import ESTIMATOR_OUTPUT_CONTRACT_VERSION
 from income_estimator.models.capacity import GradientBoostedCapacityModel
 
 MAXIMUM_REPORTED_CONTRIBUTIONS = 15

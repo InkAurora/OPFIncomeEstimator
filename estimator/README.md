@@ -80,18 +80,24 @@ income-estimator request.json --bundle bundles/production-0.11.0
 income-estimator request.json --bundle bundles/production-0.11.0 --explain
 ```
 
-Both emit production result contract `1.0`: an unmodified output `1.1` estimate or explanation `1.0`
-report, wrapped in an envelope carrying the bundle identity that produced it. Output `1.1` is frozen,
-so the identity is added around it rather than inside it.
+Both emit production result contract `1.0`: an unmodified output `1.2` estimate or explanation `1.0`
+report, wrapped in an envelope carrying the bundle identity that produced it. The identity is added
+around the estimate rather than inside it.
+
+Output `1.2` states what each month's evidence supports. `qualified_sustainable_income_minor` is the
+only field a lending policy may read, and it is present only where `assessment_status` is
+`SUPPORTED`. The research estimate stays beside it in `sustainable_income_point_minor`. A consumer
+still on `1.1` calls `estimate_v1_1`, or `to_v1_1()` on the estimate, and gets exactly the record it
+got before.
 
 ```json
 {
   "schema_version": "1.0",
   "bundle_id": "production-0.11.0",
-  "bundle_digest": "4405227b717fb6e26006ed89ea637a8da2bb1cd43e44afe4bf7ee4f647aa36a5",
+  "bundle_digest": "d856811cee0982186a6dcf4a81869d89d12bf7cc49048687c5c37032d5df2785",
   "estimator_package_version": "0.11.0",
   "model_versions": ["capacity-gbdt-stumps-0.6.0", "conditional-selector-intervals-0.11.0"],
-  "estimate": { "schema_version": "1.1", "...": "..." }
+  "estimate": { "schema_version": "1.2", "assessment_status": "SUPPORTED", "...": "..." }
 }
 ```
 

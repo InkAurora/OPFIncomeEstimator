@@ -77,6 +77,9 @@ class MonthRow:
     sustainable_p50_minor: int | None
     sustainable_p90_minor: int | None
     quantile_unavailable_reason: str | None
+    assessment_status: str
+    assessment_reason_codes: tuple[str, ...]
+    qualified_sustainable_minor: int | None
     confidence_score_basis_points: int | None
     routing_reason_codes: tuple[str, ...]
     component_disagreement_basis_points: int | None
@@ -110,6 +113,12 @@ class MonthRow:
         if not self.truth_sustainable_minor or self.sustainable_error_minor is None:
             return None
         return self.sustainable_error_minor / self.truth_sustainable_minor * 100.0
+
+    @property
+    def is_qualified(self) -> bool:
+        """Whether a lending policy may read this month's amount at all."""
+
+        return self.qualified_sustainable_minor is not None
 
     @property
     def has_interval(self) -> bool:
@@ -540,6 +549,9 @@ def join_truth(
             sustainable_p50_minor=month.sustainable_income_p50_minor,
             sustainable_p90_minor=month.sustainable_income_p90_minor,
             quantile_unavailable_reason=month.quantile_unavailable_reason,
+            assessment_status=month.assessment_status,
+            assessment_reason_codes=tuple(month.assessment_reason_codes),
+            qualified_sustainable_minor=month.qualified_sustainable_income_minor,
             confidence_score_basis_points=month.confidence_score_basis_points,
             routing_reason_codes=tuple(month.routing_reason_codes),
             component_disagreement_basis_points=month.component_disagreement_basis_points,

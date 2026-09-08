@@ -255,7 +255,9 @@ def test_wrong_estimator_version_fails(
 def test_wrong_output_contract_fails(
     rewrite_manifest: Callable[[dict[str, object]], Path],
 ) -> None:
-    bundle = rewrite_manifest({"output_contract_version": "1.2"})
+    # Any version the package does not emit. `1.2` was that version until the assessment status
+    # was added; the point of the test is the refusal, not the number.
+    bundle = rewrite_manifest({"output_contract_version": "1.3"})
 
     with pytest.raises(BundleCompatibilityError, match="expects output contract"):
         ProductionIncomeEstimator.from_bundle(bundle)

@@ -24,7 +24,7 @@ from pathlib import Path
 
 from income_estimator.contracts.bundle_v1 import BUNDLE_CONTRACT_VERSION, BundleManifestV1
 from income_estimator.contracts.explanation_v1 import ESTIMATOR_EXPLANATION_CONTRACT_VERSION
-from income_estimator.contracts.output_v1_1 import ESTIMATOR_OUTPUT_CONTRACT_VERSION
+from income_estimator.contracts.output_v1_2 import ESTIMATOR_OUTPUT_CONTRACT_VERSION
 from income_estimator.features import FEATURE_SCHEMA_FINGERPRINT, FEATURE_SET_VERSION
 from income_estimator.models.capacity import CapacityEstimatorArtifact
 from income_estimator.models.quantiles import ConformalCalibrationArtifact

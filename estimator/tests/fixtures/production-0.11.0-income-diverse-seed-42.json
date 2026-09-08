@@ -1,5 +1,5 @@
 {
-  "bundle_digest": "86474d2b23916f69484548910267e3c9ed4d8de868875b7054f9b9cd668d692d",
+  "bundle_digest": "d856811cee0982186a6dcf4a81869d89d12bf7cc49048687c5c37032d5df2785",
   "bundle_id": "production-0.11.0",
   "model_versions": [
     "capacity-gbdt-stumps-0.6.0",
@@ -117,7 +117,7 @@
     }
   ],
   "published_interval_count": 12,
-  "result_sha256": "84d5ad4cb0f8b85ba93565662eab7fe61063a636f4caad41d0ccb84c3d126a12",
+  "result_sha256": "24b56ed208bfe297b3643737368ca2f7be1f393139307d30165b8d82570d3ec9",
   "scenario": "income_diverse.yaml",
   "seed": 42
 }

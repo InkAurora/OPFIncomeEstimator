@@ -21,7 +21,7 @@
   "explanation_contract_version": "1.0",
   "feature_schema_fingerprint": "e54e70affc30a6fad10282e62463a936",
   "feature_set_version": "customer-month-features-1.2.0",
-  "output_contract_version": "1.1",
+  "output_contract_version": "1.2",
   "provenance": {
     "calibration_report": {
       "path": "provenance/quantile-calibration-0.11.0-report.json",

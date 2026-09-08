@@ -7,9 +7,14 @@ chosen so the defective behaviour and the correct behaviour differ by a large, o
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
+from income_estimator.assessment import assess_month, recurring_unrecognized_months
+from income_estimator.contracts.output_v1_2 import MonthlyIncomeEstimateV12
 from income_estimator.pipeline import RecurringIncomeEstimator
+from income_estimator.production import ProductionIncomeEstimator
 
 
 def _coverage(eligible: int, observed: int) -> list[dict[str, object]]:
@@ -271,3 +276,188 @@ def test_months_must_match_the_window_it_describes(request_payload, transaction)
 
     with pytest.raises(Exception, match="spans 1 calendar month"):
         RecurringIncomeEstimator().explain(payload)
+
+
+BUNDLE_ROOT = Path(__file__).parents[1] / "bundles" / "production-0.11.0"
+
+
+@pytest.fixture(scope="module")
+def promoted() -> ProductionIncomeEstimator:
+    return ProductionIncomeEstimator.from_bundle(BUNDLE_ROOT)
+
+
+def _empty_request() -> dict[str, object]:
+    """A valid twelve-month request against two consented accounts holding no transactions."""
+
+    return {
+        "schema_version": "1.0",
+        "source_contract_schema_version": "1.6",
+        "run_id": "run-empty",
+        "customer_id": "customer-empty",
+        "currency": "BRL",
+        "window_start": "2026-01-01",
+        "window_end": "2026-12-31",
+        "months": 12,
+        "accounts": [
+            {
+                "schema_version": "1.0",
+                "customer_id": "customer-empty",
+                "account_id": account,
+                "institution_id": f"bank-{account}",
+                "currency": "BRL",
+            }
+            for account in ("checking", "savings")
+        ],
+        "transactions": [],
+        "coverage": [],
+    }
+
+
+def test_empty_history_qualifies_no_amount(promoted: ProductionIncomeEstimator) -> None:
+    """Two accounts and no transactions used to return R$4,319.65 of sustainable income.
+
+    The number itself was never the problem; a research pipeline may produce whatever its features
+    imply. The problem was that it arrived in the same field, under the same name, that a lending
+    policy reads for a well-observed salaried year.
+    """
+
+    estimate = promoted.estimate_v1_2(_empty_request())
+
+    for month in estimate.monthly_estimates:
+        assert month.assessment_status == "INSUFFICIENT_EVIDENCE"
+        assert month.qualified_sustainable_income_minor is None
+        assert "NO_OBSERVED_TRANSACTIONS" in month.assessment_reason_codes
+    # The research estimate is not deleted. It is no longer mistakable for a usable amount.
+    assert estimate.monthly_estimates[-1].sustainable_income_point_minor is not None
+
+
+def test_a_month_outside_calibrated_support_is_not_qualified(
+    promoted: ProductionIncomeEstimator,
+) -> None:
+    """An amount whose interval could not be published is a question for a person."""
+
+    from release.check_documented_cli import sample_request
+
+    estimate = promoted.estimate_v1_2(sample_request())
+    out_of_support = [
+        month
+        for month in estimate.monthly_estimates
+        if month.quantile_unavailable_reason == "OUT_OF_CALIBRATED_SUPPORT"
+    ]
+
+    assert out_of_support
+    for month in out_of_support:
+        assert month.assessment_status == "REVIEW_REQUIRED"
+        assert month.qualified_sustainable_income_minor is None
+        assert "OUT_OF_CALIBRATED_SUPPORT" in month.assessment_reason_codes
+
+
+def test_repeating_unrecognized_credits_are_not_counted_as_income(
+    request_payload, transaction
+) -> None:
+    """A payer nothing recognizes cannot become a stream, so it becomes an ordinary zero.
+
+    Counting it would replace a silent zero with a silent amount, which is worse. It stays
+    uncounted, and the month it lands in is raised for a person instead.
+    """
+
+    payload = request_payload(
+        transactions=[
+            transaction(f"salary-{month}", posted_at=f"2026-{month:02d}-05", description="SALARY")
+            for month in (1, 2, 3)
+        ]
+        + [
+            transaction(
+                f"unknown-{month}",
+                posted_at=f"2026-{month:02d}-18",
+                amount_minor=300_000,
+                description="PIX RECEBIDO ACME",
+            )
+            for month in (1, 2, 3)
+        ],
+        months=3,
+    )
+
+    audit = RecurringIncomeEstimator().explain(payload)
+    unknown = [
+        item for item in audit.transaction_decisions if item.transaction_id.startswith("unknown-")
+    ]
+
+    assert len(unknown) == 3
+    assert all(item.classification == "AMBIGUOUS" for item in unknown)
+    assert _months(audit)["2026-01"] == 500_000
+    assert recurring_unrecognized_months(audit.transaction_decisions) == frozenset(
+        {"2026-01", "2026-02", "2026-03"}
+    )
+
+
+def test_material_unclassified_credit_needs_review() -> None:
+    """A fifth or more of arriving money being unexplained is a question, not a rounding error."""
+
+    status, reasons = assess_month(
+        sustainable_income_minor=500_000,
+        quantile_unavailable_reason=None,
+        counted_income_minor=500_000,
+        unclassified_credit_minor=200_000,
+        window_has_observed_transactions=True,
+        window_has_established_income=True,
+        has_recurring_unrecognized_source=False,
+    )
+
+    assert status == "REVIEW_REQUIRED"
+    assert "MATERIAL_UNCLASSIFIED_CREDITS" in reasons
+
+
+def test_a_well_evidenced_month_still_qualifies() -> None:
+    """The rule must withhold amounts without withholding every amount."""
+
+    status, reasons = assess_month(
+        sustainable_income_minor=500_000,
+        quantile_unavailable_reason=None,
+        counted_income_minor=500_000,
+        unclassified_credit_minor=0,
+        window_has_observed_transactions=True,
+        window_has_established_income=True,
+        has_recurring_unrecognized_source=False,
+    )
+
+    assert status == "SUPPORTED"
+    assert reasons == ("EVIDENCE_WITHIN_CALIBRATED_SUPPORT",)
+
+
+def test_a_qualified_amount_cannot_accompany_an_unqualified_status() -> None:
+    """The contract itself refuses the shape the old one could not express."""
+
+    with pytest.raises(Exception, match="published only for SUPPORTED"):
+        MonthlyIncomeEstimateV12(
+            month="2026-01",
+            estimated_income_minor=500_000,
+            confidence_lower_minor=500_000,
+            confidence_upper_minor=500_000,
+            realized_income_estimate_minor=500_000,
+            sustainable_income_p50_minor=500_000,
+            sustainable_income_point_minor=500_000,
+            quantile_unavailable_reason="OUT_OF_CALIBRATED_SUPPORT",
+            assessment_status="REVIEW_REQUIRED",
+            assessment_reason_codes=("OUT_OF_CALIBRATED_SUPPORT",),
+            qualified_sustainable_income_minor=500_000,
+        )
+
+
+def test_the_downgrade_to_1_1_keeps_every_number(promoted: ProductionIncomeEstimator) -> None:
+    """Old consumers get the money they got before, and none of the new standing."""
+
+    from release.check_documented_cli import sample_request
+
+    request = sample_request()
+    assessed = promoted.estimate_v1_2(request)
+    legacy = promoted.estimate_v1_1(request)
+
+    assert legacy.schema_version == "1.1"
+    assert not hasattr(legacy.monthly_estimates[0], "assessment_status")
+    for new, old in zip(assessed.monthly_estimates, legacy.monthly_estimates, strict=True):
+        assert old.month == new.month
+        assert old.estimated_income_minor == new.estimated_income_minor
+        assert old.sustainable_income_p50_minor == new.sustainable_income_p50_minor
+        assert old.sustainable_income_p10_minor == new.sustainable_income_p10_minor
+        assert old.sustainable_income_p90_minor == new.sustainable_income_p90_minor

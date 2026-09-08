@@ -163,7 +163,7 @@ def test_explanation_traces_every_decision_and_version(
 
     assert isinstance(explanation, EstimationExplanationV1)
     assert explanation.estimator_version == "ensemble-0.6.0"
-    assert explanation.output_contract_version == "1.1"
+    assert explanation.output_contract_version == "1.2"
     assert "capacity-gbdt-stumps-0.6.0" in explanation.model_versions
     assert "conditional-selector-intervals-0.11.0" in explanation.model_versions
     assert explanation.income_streams

@@ -21,7 +21,6 @@ from income_estimator.contracts.features_v1 import (
     CustomerMonthFeatureValueV1,
 )
 from income_estimator.contracts.output_v1_1 import (
-    ESTIMATOR_OUTPUT_CONTRACT_VERSION,
     QUANTILE_UNAVAILABLE_INSUFFICIENT_HISTORY,
     QUANTILE_UNAVAILABLE_UNCALIBRATED,
     ComponentEstimateV11,
@@ -29,6 +28,11 @@ from income_estimator.contracts.output_v1_1 import (
     IncomeEstimateV11,
     IncomeStreamSummaryV11,
     MonthlyIncomeEstimateV11,
+)
+from income_estimator.contracts.output_v1_2 import (
+    ESTIMATOR_OUTPUT_CONTRACT_VERSION,
+    IncomeEstimateV12,
+    MonthlyIncomeEstimateV12,
 )
 from income_estimator.contracts.production_v1 import (
     PRODUCTION_RESULT_CONTRACT_VERSION,
@@ -88,6 +92,8 @@ __all__ = [
     "ESTIMATOR_INPUT_CONTRACT_VERSION",
     "ESTIMATOR_INPUT_CONTRACT_VERSION_1_2",
     "ESTIMATOR_OUTPUT_CONTRACT_VERSION",
+    "IncomeEstimateV12",
+    "MonthlyIncomeEstimateV12",
     "QUANTILE_UNAVAILABLE_INSUFFICIENT_HISTORY",
     "QUANTILE_UNAVAILABLE_UNCALIBRATED",
     "ComponentEstimateV11",

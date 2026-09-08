@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from income_estimator.assessment import assess_month, recurring_unrecognized_months
 from income_estimator.contracts import (
     ESTIMATOR_CONTRACT_VERSION,
     ESTIMATOR_OUTPUT_CONTRACT_VERSION,
@@ -18,7 +19,11 @@ from income_estimator.contracts.explanation_v1 import EstimationExplanationV1
 from income_estimator.contracts.output_v1_1 import (
     IncomeEstimateV11,
     IncomeStreamSummaryV11,
-    MonthlyIncomeEstimateV11,
+)
+from income_estimator.contracts.output_v1_2 import (
+    ASSESSMENT_SUPPORTED,
+    IncomeEstimateV12,
+    MonthlyIncomeEstimateV12,
 )
 from income_estimator.income_streams import detect_income_streams
 from income_estimator.models import (
@@ -236,7 +241,16 @@ class EnsembleIncomeEstimator(RecurringIncomeEstimator):
         }
 
     def estimate_v1_1(self, request: Any) -> IncomeEstimateV11:
-        """Return realized and sustainable estimates with components and confidence."""
+        """Return the `1.2` assessment downgraded to `1.1` for consumers that have not moved.
+
+        There is one code path. `1.1` is produced by dropping what `1.2` added, through the adapter
+        on the record itself, so the two versions cannot drift apart or disagree about a number.
+        """
+
+        return self.estimate_v1_2(request).to_v1_1()
+
+    def estimate_v1_2(self, request: Any) -> IncomeEstimateV12:
+        """Return realized and sustainable estimates, each month with its evidence assessed."""
 
         validated = validate_estimator_input(request)
         audit = self.explain(validated)
@@ -247,11 +261,32 @@ class EnsembleIncomeEstimator(RecurringIncomeEstimator):
         }
         features_by_month = self._features_by_month(validated)
         excluded_by_month: dict[str, list[str]] = {}
+        unclassified_by_month: dict[str, int] = {}
         for decision in audit.transaction_decisions:
-            if decision.classification == "EXCLUDED" and decision.direction == "CREDIT":
+            if decision.direction != "CREDIT":
+                continue
+            if decision.classification == "EXCLUDED":
                 excluded_by_month.setdefault(decision.posted_month, []).append(
                     decision.transaction_id
                 )
+            elif decision.classification == "AMBIGUOUS":
+                unclassified_by_month[decision.posted_month] = (
+                    unclassified_by_month.get(decision.posted_month, 0)
+                    + decision.amount_minor
+                )
+
+        # Window-level facts, read once. A month in which nothing was due is not a month short of
+        # evidence; a window in which nothing was ever established as income is.
+        observed_in_window = any(
+            decision.classification != "EXCLUDED"
+            or "OUTSIDE_ESTIMATION_WINDOW" not in decision.reason_codes
+            for decision in audit.transaction_decisions
+        )
+        established_income = any(
+            decision.classification == "INCOME"
+            for decision in audit.transaction_decisions
+        )
+        unrecognized_months = recurring_unrecognized_months(audit.transaction_decisions)
 
         # An output month with no feature row was scored on `{}` and still published a sustainable
         # income, so a request whose `months` ran past `window_end` produced an estimate for a month
@@ -269,7 +304,7 @@ class EnsembleIncomeEstimator(RecurringIncomeEstimator):
                 "window that features are built from"
             )
 
-        monthly: list[MonthlyIncomeEstimateV11] = []
+        monthly: list[MonthlyIncomeEstimateV12] = []
         for estimate in audit.estimate.monthly_estimates:
             features = features_by_month[estimate.month]
             result = combine_month(
@@ -283,9 +318,26 @@ class EnsembleIncomeEstimator(RecurringIncomeEstimator):
                 realized_selected="recurring_streams_0_2",
                 intervals=self.intervals,
             )
+            status, reasons = assess_month(
+                sustainable_income_minor=result.sustainable_income_minor,
+                quantile_unavailable_reason=result.quantile_unavailable_reason,
+                counted_income_minor=estimate.estimated_income_minor,
+                unclassified_credit_minor=unclassified_by_month.get(estimate.month, 0),
+                window_has_observed_transactions=observed_in_window,
+                window_has_established_income=established_income,
+                has_recurring_unrecognized_source=estimate.month in unrecognized_months,
+            )
             monthly.append(
-                MonthlyIncomeEstimateV11(
+                MonthlyIncomeEstimateV12(
                     month=estimate.month,
+                    assessment_status=status,
+                    assessment_reason_codes=reasons,
+                    sustainable_income_point_minor=result.sustainable_income_minor,
+                    qualified_sustainable_income_minor=(
+                        result.sustainable_income_minor
+                        if status == ASSESSMENT_SUPPORTED
+                        else None
+                    ),
                     estimated_income_minor=estimate.estimated_income_minor,
                     realized_income_estimate_minor=result.realized_income_minor,
                     confidence_lower_minor=estimate.confidence_lower_minor,
@@ -309,7 +361,7 @@ class EnsembleIncomeEstimator(RecurringIncomeEstimator):
                 )
             )
 
-        return IncomeEstimateV11(
+        return IncomeEstimateV12(
             estimator_version=self.estimator_version,
             run_id=validated.run_id,
             customer_id=validated.customer_id,
