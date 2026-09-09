@@ -1,0 +1,370 @@
+{
+  "committed_ensemble_summary": {
+    "capacity_artifact_sha256": "f58f13d57c0eeff0d5e43f25372f3ac42a3aed3261b08c38e4f83b4a047a87b5",
+    "capacity_model_version": "capacity-gbdt-stumps-0.5.0",
+    "customer_count": 26,
+    "promotion": {
+      "best_component": "capacity_model",
+      "best_component_mae_minor": 23236.3045,
+      "failures": [],
+      "improved_segments": [
+        "high",
+        "middle",
+        "months_under_6",
+        "partial_high",
+        "stable"
+      ],
+      "routed_mae_minor": 21226.734,
+      "status": "PROMOTED"
+    },
+    "row_count": 312
+  },
+  "environment": {
+    "packages": {
+      "PyYAML": "6.0.3",
+      "altair": "6.2.2",
+      "pandas": "3.0.5",
+      "pyarrow": "23.0.1",
+      "pydantic": "2.13.4",
+      "pytest": "8.4.2",
+      "ruff": "0.16.3",
+      "streamlit": "1.63.0"
+    },
+    "python": "3.14.7 (tags/v3.14.7:823f032, Aug  5 2026, 10:51:32) [MSC v.1944 64 bit (AMD64)]"
+  },
+  "git_commit": "4ee69caf8a93a1908d86cb7da8c27259a9f7fefe",
+  "probes": {
+    "description_sensitivity": {
+      "FOLHA DE PAGAMENTO": {
+        "classification": "AMBIGUOUS",
+        "income_minor": 0,
+        "reasons": [
+          "UNRECOGNIZED_CREDIT"
+        ]
+      },
+      "PIX RECEBIDO EMPREGADOR": {
+        "classification": "AMBIGUOUS",
+        "income_minor": 0,
+        "reasons": [
+          "UNRECOGNIZED_CREDIT"
+        ]
+      },
+      "SALARY": {
+        "classification": "INCOME",
+        "income_minor": 500000,
+        "reasons": [
+          "STRONG_INCOME_DESCRIPTION_SALARY"
+        ]
+      },
+      "SAL\u00c1RIO": {
+        "classification": "AMBIGUOUS",
+        "income_minor": 0,
+        "reasons": [
+          "UNRECOGNIZED_CREDIT"
+        ]
+      }
+    },
+    "empty_history": {
+      "confidence_basis_points": 0,
+      "interval_unavailable_reason": "OUT_OF_CALIBRATED_SUPPORT",
+      "sustainable_income_minor": 431965
+    },
+    "mismatched_window": {
+      "returned_months": [
+        "2026-01",
+        "2026-02"
+      ],
+      "sustainable_points_minor": [
+        541363,
+        516310
+      ],
+      "window_end": "2026-01-31"
+    },
+    "noncanonical_dates": {
+      "accepted_by_validator": true,
+      "income_minor": 0
+    },
+    "quarterly_gap_imputation": {
+      "estimated_total_minor": 6300000,
+      "monthly": [
+        {
+          "imputed_minor": 0,
+          "month": "2026-01",
+          "observed_minor": 900000
+        },
+        {
+          "imputed_minor": 900000,
+          "month": "2026-02",
+          "observed_minor": 0
+        },
+        {
+          "imputed_minor": 900000,
+          "month": "2026-03",
+          "observed_minor": 0
+        },
+        {
+          "imputed_minor": 0,
+          "month": "2026-04",
+          "observed_minor": 900000
+        },
+        {
+          "imputed_minor": 900000,
+          "month": "2026-05",
+          "observed_minor": 0
+        },
+        {
+          "imputed_minor": 900000,
+          "month": "2026-06",
+          "observed_minor": 0
+        },
+        {
+          "imputed_minor": 0,
+          "month": "2026-07",
+          "observed_minor": 900000
+        }
+      ],
+      "observed_total_minor": 2700000,
+      "stream_frequency": "QUARTERLY"
+    },
+    "rejected_release_evidence": {
+      "builder_accepted": true,
+      "loader_accepted": true,
+      "reported_artifact_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+      "reported_status": "RELEASE_REJECTED"
+    },
+    "undated_coverage_changes_historical_features": {
+      "data_completeness_score_basis_points": {
+        "after": 3208,
+        "before": 4458
+      },
+      "effective_consent_coverage_basis_points": {
+        "after": 5000,
+        "before": 10000
+      },
+      "minimum_account_coverage_basis_points": {
+        "after": 5000,
+        "before": 10000
+      }
+    },
+    "unrelated_equal_debit": {
+      "income_minor": 0,
+      "salary_reasons": [
+        "VISIBLE_OWN_TRANSFER_PAIR"
+      ]
+    }
+  },
+  "regenerated_ensemble_summary": {
+    "capacity_artifact_sha256": "4ee9c3a6df62025754e47bafdf8a181250dd99e4840acef2d01a8b899f8b8e6a",
+    "capacity_model_version": "capacity-gbdt-stumps-0.6.0",
+    "customer_count": 26,
+    "promotion": {
+      "best_component": "capacity_model",
+      "best_component_mae_minor": 14910.7821,
+      "failures": [
+        "routed MAE 16064.1282 exceeds best component capacity_model 14910.7821"
+      ],
+      "improved_segments": [
+        "months_under_6",
+        "partial_high"
+      ],
+      "routed_mae_minor": 16064.1282,
+      "status": "NOT_PROMOTED"
+    },
+    "row_count": 312
+  },
+  "regenerated_stress": {
+    "estimator_version": "ensemble-0.6.0",
+    "held_out_conditions": [
+      "clean",
+      "noisy",
+      "high_volatility"
+    ],
+    "model_versions": [
+      "capacity-gbdt-stumps-0.6.0",
+      "conditional-selector-intervals-0.11.0"
+    ],
+    "months": 12,
+    "population_size": 20,
+    "schema_version": "1.0",
+    "suites": [
+      {
+        "customer_count": 20,
+        "description": "single salaried account, complete observation, no products",
+        "false_income_month_count": 0,
+        "in_training_distribution": false,
+        "interval_count": 0,
+        "interval_coverage": null,
+        "mean_confidence_basis_points": 7325.2333,
+        "realized_income": {
+          "count": 240,
+          "mean_absolute_error_minor": 0.0,
+          "mean_truth_minor": 650000.0,
+          "wape": 0.0
+        },
+        "scenario": "salaried_basic.yaml",
+        "seed": 610000,
+        "suite": "clean",
+        "sustainable_income": {
+          "count": 0,
+          "unavailable_reason": "CONTRACT_BELOW_1_3"
+        }
+      },
+      {
+        "customer_count": 20,
+        "description": "mixed income profiles with complete observation",
+        "false_income_month_count": 0,
+        "in_training_distribution": true,
+        "interval_count": 240,
+        "interval_coverage": 0.758333,
+        "mean_confidence_basis_points": 6941.8667,
+        "realized_income": {
+          "count": 240,
+          "mean_absolute_error_minor": 0.0,
+          "mean_truth_minor": 410563.15,
+          "wape": 0.0
+        },
+        "scenario": "income_diverse.yaml",
+        "seed": 620000,
+        "suite": "normal",
+        "sustainable_income": {
+          "count": 240,
+          "mean_absolute_error_minor": 53839.3042,
+          "mean_truth_minor": 425201.4,
+          "wape": 0.12662071
+        }
+      },
+      {
+        "customer_count": 20,
+        "description": "stable salary behind partial consent and a degraded feed",
+        "false_income_month_count": 0,
+        "in_training_distribution": true,
+        "interval_count": 240,
+        "interval_coverage": 0.958333,
+        "mean_confidence_basis_points": 6605.6833,
+        "realized_income": {
+          "count": 240,
+          "mean_absolute_error_minor": 0.0,
+          "mean_truth_minor": 600000.0,
+          "wape": 0.0
+        },
+        "scenario": "incomplete_observation.yaml",
+        "seed": 630000,
+        "suite": "partial_consent",
+        "sustainable_income": {
+          "count": 240,
+          "mean_absolute_error_minor": 3944.8167,
+          "mean_truth_minor": 600000.0,
+          "wape": 0.00657469
+        }
+      },
+      {
+        "customer_count": 20,
+        "description": "raises, promotions, job loss, job change, bonus, inheritance",
+        "false_income_month_count": 0,
+        "in_training_distribution": true,
+        "interval_count": 240,
+        "interval_coverage": 0.975,
+        "mean_confidence_basis_points": 7060.1667,
+        "realized_income": {
+          "count": 240,
+          "mean_absolute_error_minor": 0.0,
+          "mean_truth_minor": 535291.6667,
+          "wape": 0.0
+        },
+        "scenario": "life_events.yaml",
+        "seed": 640000,
+        "suite": "life_events",
+        "sustainable_income": {
+          "count": 240,
+          "mean_absolute_error_minor": 10757.8333,
+          "mean_truth_minor": 501529.1667,
+          "wape": 0.02145007
+        }
+      },
+      {
+        "customer_count": 20,
+        "description": "income-shaped non-income credits with a late, duplicated, reversed feed",
+        "false_income_month_count": 0,
+        "in_training_distribution": false,
+        "interval_count": 224,
+        "interval_coverage": 0.348214,
+        "mean_confidence_basis_points": 7441.7417,
+        "realized_income": {
+          "count": 240,
+          "mean_absolute_error_minor": 9957.325,
+          "mean_truth_minor": 594551.3583,
+          "wape": 0.01674763
+        },
+        "scenario": "noisy_observation.yaml",
+        "seed": 650000,
+        "suite": "noisy",
+        "sustainable_income": {
+          "count": 240,
+          "mean_absolute_error_minor": 18045.9625,
+          "mean_truth_minor": 595500.0,
+          "wape": 0.03030388
+        }
+      },
+      {
+        "customer_count": 20,
+        "description": "irregular self-employed and business income on a clean feed",
+        "false_income_month_count": 0,
+        "in_training_distribution": false,
+        "interval_count": 234,
+        "interval_coverage": 0.15812,
+        "mean_confidence_basis_points": 5456.325,
+        "realized_income": {
+          "count": 240,
+          "mean_absolute_error_minor": 0.0,
+          "mean_truth_minor": 378100.275,
+          "wape": 0.0
+        },
+        "scenario": "high_volatility.yaml",
+        "seed": 660000,
+        "suite": "high_volatility",
+        "sustainable_income": {
+          "count": 240,
+          "mean_absolute_error_minor": 147532.4875,
+          "mean_truth_minor": 359450.0,
+          "wape": 0.41043953
+        }
+      }
+    ]
+  },
+  "review_date": "2026-09-08",
+  "routed_mae_increase_over_capacity_percent": 7.734980581602069,
+  "validation": {
+    "clean_install_opt_in": {
+      "passed": 4,
+      "skipped": 0
+    },
+    "demo_service": {
+      "passed": 31
+    },
+    "documented_cli_commands": {
+      "passed": 12
+    },
+    "editable_demo_install": {
+      "error": "Multiple top-level modules discovered in a flat-layout: ['app', 'export', 'formatting', 'profiles', 'service'].",
+      "passed": false
+    },
+    "estimator": {
+      "failed": 1,
+      "failed_test": "test_committed_fixtures_are_what_the_recorder_produces",
+      "initially_skipped": 4,
+      "passed": 197
+    },
+    "headless_ui": {
+      "app_exceptions": 0,
+      "profile_count": 5,
+      "supported_combinations": 7,
+      "visual_browser_inspection": false
+    },
+    "lint": "passed",
+    "simulator": {
+      "failed": 1,
+      "failed_test": "test_phase7_reference_population_is_byte_stable",
+      "passed": 320
+    }
+  }
+}
