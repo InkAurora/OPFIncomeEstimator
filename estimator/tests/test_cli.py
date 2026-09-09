@@ -25,11 +25,11 @@ def request_file(tmp_path: Path, request_payload, transaction) -> Path:
 @pytest.mark.parametrize(
     ("flags", "marker"),
     [
-        ((), "recurring-streams-0.2.0"),
-        (("--baseline-0.1",), "rule-based-0.1.0"),
+        ((), "recurring-streams-0.3.0"),
+        (("--baseline-0.1",), "rule-based-0.1.1"),
         (("--audit",), "transaction_decisions"),
-        (("--features",), "customer-month-features-1.2.0"),
-        (("--ensemble",), "ensemble-0.7.0"),
+        (("--features",), "customer-month-features-1.3.0"),
+        (("--ensemble",), "ensemble-0.8.0"),
         (("--explain",), "monthly_explanations"),
     ],
 )

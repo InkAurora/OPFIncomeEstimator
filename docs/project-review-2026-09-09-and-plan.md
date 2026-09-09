@@ -27,7 +27,7 @@ the repository root with `-c` it fails to collect `evaluation` and `training`.
 | 4 Portuguese descriptions | Partial, by design | Reviewed Portuguese payroll terms added; unrecognized recurring credits raise `REVIEW_REQUIRED` rather than becoming income |
 | 5 Unsupported point estimates | Closed | `contracts/output_v1_2.py` binds `assessment_status` to `qualified_sustainable_income_minor` |
 | 6 Release accepts rejected evidence | Closed | `release/build_bundle.py` validates status, failures, digests; clean-install tests fail instead of skip |
-| **7 Retrospective coverage fields** | **Open** | `features/coverage.py:28`, `models/cashflow.py:24-32, 64` unchanged; see below |
+| **7 Retrospective coverage fields** | **Closed later on 9 September** | Was open at review time; see finding 1 below and [ADR 0010](adr/0010-coverage-oracle-removed.md) |
 | 8 Date and window validation | Closed | `contracts/v1.py` canonical dates, `months` must match window |
 | 9 Fixtures, packaging, CI | Closed | Parquet allowlisted, fixtures pinned LF, demo package declared, demo AppTest in CI |
 
@@ -36,6 +36,13 @@ Finding 7 was left open as the hardest of the nine. It turns out to be the most 
 ## Findings
 
 ### 1. P0 — The promoted routing rule wins by reading a number only the simulator knows
+
+> **Status (9 September, later the same day): closed by
+> [ADR 0010](adr/0010-coverage-oracle-removed.md).** Input contract `1.3` forbids the coverage
+> record and requires receiver consent scopes; no estimator path reads `eligible_record_count` or
+> `observed_original_record_count`; nothing scales income upward. Re-measured on corrected inputs
+> the routing rule fired on zero rows and improved no segment, and was removed. Capacity `0.7.0`,
+> routing `0.8.0`, calibration `0.13.0`, bundle `production-0.13.0`. Figures in the ADR.
 
 The simulator computes each account's `eligible_record_count` and `observed_original_record_count`
 from the records it itself generated and then withheld
@@ -205,7 +212,7 @@ starts a rewrite.
 
 | Order | Work | Exit condition | Estimate |
 | --- | --- | --- | --- |
-| 1 | Remove the coverage oracle from the estimator input path; replace with receiver-knowable coverage evidence; re-run the routing benchmark; revert routing if it loses; recalibrate; ADR 0010 | No input field encodes post-cutoff or unconsented knowledge; routing and calibration re-decided on corrected inputs | 2–3 days |
+| 1 | **Done** — [ADR 0010](adr/0010-coverage-oracle-removed.md). Coverage oracle removed; contract `1.3` consent scopes; routing removed after losing on corrected inputs; recalibrated as `0.13.0` | No input field encodes post-cutoff or unconsented knowledge; routing and calibration re-decided on corrected inputs | 2–3 days |
 | 2 | Ablations sizing generator inversion; regime holdout and time holdout added to the gate | Model card states attributable share; promotion report carries three holdout rows | 2 days |
 | 3 | Randomize generator tells: payday jitter with business days, sampled descriptions with variants and truncation, wider amount noise, misdeclared coverage | Estimator code unchanged; realized WAPE nonzero; stress suites split to vary one factor each | 3 days |
 | 4 | Regime-conditioned interval selector, conditioner ranked on the regime holdout | Per-suite out-of-distribution coverage reported and floored in the gate | 3–5 days |

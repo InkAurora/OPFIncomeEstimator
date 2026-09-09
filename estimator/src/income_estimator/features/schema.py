@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from typing import Literal
 
-FEATURE_SET_VERSION = "customer-month-features-1.2.0"
+FEATURE_SET_VERSION = "customer-month-features-1.3.0"
 
 FeatureGroup = Literal[
     "CASH_FLOW",
@@ -427,21 +427,15 @@ _COVERAGE_SCHEMA: tuple[FeatureSpec, ...] = (
         formula="accounts with at least one transaction posted in the trailing 3 months",
     ),
     FeatureSpec(
-        name="effective_consent_coverage_basis_points",
+        name="fetched_window_coverage_basis_points",
         group="COVERAGE",
         unit="BASIS_POINTS",
         window_months=None,
         formula=(
-            "eligible-record weighted mean account coverage; provider consent metadata declared "
-            "for the whole window and not recomputed per cutoff"
+            "share of account-months through the cutoff the receiver fully fetched per its own "
+            "consent scope (fetched range covers the month and pagination completed); "
+            "CONTRACT_DOMAIN_UNAVAILABLE before input contract 1.3"
         ),
-    ),
-    FeatureSpec(
-        name="minimum_account_coverage_basis_points",
-        group="COVERAGE",
-        unit="BASIS_POINTS",
-        window_months=None,
-        formula="minimum declared account coverage in basis points",
     ),
     FeatureSpec(
         name="observed_domain_count",
@@ -456,8 +450,8 @@ _COVERAGE_SCHEMA: tuple[FeatureSpec, ...] = (
         unit="BASIS_POINTS",
         window_months=None,
         formula=(
-            "floor of the mean of available components: consent coverage, months_observed capped "
-            "at 12, observed-account ratio, and observed-domain ratio"
+            "floor of the mean of available components: fetched-window coverage, months_observed "
+            "capped at 12, observed-account ratio, and observed-domain ratio"
         ),
     ),
 )

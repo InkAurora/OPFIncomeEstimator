@@ -29,14 +29,14 @@ from income_estimator.production import (
     verify_bundle,
 )
 
-BUNDLE_ROOT = Path(__file__).parents[1] / "bundles" / "production-0.12.0"
+BUNDLE_ROOT = Path(__file__).parents[1] / "bundles" / "production-0.13.0"
 
 
 @pytest.fixture
 def bundle_copy(tmp_path: Path) -> Path:
     """A writable bundle outside the repository, so a test can corrupt it safely."""
 
-    destination = tmp_path / "deployed" / "production-0.12.0"
+    destination = tmp_path / "deployed" / "production-0.13.0"
     shutil.copytree(BUNDLE_ROOT, destination)
     return destination
 
@@ -60,9 +60,9 @@ def rewrite_manifest(bundle_copy: Path) -> Callable[[dict[str, object]], Path]:
 def test_committed_bundle_verifies() -> None:
     manifest, digest = verify_bundle(BUNDLE_ROOT)
 
-    assert manifest.bundle_id == "production-0.12.0"
-    assert manifest.capacity.version == "capacity-gbdt-stumps-0.6.0"
-    assert manifest.calibration.version == "conditional-selector-intervals-0.12.0"
+    assert manifest.bundle_id == "production-0.13.0"
+    assert manifest.capacity.version == "capacity-gbdt-stumps-0.7.0"
+    assert manifest.calibration.version == "conditional-selector-intervals-0.13.0"
     assert manifest.feature_set_version == FEATURE_SET_VERSION
     assert manifest.feature_schema_fingerprint == FEATURE_SCHEMA_FINGERPRINT
     assert digest == hashlib.sha256((BUNDLE_ROOT / "manifest.json").read_bytes()).hexdigest()
@@ -83,7 +83,7 @@ def test_loads_from_a_path_outside_the_repository(
     estimator = ProductionIncomeEstimator.from_bundle(bundle_copy)
     result = estimator.estimate_production(request_v1_2)
 
-    assert result.bundle_id == "production-0.12.0"
+    assert result.bundle_id == "production-0.13.0"
     assert result.estimate is not None
     assert result.estimate.monthly_estimates
 
@@ -97,8 +97,8 @@ def test_estimate_reports_exact_bundle_identity(request_v1_2: dict[str, object])
     assert result.estimator_package_version == PACKAGE_VERSION
     assert result.feature_set_version == FEATURE_SET_VERSION
     assert result.model_versions == (
-        "capacity-gbdt-stumps-0.6.0",
-        "conditional-selector-intervals-0.12.0",
+        "capacity-gbdt-stumps-0.7.0",
+        "conditional-selector-intervals-0.13.0",
     )
     assert result.explanation is None
 
@@ -133,7 +133,7 @@ def test_explanation_agrees_with_the_estimate_it_explains(
 
 
 def test_one_corrupted_byte_in_a_model_fails(bundle_copy: Path) -> None:
-    target = bundle_copy / "artifacts" / "capacity-estimator-0.6.0.json"
+    target = bundle_copy / "artifacts" / "capacity-estimator-0.7.0.json"
     payload = bytearray(target.read_bytes())
     payload[-2] = payload[-2] ^ 0x01
     target.write_bytes(bytes(payload))
@@ -146,7 +146,7 @@ def test_one_corrupted_byte_in_the_evidence_fails(bundle_copy: Path) -> None:
     """Provenance is pinned too. A bundle whose evidence was edited is not the bundle."""
 
     target = (
-        bundle_copy / "provenance" / "lockbox-conditional-selector-intervals-0.12.0-report.json"
+        bundle_copy / "provenance" / "lockbox-conditional-selector-intervals-0.13.0-report.json"
     )
     target.write_bytes(target.read_bytes() + b" ")
 
@@ -157,14 +157,14 @@ def test_one_corrupted_byte_in_the_evidence_fails(bundle_copy: Path) -> None:
 def test_missing_calibration_fails_closed(bundle_copy: Path) -> None:
     """No silent degradation to the recurring-stream component."""
 
-    (bundle_copy / "artifacts" / "quantile-calibration-0.12.0.json").unlink()
+    (bundle_copy / "artifacts" / "quantile-calibration-0.13.0.json").unlink()
 
     with pytest.raises(BundleIntegrityError, match="bundle file missing"):
         ProductionIncomeEstimator.from_bundle(bundle_copy)
 
 
 def test_missing_capacity_fails_closed(bundle_copy: Path) -> None:
-    (bundle_copy / "artifacts" / "capacity-estimator-0.6.0.json").unlink()
+    (bundle_copy / "artifacts" / "capacity-estimator-0.7.0.json").unlink()
 
     with pytest.raises(BundleIntegrityError, match="bundle file missing"):
         ProductionIncomeEstimator.from_bundle(bundle_copy)
@@ -278,9 +278,9 @@ def test_a_loosely_constructed_estimator_cannot_claim_bundle_identity(
     """The class is reachable without a bundle; the production result is not."""
 
     estimator = ProductionIncomeEstimator(
-        BUNDLE_ROOT / "artifacts" / "capacity-estimator-0.6.0.json",
+        BUNDLE_ROOT / "artifacts" / "capacity-estimator-0.7.0.json",
         None,
-        BUNDLE_ROOT / "artifacts" / "quantile-calibration-0.12.0.json",
+        BUNDLE_ROOT / "artifacts" / "quantile-calibration-0.13.0.json",
     )
 
     assert estimator.estimate_v1_1(request_v1_2).monthly_estimates
@@ -307,7 +307,7 @@ def test_cli_bundle_path_emits_a_production_result(
     assert cli_main([str(request_path), "--bundle", str(BUNDLE_ROOT)]) == 0
 
     payload = json.loads(capsys.readouterr().out)
-    assert payload["bundle_id"] == "production-0.12.0"
+    assert payload["bundle_id"] == "production-0.13.0"
     assert payload["estimate"] is not None
     assert payload["explanation"] is None
 
@@ -348,7 +348,7 @@ def test_cli_reports_a_corrupted_bundle_rather_than_estimating(
     request_v1_2: dict[str, object],
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    target = bundle_copy / "artifacts" / "quantile-calibration-0.12.0.json"
+    target = bundle_copy / "artifacts" / "quantile-calibration-0.13.0.json"
     target.write_bytes(target.read_bytes() + b"\n")
     request_path = tmp_path / "request.json"
     request_path.write_text(json.dumps(request_v1_2), encoding="utf-8")
@@ -374,7 +374,7 @@ def test_a_calibration_not_fitted_against_the_bundled_capacity_fails(bundle_copy
     relative = "artifacts/quantile-calibration-0.8.0.json"
     payload = source.read_bytes()
     (bundle_copy / relative).write_bytes(payload)
-    (bundle_copy / "artifacts" / "quantile-calibration-0.12.0.json").unlink()
+    (bundle_copy / "artifacts" / "quantile-calibration-0.13.0.json").unlink()
 
     manifest_path = bundle_copy / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))

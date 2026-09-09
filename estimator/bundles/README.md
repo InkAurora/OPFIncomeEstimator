@@ -9,7 +9,36 @@ A bundle is identified by the SHA-256 of its `manifest.json`. The manifest pins 
 digest, so that one number covers the directory transitively, and it is what a production result
 reports back.
 
-## `production-0.12.0`
+## `production-0.13.0`
+
+| File | Role | Version |
+|---|---|---|
+| `artifacts/capacity-estimator-0.7.0.json` | sustainable-income point estimate | `capacity-gbdt-stumps-0.7.0` |
+| `artifacts/quantile-calibration-0.13.0.json` | its interval, or an abstention | `conditional-selector-intervals-0.13.0` |
+| `provenance/capacity-estimator-0.7.0-report.json` | why that model | — |
+| `provenance/quantile-calibration-0.13.0-report.json` | every validation gate | — |
+| `provenance/lockbox-…-0.13.0-report.json` | `RELEASE_CONFIRMED` on these exact bytes | — |
+
+Requires feature set `customer-month-features-1.3.0` and `income-estimator` `0.13.0` or newer.
+Accepts input contracts `1.0` through `1.3`; emits output `1.2` and explanation `1.0`. Output `1.2`
+publishes `qualified_sustainable_income_minor` only where a month's evidence is assessed
+`SUPPORTED`; a consumer still on `1.1` calls `estimate_v1_1` and gets what it always got.
+
+Lockbox seeds `1_010_000`+. Floors `610_000`, `710_000`, `810_000`, and `910_000` are already spent
+by earlier releases. Lockbox result: coverage `0.8756` on 8639/8640 rows, `RELEASE_CONFIRMED`.
+
+The promotion decision is [ADR 0010](../../docs/adr/0010-coverage-oracle-removed.md). It removed the
+coverage oracle from every input path: contract `1.3` forbids the simulator's withheld-record
+counts and requires receiver-known `consent_scopes` instead, and no rule now routes away from the
+capacity model.
+
+## `production-0.12.0` — superseded
+
+**Superseded — see [ADR 0010](../../docs/adr/0010-coverage-oracle-removed.md).** Its inputs carried
+the coverage oracle: `customer-month-features-1.2.0` read per-account record counts only the
+simulator could produce, `recurring-streams-0.2.0` scaled by the same ratio, and
+`deterministic-routing-0.7.0` routed to the cash-flow component wherever that ratio fired. Every
+figure below is withdrawn where it touches `incomplete_observation` or `partial_consent`.
 
 | File | Role | Version |
 |---|---|---|
@@ -45,7 +74,7 @@ verified anywhere.
 
 ```bash
 cd estimator
-python -m release.build_bundle --output bundles/production-0.12.0
+python -m release.build_bundle --output bundles/production-0.13.0
 ```
 
 Deterministic. `tests/test_release.py` asserts the committed bundle is byte-identical to what the
@@ -63,7 +92,7 @@ integrity check on Windows.
 
 ```bash
 cd estimator
-python -c "from pathlib import Path; from income_estimator.production import verify_bundle; print(verify_bundle(Path('bundles/production-0.12.0'))[1])"
+python -c "from pathlib import Path; from income_estimator.production import verify_bundle; print(verify_bundle(Path('bundles/production-0.13.0'))[1])"
 ```
 
 `verify_bundle` checks presence and digests without constructing a model.

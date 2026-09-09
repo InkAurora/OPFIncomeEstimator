@@ -1,0 +1,44 @@
+{
+  "accepted_input_contract_versions": [
+    "1.0",
+    "1.1",
+    "1.2",
+    "1.3"
+  ],
+  "bundle_id": "production-0.13.0",
+  "bundle_version": "0.13.0",
+  "calibration": {
+    "path": "artifacts/quantile-calibration-0.13.0.json",
+    "sha256": "68b1d736e71f7e2223b700d198a9c275da7aec3d550bc19cbda4d9f136f8cbe3",
+    "version": "conditional-selector-intervals-0.13.0"
+  },
+  "capacity": {
+    "path": "artifacts/capacity-estimator-0.7.0.json",
+    "sha256": "504a8e865f51c6fb4c74827521587d591e0b509354b7d6c5173f97839f745f51",
+    "version": "capacity-gbdt-stumps-0.7.0"
+  },
+  "estimator_package_version": "0.13.0",
+  "estimator_version": "ensemble-0.8.0",
+  "explanation_contract_version": "1.0",
+  "feature_schema_fingerprint": "41bacb36c7277be61ac2b737b673bf31",
+  "feature_set_version": "customer-month-features-1.3.0",
+  "output_contract_version": "1.2",
+  "provenance": {
+    "calibration_report": {
+      "path": "provenance/quantile-calibration-0.13.0-report.json",
+      "sha256": "2c30a2464e1d7f9a75cd06875d04091a3eb088c64f8b08ab0e50d39f596157ee"
+    },
+    "capacity_report": {
+      "path": "provenance/capacity-estimator-0.7.0-report.json",
+      "sha256": "59a92424cb1b8a5104086784c44cc5b3ff5c93426a96d7cf8bf5d209520578af"
+    },
+    "decision_record": "docs/adr/0010-coverage-oracle-removed.md",
+    "lockbox_report": null,
+    "release_lockbox_report": {
+      "path": "provenance/lockbox-conditional-selector-intervals-0.13.0-report.json",
+      "sha256": "b89b02e7e5b8cfc9f4a6a8c1b2e2b3098c52e90d9d836894456f62ca255ea091"
+    }
+  },
+  "schema_version": "1.0",
+  "support_envelope_version": "1.0"
+}

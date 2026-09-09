@@ -134,15 +134,25 @@ def _income_type(generated: GeneratedScenario) -> str:
     return str(getattr(value, "value", value))
 
 
-def _coverage_label(request: EstimatorInputV1) -> str:
-    eligible = sum(item.eligible_record_count for item in request.coverage)
-    observed = sum(item.observed_original_record_count for item in request.coverage)
+def _coverage_label(generated: GeneratedScenario) -> str:
+    """Bucket label from the simulator's private withheld-record counts.
+
+    This reads ``generated.observations.observation_coverage`` directly rather than the estimator
+    request: those counts are private labels describing records the receiver never fetched, so they
+    must not be forwarded to or read from the estimator boundary. Computing the same bucket here,
+    on the simulator side, keeps evaluation breakdowns available without reintroducing the oracle
+    into the estimator contract.
+    """
+
+    coverage_records = getattr(generated.observations, "observation_coverage", ())
+    eligible = sum(item.eligible_record_count for item in coverage_records)
+    observed = sum(item.observed_original_record_count for item in coverage_records)
     if eligible:
         basis_points = (observed * 10_000 + eligible // 2) // eligible
-    elif request.coverage:
+    elif coverage_records:
         basis_points = sum(
-            item.effective_coverage_basis_points for item in request.coverage
-        ) // len(request.coverage)
+            item.effective_coverage_basis_points for item in coverage_records
+        ) // len(coverage_records)
     else:
         basis_points = 10_000
     return f"{basis_points / 100:.2f}%"
@@ -265,7 +275,7 @@ def evaluate_population(
         }
         event_window = _life_event_window(generated)
         income_type = _income_type(generated)
-        coverage = _coverage_label(request)
+        coverage = _coverage_label(generated)
         for truth in generated.ground_truth.customer_months:
             predicted = estimated_by_month[truth.month]
             points.append(

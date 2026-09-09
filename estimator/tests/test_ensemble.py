@@ -15,7 +15,7 @@ from income_estimator.models.ensemble import ENSEMBLE_VERSION
 from income_estimator.pipeline import EnsembleIncomeEstimator
 
 CAPACITY_MODEL_PATH = (
-    Path(__file__).parents[1] / "training" / "artifacts" / "capacity-estimator-0.6.0.json"
+    Path(__file__).parents[1] / "training" / "artifacts" / "capacity-estimator-0.7.0.json"
 )
 
 
@@ -120,9 +120,9 @@ def test_ensemble_emits_both_targets_and_stays_1_0_readable(
     month = estimate.monthly_estimates[-1]
 
     assert isinstance(estimate, IncomeEstimateV11)
-    assert estimate.estimator_version == "ensemble-0.7.0"
+    assert estimate.estimator_version == "ensemble-0.8.0"
     assert ENSEMBLE_VERSION in estimate.component_versions
-    assert estimate.model_versions == ("capacity-gbdt-stumps-0.6.0",)
+    assert estimate.model_versions == ("capacity-gbdt-stumps-0.7.0",)
     assert month.realized_income_estimate_minor == 500_000
     assert month.sustainable_income_p50_minor is not None
     assert month.sustainable_income_p10_minor is None
@@ -167,38 +167,71 @@ def test_every_component_stays_visible_with_its_weight(
     assert sum(1 for value in weights.values() if value == 10_000) == 2
 
 
-def _with_coverage(payload: dict, basis_points: int | None) -> dict:
-    """Declare a consent coverage level, or leave it undeclared."""
+def _scope(
+    account_id: str,
+    fetched_from: str,
+    fetched_through: str,
+    *,
+    pagination_complete: bool = True,
+) -> dict[str, object]:
+    """A contract-1.3 consent scope: what the receiver itself fetched for one account."""
 
+    return {
+        "schema_version": "1.3",
+        "customer_id": "customer-test",
+        "account_id": account_id,
+        "fetched_from": fetched_from,
+        "fetched_through": fetched_through,
+        "pagination_complete": pagination_complete,
+    }
+
+
+def _with_coverage(payload: dict, level: str | None) -> dict:
+    """Declare a fetched-window coverage level ("complete", "partial"), or leave it undeclared.
+
+    Undeclared is a request that predates contract 1.3: it carries no consent scope at all, so
+    ``fetched_window_coverage_basis_points`` is missing rather than zero.
+    """
+
+    if level is None:
+        return payload
     payload = dict(payload)
-    payload["coverage"] = (
-        []
-        if basis_points is None
-        else [
-            {
-                "schema_version": "1.0",
-                "customer_id": "customer-test",
-                "account_id": "checking",
-                "configured_coverage_percent": basis_points // 100,
-                "eligible_record_count": 100,
-                "observed_original_record_count": basis_points // 100,
-                "effective_coverage_basis_points": basis_points,
-            }
+    payload["schema_version"] = "1.3"
+    payload["accounts"] = [dict(item, schema_version="1.3") for item in payload["accounts"]]
+    payload["transactions"] = [
+        dict(item, schema_version="1.3") for item in payload["transactions"]
+    ]
+    window_start = payload["window_start"]
+    window_end = payload["window_end"]
+    if level == "complete":
+        payload["consent_scopes"] = [
+            _scope(account["account_id"], window_start, window_end)
+            for account in payload["accounts"]
         ]
-    )
+    elif level == "partial":
+        # Savings is missing its first month, so the fetched window covers less than every
+        # account-month; the receiver knows exactly which month it never fetched.
+        second_month_start = f"{window_start[:5]}{int(window_start[5:7]) + 1:02d}-01"
+        payload["consent_scopes"] = [
+            _scope("checking", window_start, window_end),
+            _scope("savings", second_month_start, window_end),
+        ]
+    else:
+        raise ValueError(f"unknown coverage level: {level}")
     return payload
 
 
-def test_routing_fires_only_on_stable_income_under_declared_partial_coverage(
+def test_capacity_model_is_selected_whatever_the_fetch_coverage_says(
     request_payload,
     transaction,
 ) -> None:
-    """The exception is narrower than it was, and the narrowing is what made routing pay.
+    """No rule routes away from the capacity model; the reasons still describe the evidence.
 
-    Routing on stability alone lost to the capacity model it routed away from. Where coverage is
-    complete the model wins; where it is declared incomplete the reconstructed month has already
-    accounted for the gap the model has to infer. Undeclared coverage is neither, and does not
-    route.
+    `0.7.0` preferred last month's cash flow under stable income and partial coverage, and won its
+    benchmark because both the coverage feature and the cash-flow component read a record-count
+    ratio only the simulator could know (ADR 0010). Re-measured on the receiver's own fetch
+    coverage, no component beats the model on any segment, so none is selected. The reason codes
+    keep reporting coverage and volatility so a reviewer can see what the earlier rules acted on.
     """
 
     stable = _payload(request_payload, transaction)
@@ -212,12 +245,14 @@ def test_routing_fires_only_on_stable_income_under_declared_partial_coverage(
     def reasons(payload: dict) -> tuple[str, ...]:
         return estimator.estimate_v1_1(payload).monthly_estimates[-1].routing_reason_codes
 
-    partial = reasons(_with_coverage(stable, 9_000))
-    complete = reasons(_with_coverage(stable, 10_000))
+    partial = reasons(_with_coverage(stable, "partial"))
+    complete = reasons(_with_coverage(stable, "complete"))
     undeclared = reasons(_with_coverage(stable, None))
-    volatile_reasons = reasons(_with_coverage(volatile, 9_000))
+    volatile_reasons = reasons(_with_coverage(volatile, "partial"))
 
-    assert "STABLE_INCOME_AND_PARTIAL_COVERAGE_PREFERS_CASH_FLOW" in partial
+    assert "CAPACITY_MODEL_SELECTED" in partial
+    assert "PARTIAL_COVERAGE" in partial
+    assert "STABLE_INCOME_AND_PARTIAL_COVERAGE_PREFERS_CASH_FLOW" not in partial
 
     assert "CAPACITY_MODEL_SELECTED" in complete
     assert "COMPLETE_COVERAGE" in complete

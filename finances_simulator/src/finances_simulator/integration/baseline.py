@@ -1,4 +1,10 @@
-"""Small auditable estimator used for Phase-7 end-to-end evaluation."""
+"""Small auditable estimator used for Phase-7 end-to-end evaluation.
+
+The baseline no longer scales observed income by provider coverage counts (eligible/observed
+record ratios): those counts describe records the receiver never fetched and are not
+receiver-knowable, so they must not enter the estimate. The monthly estimate is the observed
+credited amount, unscaled, with a fixed uncertainty band.
+"""
 
 from __future__ import annotations
 
@@ -11,6 +17,8 @@ from finances_simulator.integration.contracts import (
     MonthlyIncomeEstimateV1,
 )
 from finances_simulator.simulation.primitives import month_start
+
+_UNCERTAINTY_BASIS_POINTS = 1_000
 
 
 class BaselineIncomeEstimator:
@@ -25,7 +33,6 @@ class BaselineIncomeEstimator:
             if transaction.direction == "CREDIT" and transaction.transaction_id not in excluded:
                 credits_by_month[transaction.posted_at[:7]].append(transaction)
 
-        effective_coverage = self._effective_coverage_basis_points(request)
         start = date.fromisoformat(request.window_start)
         monthly_estimates: list[MonthlyIncomeEstimateV1] = []
         for index in range(request.months):
@@ -34,16 +41,9 @@ class BaselineIncomeEstimator:
                 credits_by_month.get(month, ()),
                 key=lambda item: item.transaction_id,
             )
-            observed_amount = sum(item.amount_minor for item in contributors)
-            estimate = (
-                (observed_amount * 10_000 + effective_coverage // 2)
-                // effective_coverage
-                if effective_coverage
-                else observed_amount
-            )
-            uncertainty_basis_points = max(1_000, 10_000 - effective_coverage)
+            estimate = sum(item.amount_minor for item in contributors)
             uncertainty = (
-                estimate * uncertainty_basis_points + 5_000
+                estimate * _UNCERTAINTY_BASIS_POINTS + 5_000
             ) // 10_000
             monthly_estimates.append(
                 MonthlyIncomeEstimateV1(
@@ -64,20 +64,6 @@ class BaselineIncomeEstimator:
             currency=request.currency,
             monthly_estimates=tuple(monthly_estimates),
         )
-
-    @staticmethod
-    def _effective_coverage_basis_points(request: EstimatorInputV1) -> int:
-        eligible = sum(item.eligible_record_count for item in request.coverage)
-        observed = sum(item.observed_original_record_count for item in request.coverage)
-        if eligible:
-            return max(1, (observed * 10_000 + eligible // 2) // eligible)
-        if request.coverage:
-            return max(
-                1,
-                sum(item.effective_coverage_basis_points for item in request.coverage)
-                // len(request.coverage),
-            )
-        return 10_000
 
     @staticmethod
     def _excluded_transaction_ids(request: EstimatorInputV1) -> set[str]:

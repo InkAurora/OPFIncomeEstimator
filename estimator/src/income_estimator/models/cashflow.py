@@ -1,15 +1,26 @@
-"""Monthly realized-income reconstruction from classified observed credits."""
+"""Monthly realized-income reconstruction from classified observed credits.
+
+Until estimator `0.1.0` this module divided each account's observed income by a coverage ratio
+built from ``eligible_record_count`` and ``observed_original_record_count``. Those counts were the
+simulator's own record of what it had withheld; no receiver can produce them, and dividing by them
+recovered hidden income exactly. The reconstruction now reports what was observed. A known fetch gap
+is a reason to widen or withhold, never to multiply.
+"""
 
 from __future__ import annotations
 
 from collections import defaultdict
 from datetime import date
 
+from income_estimator.consent_scope import fetch_gap_months_by_account
 from income_estimator.contracts.audit import TransactionDecision
 from income_estimator.contracts.v1 import (
     EstimatorInputV1,
     MonthlyIncomeEstimateV1,
 )
+
+OBSERVED_UNCERTAINTY_BASIS_POINTS = 500
+FETCH_GAP_UNCERTAINTY_BASIS_POINTS = 2_500
 
 
 def _month_sequence(window_start: str, count: int) -> tuple[str, ...]:
@@ -21,28 +32,15 @@ def _month_sequence(window_start: str, count: int) -> tuple[str, ...]:
     )
 
 
-def _coverage_by_account(request: EstimatorInputV1) -> dict[str, int]:
-    result: dict[str, int] = {}
-    for coverage in request.coverage:
-        if coverage.eligible_record_count:
-            basis_points = (
-                coverage.observed_original_record_count * 10_000
-                + coverage.eligible_record_count // 2
-            ) // coverage.eligible_record_count
-        else:
-            basis_points = coverage.effective_coverage_basis_points
-        result[coverage.account_id] = min(10_000, max(1, basis_points))
-    return result
-
-
 def reconstruct_monthly_income(
     request: EstimatorInputV1,
     decisions: tuple[TransactionDecision, ...],
 ) -> tuple[MonthlyIncomeEstimateV1, ...]:
-    """Sum selected credits and adjust each account for measured observation coverage."""
+    """Sum selected credits per month; widen the interval where the receiver knows it has a gap."""
 
     transaction_by_id = {item.transaction_id: item for item in request.transactions}
-    coverage_by_account = _coverage_by_account(request)
+    months = _month_sequence(request.window_start, request.months)
+    gaps_by_account = fetch_gap_months_by_account(request, months)
     included_by_month_account: dict[tuple[str, str], list[TransactionDecision]] = defaultdict(list)
     for decision in decisions:
         if decision.classification != "INCOME":
@@ -51,22 +49,22 @@ def reconstruct_monthly_income(
         included_by_month_account[(decision.posted_month, account_id)].append(decision)
 
     estimates: list[MonthlyIncomeEstimateV1] = []
-    for month in _month_sequence(request.window_start, request.months):
+    for month in months:
         estimate = 0
         contributors: list[str] = []
-        used_coverages: list[int] = []
         for account in request.accounts:
             items = included_by_month_account.get((month, account.account_id), ())
             if not items:
                 continue
-            observed = sum(item.amount_minor for item in items)
-            coverage = coverage_by_account.get(account.account_id, 10_000)
-            estimate += (observed * 10_000 + coverage // 2) // coverage
-            used_coverages.append(coverage)
+            estimate += sum(item.amount_minor for item in items)
             contributors.extend(item.transaction_id for item in items)
 
-        effective_coverage = min(used_coverages, default=10_000)
-        uncertainty_basis_points = max(500, 10_000 - effective_coverage)
+        month_has_gap = any(month in gaps for gaps in gaps_by_account.values())
+        uncertainty_basis_points = (
+            FETCH_GAP_UNCERTAINTY_BASIS_POINTS
+            if month_has_gap
+            else OBSERVED_UNCERTAINTY_BASIS_POINTS
+        )
         uncertainty = (estimate * uncertainty_basis_points + 5_000) // 10_000
         estimates.append(
             MonthlyIncomeEstimateV1(

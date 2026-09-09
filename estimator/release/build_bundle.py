@@ -10,7 +10,7 @@ be a bundle only on this machine.
 
 Run from the estimator directory:
 
-    python -m release.build_bundle --output bundles/production-0.12.0
+    python -m release.build_bundle --output bundles/production-0.13.0
 """
 
 from __future__ import annotations
@@ -34,22 +34,25 @@ ARTIFACT_ROOT = Path(__file__).parents[1] / "training" / "artifacts"
 
 CRLF = bytes((13, 10))
 
-CAPACITY_SOURCE = ARTIFACT_ROOT / "capacity-estimator-0.6.0.json"
-CALIBRATION_SOURCE = ARTIFACT_ROOT / "quantile-calibration-0.12.0.json"
-CAPACITY_REPORT_SOURCE = ARTIFACT_ROOT / "capacity-estimator-0.6.0-report.json"
-CALIBRATION_REPORT_SOURCE = ARTIFACT_ROOT / "quantile-calibration-0.12.0-report.json"
+CAPACITY_SOURCE = ARTIFACT_ROOT / "capacity-estimator-0.7.0.json"
+CALIBRATION_SOURCE = ARTIFACT_ROOT / "quantile-calibration-0.13.0.json"
+CAPACITY_REPORT_SOURCE = ARTIFACT_ROOT / "capacity-estimator-0.7.0-report.json"
+CALIBRATION_REPORT_SOURCE = ARTIFACT_ROOT / "quantile-calibration-0.13.0-report.json"
 
 # `0.11.0` needed two lockbox readings because the support envelope was attached after the first
 # one, so the report that promoted the calibration described bytes the bundle did not ship.
-# `0.12.0` is written with its envelope already attached, so one reading describes the released
-# bytes exactly and there is no earlier reading to keep beside it.
+# `0.12.0` onward is written with its envelope already attached, so one reading describes the
+# released bytes exactly and there is no earlier reading to keep beside it.
 RELEASE_LOCKBOX_REPORT_SOURCE = (
-    ARTIFACT_ROOT / "lockbox-conditional-selector-intervals-0.12.0-report.json"
+    ARTIFACT_ROOT / "lockbox-conditional-selector-intervals-0.13.0-report.json"
 )
 
-DECISION_RECORD = "docs/adr/0009-routing-narrowed-and-recalibrated.md"
+DECISION_RECORD = "docs/adr/0010-coverage-oracle-removed.md"
 
-ACCEPTED_INPUT_CONTRACT_VERSIONS = ("1.0", "1.1", "1.2")
+# Contracts `1.0`-`1.2` are still parsed, but their `coverage` records are no longer read: the
+# estimator treats them as declaring no receiver-known gaps. `1.3` is the first contract whose
+# every field a receiver can write.
+ACCEPTED_INPUT_CONTRACT_VERSIONS = ("1.0", "1.1", "1.2", "1.3")
 
 TRAINING_PROMOTED_STATUS = "PROMOTED"
 LOCKBOX_CONFIRMED_STATUS = "RELEASE_CONFIRMED"
@@ -322,11 +325,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path(__file__).parents[1] / "bundles" / "production-0.12.0",
+        default=Path(__file__).parents[1] / "bundles" / "production-0.13.0",
         help="Bundle directory to write; replaced if it already exists",
     )
-    parser.add_argument("--bundle-id", default="production-0.12.0")
-    parser.add_argument("--bundle-version", default="0.12.0")
+    parser.add_argument("--bundle-id", default="production-0.13.0")
+    parser.add_argument("--bundle-version", default="0.13.0")
     args = parser.parse_args(argv)
 
     from income_estimator import __version__ as package_version

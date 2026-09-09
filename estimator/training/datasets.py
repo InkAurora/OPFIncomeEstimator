@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 
 from finances_simulator.batch import GeneratedPopulation
-from finances_simulator.integration import build_estimator_input_v1_1
+from finances_simulator.integration import build_estimator_input_v1_3
 
 from income_estimator.contracts import validate_estimator_input
 from income_estimator.models.transaction_classifier import (
@@ -17,7 +17,7 @@ from income_estimator.transaction_intelligence import (
     extract_transaction_features,
 )
 
-DATASET_VERSION = "synthetic-transactions-1.0.0"
+DATASET_VERSION = "synthetic-transactions-1.1.0"
 SPLIT_VERSION = "customer-sha256-70-15-15-v1"
 
 
@@ -42,7 +42,7 @@ def build_labeled_dataset(
     records: list[LabeledTransaction] = []
     for population in populations:
         for generated in population.members:
-            external_request = build_estimator_input_v1_1(generated)
+            external_request = build_estimator_input_v1_3(generated)
             request = validate_estimator_input(external_request)
             observed_features = extract_transaction_features(request)
             truth_by_id = {

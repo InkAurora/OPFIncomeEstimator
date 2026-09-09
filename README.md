@@ -72,37 +72,40 @@ selectable; every contract except `1.5` also carries a committed byte-stable ref
 
 ### Estimator
 
-Package `0.12.0`. One estimate is produced by three artifacts read together:
+Package `0.13.0`. One estimate is produced by three artifacts read together:
 
 | Role | Artifact | Version |
 |---|---|---|
-| Realized monthly income | frozen rules | `recurring-streams-0.2.0` |
-| Sustainable monthly income | `capacity-estimator-0.6.0.json` | `capacity-gbdt-stumps-0.6.0` |
-| Interval around it | `quantile-calibration-0.12.0.json` | `conditional-selector-intervals-0.12.0` |
-| Routing between them | deterministic | `ensemble-0.7.0` |
-| Features | 104 point-in-time features | `customer-month-features-1.2.0` |
+| Realized monthly income | frozen rules | `recurring-streams-0.3.0` |
+| Sustainable monthly income | `capacity-estimator-0.7.0.json` | `capacity-gbdt-stumps-0.7.0` |
+| Interval around it | `quantile-calibration-0.13.0.json` | `conditional-selector-intervals-0.13.0` |
+| Routing between them | deterministic | `ensemble-0.8.0` |
+| Features | 103 point-in-time features | `customer-month-features-1.3.0` |
 
-It accepts input contracts `1.0` through `1.2`, returns output contract `1.1`, and explains itself
+It accepts input contracts `1.0` through `1.3`, returns output contract `1.1`, and explains itself
 under explanation contract `1.0`. The capacity and calibration artifacts are a bound pair: the
 calibration records the capacity `model_version` and the SHA-256 of its exact bytes, and the runtime
 refuses any other combination.
 
 Deployment loads that pair as one immutable **bundle** rather than as two paths on a command line.
-`estimator/bundles/production-0.12.0/` holds the artifacts, the reports that promoted them, and a
+`estimator/bundles/production-0.13.0/` holds the artifacts, the reports that promoted them, and a
 manifest pinning every file by digest; `ProductionIncomeEstimator.from_bundle` verifies all of it
 and raises rather than degrading, and every result it returns carries the bundle digest. The wheel
 supplies the loader and never the model bytes, because code and models have different lifecycles.
 
 ```bash
-income-estimator request.json --bundle bundles/production-0.12.0
+income-estimator request.json --bundle bundles/production-0.13.0
 ```
 
-Measured on held-out synthetic populations: realized-income reconstruction improves
-incomplete-observation MAE `99.25%` over the frozen `0.1` rule baseline with no complete-data
-regression and no added false-income classification. Routed MAE is `21,227` minor units against
-`23,236` for the best individual component. The promoted interval covers `0.9050` against a nominal
-`0.80` on validation, publishing `8,635` of `8,640` rows, and confirmed on a release lockbox read
-once.
+[ADR 0010](docs/adr/0010-coverage-oracle-removed.md) removed the coverage oracle from every input
+path: contract `1.3` forbids the simulator's withheld-record counts and requires receiver-known
+`consent_scopes` instead, and nothing scales an estimate by a ratio a receiver could not have
+written. Measured on held-out synthetic populations: capacity model `0.7.0` scores test MAE
+`25374.23` (WAPE `0.0502`), and routing `0.8.0` selects the capacity model everywhere available —
+the re-pointed coverage rule never fired on the benchmark, so it was removed rather than kept
+dormant. Ensemble benchmark evidence: routed MAE `13973.25`, identical to the capacity model alone,
+`0` of `312` rows routed away. Calibration coverage `0.8760` against nominal `0.80` on 8635/8640
+rows, `PROMOTED`; lockbox `0.8756` on 8639/8640 rows, `RELEASE_CONFIRMED`.
 
 ### What this does not yet cover
 
@@ -119,13 +122,13 @@ once.
 - **High-volatility sustainable income is weak.** Sustainable WAPE `0.410` on that suite.
 - **No annual quantiles.** `annual_income_p10/p50/p90` stay absent because the dependence structure
   across months has not been measured, and multiplying monthly quantiles by twelve would invent one.
-- **Synthetic metrics are partly generator inversion.** The estimator input carries per-account
-  record counts that only the simulator can know, and the promoted routing rule wins its benchmark
-  by reading them; two further feature-to-label identities make the headline WAPE figures
-  tautological on the training scenarios. See
-  [`docs/project-review-2026-09-09-and-plan.md`](docs/project-review-2026-09-09-and-plan.md) for
-  the evidence and the ordered plan that follows from it. The routing and stress numbers quoted
-  above describe `0.11` and are superseded by [ADR 0009](docs/adr/0009-routing-narrowed-and-recalibrated.md).
+- **The coverage-oracle instance of generator inversion is closed.** The estimator input no longer
+  carries per-account record counts that only the simulator could know; see
+  [ADR 0010](docs/adr/0010-coverage-oracle-removed.md). Two further feature-to-label identities
+  raised by
+  [`docs/project-review-2026-09-09-and-plan.md`](docs/project-review-2026-09-09-and-plan.md) remain
+  open work under the plan that follows it. Every routing and stress number quoted under `0.12.0`
+  on `incomplete_observation` or `partial_consent` measured the coverage oracle and is withdrawn.
 
 See [`docs/estimator-implementation-plan.md`](docs/estimator-implementation-plan.md) for target
 definitions and acceptance criteria, and
@@ -170,10 +173,11 @@ alone, and the private truth is joined afterwards to score the answer.
 python -m streamlit run demo_app/app.py
 ```
 
-It runs the promoted pair exactly: capacity model `capacity-gbdt-stumps-0.6.0` and interval
-calibration `conditional-selector-intervals-0.12.0`, under estimator `ensemble-0.7.0`. Two of the
-five profiles are the documented weak cases, and the page shows their interval coverage falling
-below nominal rather than hiding it. See [`demo_app/README.md`](demo_app/README.md).
+It runs the promoted pair exactly: capacity model `capacity-gbdt-stumps-0.7.0` and interval
+calibration `conditional-selector-intervals-0.13.0`, under estimator `ensemble-0.8.0`, on input
+contract `1.3`. Two of the five profiles are the documented weak cases, and the page shows their
+interval coverage falling below nominal rather than hiding it. See
+[`demo_app/README.md`](demo_app/README.md).
 
 ## Getting started
 

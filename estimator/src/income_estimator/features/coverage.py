@@ -1,43 +1,35 @@
-"""Consent-coverage, observation-history, and account-activity features."""
+"""Consent-scope, observation-history, and account-activity features.
+
+Coverage here means what the receiver fetched, read from the consent scope it wrote itself. The
+two features this module used to publish, ``effective_consent_coverage_basis_points`` and
+``minimum_account_coverage_basis_points``, were ratios of record counts only the simulator could
+know; they are gone, and a request that predates contract 1.3 reports the replacement as
+unavailable rather than as complete.
+"""
 
 from __future__ import annotations
 
 from datetime import date
 
+from income_estimator.consent_scope import fetched_window_basis_points
 from income_estimator.features.monthly import PointInTimeView
 from income_estimator.features.outcomes import (
     FeatureOutcome,
     missing,
     present,
-    round_basis_points,
 )
-from income_estimator.features.schema import MISSING_NO_OBSERVED_RECORDS, PRODUCT_DOMAINS
-from income_estimator.models.cashflow import _coverage_by_account
+from income_estimator.features.schema import (
+    MISSING_CONTRACT_DOMAIN_UNAVAILABLE,
+    MISSING_NO_OBSERVED_RECORDS,
+    PRODUCT_DOMAINS,
+)
 
 
-def _consent_coverage(view: PointInTimeView) -> tuple[FeatureOutcome, FeatureOutcome]:
-    """Weight declared account coverage by eligible records, not by account count."""
-
-    records = view.request.coverage
-    if not records:
-        return (
-            missing(MISSING_NO_OBSERVED_RECORDS),
-            missing(MISSING_NO_OBSERVED_RECORDS),
-        )
-    normalized = _coverage_by_account(view.request)
-    weights = {record.account_id: record.eligible_record_count for record in records}
-    total_weight = sum(weights.values())
-    if total_weight:
-        weighted = (
-            sum(normalized[account_id] * weight for account_id, weight in weights.items())
-            / total_weight
-        )
-    else:
-        weighted = sum(normalized.values()) / len(normalized)
-    return (
-        present(round_basis_points(weighted)),
-        present(min(normalized.values())),
-    )
+def _fetched_window_coverage(view: PointInTimeView) -> FeatureOutcome:
+    value = fetched_window_basis_points(view.request, view.months)
+    if value is None:
+        return missing(MISSING_CONTRACT_DOMAIN_UNAVAILABLE)
+    return present(value)
 
 
 def coverage_features(view: PointInTimeView) -> dict[str, FeatureOutcome]:
@@ -56,7 +48,7 @@ def coverage_features(view: PointInTimeView) -> dict[str, FeatureOutcome]:
     for item in view.trailing(3):
         recent_accounts.update(item.active_account_ids)
 
-    consent_coverage, minimum_coverage = _consent_coverage(view)
+    fetched_coverage = _fetched_window_coverage(view)
     accounts_declared = len(view.request.accounts)
 
     result: dict[str, FeatureOutcome] = {
@@ -71,8 +63,7 @@ def coverage_features(view: PointInTimeView) -> dict[str, FeatureOutcome]:
         "accounts_observed": present(len(observed_accounts)),
         "institutions_observed": present(len(institutions)),
         "active_accounts_3m": present(len(recent_accounts)),
-        "effective_consent_coverage_basis_points": consent_coverage,
-        "minimum_account_coverage_basis_points": minimum_coverage,
+        "fetched_window_coverage_basis_points": fetched_coverage,
         "observed_domain_count": present(len(view.domains)),
     }
 
@@ -81,8 +72,8 @@ def coverage_features(view: PointInTimeView) -> dict[str, FeatureOutcome]:
         10_000 * len(observed_accounts) // accounts_declared if accounts_declared else 0,
         10_000 * len(view.domains) // len(PRODUCT_DOMAINS),
     ]
-    if not consent_coverage.is_missing:
-        components.append(int(consent_coverage.value))
+    if not fetched_coverage.is_missing:
+        components.append(int(fetched_coverage.value))
     result["data_completeness_score_basis_points"] = present(sum(components) // len(components))
     return result
 

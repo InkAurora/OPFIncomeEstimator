@@ -45,7 +45,7 @@ from income_estimator.production import (
     verify_bundle,
 )
 
-__version__ = "0.12.0"
+__version__ = "0.13.0"
 
 __all__ = [
     "verify_bundle",

@@ -28,7 +28,7 @@ from pathlib import Path
 import pytest
 
 ESTIMATOR_ROOT = Path(__file__).parents[1]
-BUNDLE_ROOT = ESTIMATOR_ROOT / "bundles" / "production-0.12.0"
+BUNDLE_ROOT = ESTIMATOR_ROOT / "bundles" / "production-0.13.0"
 FIXTURE_ROOT = Path(__file__).parent / "fixtures"
 
 pytestmark = pytest.mark.skipif(
@@ -110,7 +110,7 @@ def test_installed_wheel_imports_without_the_repository(clean_environment: Path)
     )
 
     assert completed.returncode == 0, completed.stderr
-    assert completed.stdout.strip() == "0.12.0"
+    assert completed.stdout.strip() == "0.13.0"
 
 
 def test_console_script_runs_a_relocated_bundle(
@@ -138,7 +138,7 @@ def test_console_script_runs_a_relocated_bundle(
     assert completed.returncode == 0, completed.stderr
 
     expected = json.loads(
-        (FIXTURE_ROOT / "production-0.12.0-expected.json").read_text(encoding="utf-8")
+        (FIXTURE_ROOT / "production-0.13.0-expected.json").read_text(encoding="utf-8")
     )
     payload = json.loads(completed.stdout)
     assert payload["bundle_digest"] == expected["bundle_digest"]
@@ -166,7 +166,7 @@ def test_relocated_bundle_still_refuses_a_corrupted_byte(
     deployment = tmp_path / "corrupt"
     deployment.mkdir()
     shutil.copytree(BUNDLE_ROOT, deployment / "bundle")
-    target = deployment / "bundle" / "artifacts" / "capacity-estimator-0.6.0.json"
+    target = deployment / "bundle" / "artifacts" / "capacity-estimator-0.7.0.json"
     target.write_bytes(target.read_bytes() + b"\n")
     request_path = deployment / "request.json"
     request_path.write_text(json.dumps(request_v1_2), encoding="utf-8")

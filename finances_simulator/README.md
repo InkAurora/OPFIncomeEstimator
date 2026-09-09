@@ -257,14 +257,21 @@ anchors deterministic Parquet, estimator-boundary, and evaluation output.
 
 ## Estimator input adapters
 
-`build_estimator_input`, `build_estimator_input_v1_1`, and `build_estimator_input_v1_2` normalize a
-generated scenario into the versioned estimator boundary. Contract `1.2` adds observed credit
-cards, credit limits, card transactions, card invoices, loan payments, loan balances, investments,
-and investment balances, so a capacity model can see what the customer owes and owns. Each
-collection is optional: a scenario whose observation contract predates a domain contributes no
-records for it, and the estimator reports that domain as unobserved rather than as zero. Every
-adapter reads an explicit allow list of observed fields and never a private one. See
-[batch and estimator contracts 1.0 to 1.2](docs/contracts-batch-v1.md).
+`build_estimator_input`, `build_estimator_input_v1_1`, `build_estimator_input_v1_2`, and
+`build_estimator_input_v1_3` normalize a generated scenario into the versioned estimator boundary.
+Contract `1.2` adds observed credit cards, credit limits, card transactions, card invoices, loan
+payments, loan balances, investments, and investment balances, so a capacity model can see what the
+customer owes and owns. Each collection is optional: a scenario whose observation contract predates
+a domain contributes no records for it, and the estimator reports that domain as unobserved rather
+than as zero. Every adapter reads an explicit allow list of observed fields and never a private one.
+See [batch and estimator contracts 1.0 to 1.2](docs/contracts-batch-v1.md).
+
+`build_estimator_input_v1_3` declares one `consent_scopes` record per account
+(`fetched_from`/`fetched_through`/`pagination_complete`) instead of the withdrawn `coverage`
+oracle, with full-window scopes and `pagination_complete=True` because the simulator fetches
+everything it emits. The generator's `observation_coverage` counts are not forwarded to the
+estimator under any adapter; they remain an evaluation-zone private label read only after
+inference. See [ADR 0010](../docs/adr/0010-coverage-oracle-removed.md).
 
 ## Private income targets
 

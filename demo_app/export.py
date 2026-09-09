@@ -65,18 +65,16 @@ def build_evidence(result: DemoResult) -> dict[str, Any]:
         "estimate": result.estimate.model_dump(mode="json"),
         "explanation": result.explanation.model_dump(mode="json"),
         "data_quality": {
-            "coverage_is_declared_by_scenario": result.data_quality.coverage_is_declared,
-            "overall_coverage_basis_points": result.data_quality.overall_coverage_basis_points,
-            "per_account_coverage": [
+            "consent_scopes": [
                 {
                     "account_id": row.account_id,
-                    "configured_coverage_percent": row.configured_coverage_percent,
-                    "eligible_record_count": row.eligible_record_count,
-                    "observed_record_count": row.observed_record_count,
-                    "effective_coverage_basis_points": row.effective_coverage_basis_points,
+                    "fetched_from": row.fetched_from,
+                    "fetched_through": row.fetched_through,
+                    "pagination_complete": row.pagination_complete,
                 }
-                for row in result.data_quality.coverage_rows
+                for row in result.data_quality.consent_scope_rows
             ],
+            "fetched_window_basis_points": result.data_quality.fetched_window_basis_points,
             "observed_transaction_count": result.data_quality.observed_transaction_count,
             "duplicate_count": result.data_quality.duplicate_count,
             "reversal_count": result.data_quality.reversal_count,
@@ -86,6 +84,23 @@ def build_evidence(result: DemoResult) -> dict[str, Any]:
             "months_with_interval": result.data_quality.months_with_interval,
             "months_abstained": result.data_quality.months_abstained,
             "abstention_reasons": list(result.data_quality.abstention_reasons),
+            "simulator_ground_truth": {
+                "visible_to_estimator": False,
+                "coverage_is_declared_by_scenario": result.data_quality.coverage_is_declared,
+                "overall_coverage_basis_points": (
+                    result.data_quality.simulated_coverage_basis_points
+                ),
+                "per_account_coverage": [
+                    {
+                        "account_id": row.account_id,
+                        "configured_coverage_percent": row.configured_coverage_percent,
+                        "eligible_record_count": row.eligible_record_count,
+                        "observed_record_count": row.observed_record_count,
+                        "effective_coverage_basis_points": row.effective_coverage_basis_points,
+                    }
+                    for row in result.data_quality.simulated_coverage_rows
+                ],
+            },
         },
         "observed_net_position": [
             {

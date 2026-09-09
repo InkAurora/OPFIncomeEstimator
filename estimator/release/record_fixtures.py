@@ -26,11 +26,11 @@ from income_estimator.contracts.production_v1 import ProductionResultV1
 from income_estimator.production import ProductionIncomeEstimator
 
 ESTIMATOR_ROOT = Path(__file__).parents[1]
-BUNDLE_ROOT = ESTIMATOR_ROOT / "bundles" / "production-0.12.0"
+BUNDLE_ROOT = ESTIMATOR_ROOT / "bundles" / "production-0.13.0"
 FIXTURE_ROOT = ESTIMATOR_ROOT / "tests" / "fixtures"
 
-MINIMAL_FIXTURE = "production-0.12.0-expected.json"
-SIMULATOR_FIXTURE = "production-0.12.0-income-diverse-seed-42.json"
+MINIMAL_FIXTURE = "production-0.13.0-expected.json"
+SIMULATOR_FIXTURE = "production-0.13.0-income-diverse-seed-42.json"
 
 SIMULATOR_SCENARIO = "income_diverse.yaml"
 SIMULATOR_SEED = 42
@@ -131,13 +131,13 @@ def record(bundle: Path = BUNDLE_ROOT, fixtures: Path = FIXTURE_ROOT) -> list[Pa
 
     from finances_simulator.config import load_scenario_config
     from finances_simulator.generation import generate_scenario
-    from finances_simulator.integration import build_estimator_input_v1_2
+    from finances_simulator.integration import build_estimator_input_v1_3
 
     config = load_scenario_config(
         ESTIMATOR_ROOT.parent / "finances_simulator" / "configs" / "scenarios" / SIMULATOR_SCENARIO
     )
     generated = generate_scenario(config, seed=SIMULATOR_SEED, months=SIMULATOR_MONTHS)
-    simulated = estimator.estimate_production(build_estimator_input_v1_2(generated))
+    simulated = estimator.estimate_production(build_estimator_input_v1_3(generated))
     assert simulated.estimate is not None
 
     simulator = fixtures / SIMULATOR_FIXTURE

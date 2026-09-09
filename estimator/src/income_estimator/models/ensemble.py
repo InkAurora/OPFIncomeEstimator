@@ -25,7 +25,7 @@ from income_estimator.contracts.output_v1_1 import (
 from income_estimator.models.capacity import GradientBoostedCapacityModel
 from income_estimator.models.quantiles import ConformalIntervalModel
 
-ENSEMBLE_VERSION = "deterministic-routing-0.7.0"
+ENSEMBLE_VERSION = "deterministic-routing-0.8.0"
 
 STABLE_VOLATILITY_MAXIMUM_RATIO = 0.1
 COMPLETE_COVERAGE_BASIS_POINTS = 10_000
@@ -94,22 +94,26 @@ def _route_sustainable(
 ) -> tuple[str | None, tuple[str, ...]]:
     """Select one component and say why.
 
-    Last month's reconstruction beats the capacity model where income is stable and the consent
-    scope is declared incomplete: the model has to infer what it cannot see, while the reconstructed
-    month has already accounted for the gap. Where coverage is complete the model wins, and routing
-    away from it there is what made `0.6.0` worse than its own best component.
+    `0.8.0` selects the capacity model wherever it is available. The reason codes still describe
+    the month's fetch coverage and volatility, because a reviewer reading the output should see the
+    evidence the earlier rules acted on even though no rule acts on it now.
 
-    That is a reversal of the earlier rule, and of the earlier reasoning. Conditioning on coverage
-    was measured against `capacity-gbdt-stumps-0.5.0` and rejected. Re-measured against `0.6.0`, on
-    the benchmark's own seeds, the intersection is where routing earns the most: routing on
-    stability alone scored `16064.13` against `14910.78` for the model by itself, while routing on
-    stability *and* declared partial coverage scored `12179.10`. Confirmed afterwards on seeds
-    `910_000`-`930_000`, which nothing had generated, over 71 customers and 852 rows: `16690.13`
-    against `19220.34` for the model alone and `20126.14` for the old rule. The ranking is the same
-    on both populations.
+    The history matters here because it is a record of a measurement error, not of a change of
+    mind. `0.6.0` routed to last month's reconstruction whenever income was stable; `0.7.0`
+    (ADR 0009) narrowed that to stable income *and* declared partial coverage, and scored
+    `12179.10` MAE against `14910.78` for the model alone, confirmed on fresh seeds. Both the
+    feature that fired that rule, `effective_consent_coverage_basis_points`, and the component it
+    routed to divided by the same ratio of record counts, counts that only the simulator could
+    know because it had generated and withheld the records. The improvement was the oracle
+    confirming itself (ADR 0010).
 
-    Undeclared coverage does not route. It is not evidence of a gap; it is the absence of evidence
-    either way, and it was not what the measurement covered.
+    Re-measured on receiver-knowable coverage, `fetched_window_coverage_basis_points`, with the
+    cash-flow component no longer scaling: the narrowed rule never fires on the benchmark
+    population and the routed ensemble equals the model alone at `13973.25`; where it did fire,
+    on `partial_high`, `0.7.0` had scored `1720.56` against `9612.08` for the model, which is what
+    an exact division looks like. No remaining component beats the model on any segment, so no
+    rule is kept. A future rule must earn its place on the routing benchmark against
+    `capacity-gbdt-stumps-0.7.0` or later, on inputs a receiver could have produced.
     """
 
     reasons: list[str] = []
@@ -119,13 +123,8 @@ def _route_sustainable(
         return None, ("NO_SUSTAINABLE_COMPONENT",)
 
     volatility = features.get("income_cv_12m")
-    coverage = features.get("effective_consent_coverage_basis_points")
-    stable = volatility is not None and volatility < STABLE_VOLATILITY_MAXIMUM_RATIO
+    coverage = features.get("fetched_window_coverage_basis_points")
     complete = coverage is not None and coverage >= COMPLETE_COVERAGE_BASIS_POINTS
-    declared_partial = coverage is not None and coverage < COMPLETE_COVERAGE_BASIS_POINTS
-    if stable and declared_partial and "cash_flow_last_month" in candidates:
-        reasons.append("STABLE_INCOME_AND_PARTIAL_COVERAGE_PREFERS_CASH_FLOW")
-        return "cash_flow_last_month", tuple(reasons)
 
     reasons.append("CAPACITY_MODEL_SELECTED")
     if coverage is None:

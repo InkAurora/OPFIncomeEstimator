@@ -17,19 +17,48 @@ from income_estimator.pipeline import RecurringIncomeEstimator
 from income_estimator.production import ProductionIncomeEstimator
 
 
-def _coverage(eligible: int, observed: int) -> list[dict[str, object]]:
-    """Declared partial coverage, which is what makes gap imputation eligible at all."""
+def _scope(
+    account_id: str,
+    fetched_from: str,
+    fetched_through: str,
+    *,
+    pagination_complete: bool = True,
+) -> dict[str, object]:
+    """A contract-1.3 consent scope: what the receiver itself fetched for one account."""
 
+    return {
+        "schema_version": "1.3",
+        "customer_id": "customer-test",
+        "account_id": account_id,
+        "fetched_from": fetched_from,
+        "fetched_through": fetched_through,
+        "pagination_complete": pagination_complete,
+    }
+
+
+def _to_v1_3(payload: dict[str, object], scopes: list[dict[str, object]]) -> dict[str, object]:
+    """Upgrade a request built by ``request_payload`` to contract 1.3 with consent scopes.
+
+    Pagination is reported incomplete on every account so the whole active span is a receiver-known
+    gap; that is what makes gap imputation eligible at all.
+    """
+
+    payload = dict(payload)
+    payload["schema_version"] = "1.3"
+    payload["accounts"] = [dict(item, schema_version="1.3") for item in payload["accounts"]]
+    payload["transactions"] = [
+        dict(item, schema_version="1.3") for item in payload["transactions"]
+    ]
+    payload["consent_scopes"] = scopes
+    return payload
+
+
+def _incomplete_scopes(payload: dict[str, object]) -> list[dict[str, object]]:
+    window_start = payload["window_start"]
+    window_end = payload["window_end"]
     return [
-        {
-            "schema_version": "1.0",
-            "customer_id": "customer-test",
-            "account_id": "checking",
-            "configured_coverage_percent": 90,
-            "eligible_record_count": eligible,
-            "observed_original_record_count": observed,
-            "effective_coverage_basis_points": round(observed * 10_000 / eligible),
-        }
+        _scope(account["account_id"], window_start, window_end, pagination_complete=False)
+        for account in payload["accounts"]
     ]
 
 
@@ -58,7 +87,7 @@ def test_quarterly_income_is_not_paid_in_the_months_between(request_payload, tra
         ],
         months=7,
     )
-    payload["coverage"] = _coverage(100, 90)
+    payload = _to_v1_3(payload, _incomplete_scopes(payload))
 
     audit = RecurringIncomeEstimator().explain(payload)
     monthly = _months(audit)
@@ -90,7 +119,7 @@ def test_monthly_income_still_fills_a_missing_payment(request_payload, transacti
         ],
         months=6,
     )
-    payload["coverage"] = _coverage(100, 90)
+    payload = _to_v1_3(payload, _incomplete_scopes(payload))
 
     audit = RecurringIncomeEstimator().explain(payload)
     monthly = _months(audit)
@@ -113,7 +142,7 @@ def test_irregular_cadence_imputes_nothing(request_payload, transaction):
         ],
         months=7,
     )
-    payload["coverage"] = _coverage(100, 90)
+    payload = _to_v1_3(payload, _incomplete_scopes(payload))
 
     audit = RecurringIncomeEstimator().explain(payload)
     monthly = _months(audit)
@@ -153,7 +182,7 @@ def test_mixed_cadences_under_partial_coverage_are_filled_separately(
         for month in (1, 4, 7)
     ]
     payload = request_payload(transactions=salary + distribution, months=7)
-    payload["coverage"] = _coverage(100, 90)
+    payload = _to_v1_3(payload, _incomplete_scopes(payload))
 
     audit = RecurringIncomeEstimator().explain(payload)
     monthly = _months(audit)
@@ -278,7 +307,7 @@ def test_months_must_match_the_window_it_describes(request_payload, transaction)
         RecurringIncomeEstimator().explain(payload)
 
 
-BUNDLE_ROOT = Path(__file__).parents[1] / "bundles" / "production-0.12.0"
+BUNDLE_ROOT = Path(__file__).parents[1] / "bundles" / "production-0.13.0"
 
 
 @pytest.fixture(scope="module")

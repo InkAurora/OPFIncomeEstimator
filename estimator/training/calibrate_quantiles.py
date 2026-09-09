@@ -74,9 +74,11 @@ from training.uncertainty_boosting import (
 # `0.11.0` was fitted around `deterministic-routing-0.6.0`. Residuals here are taken around the
 # estimate `combine_month` publishes, routing included, so a routing change invalidates the fit
 # whatever the model bytes do. `0.7.0` narrowed routing to stable income under declared partial
-# coverage, so the calibration is refitted rather than re-pointed.
-CALIBRATION_VERSION = "conditional-selector-intervals-0.12.0"
-ARTIFACT_STEM = "quantile-calibration-0.12.0"
+# coverage, so `0.12.0` was refitted rather than re-pointed. `0.13.0` is refitted again because
+# both halves moved: the capacity model lost the coverage-oracle features, and routing `0.8.0`
+# reads receiver-side fetch coverage instead of the simulator's withheld-record ratio.
+CALIBRATION_VERSION = "conditional-selector-intervals-0.13.0"
+ARTIFACT_STEM = "quantile-calibration-0.13.0"
 DEFAULT_LOWER_QUANTILE = 0.1
 DEFAULT_UPPER_QUANTILE = 0.9
 ZERO_GATE_CERTAIN_BASIS_POINTS = 1_000
@@ -194,9 +196,11 @@ FINAL_TEST_ROLE = "validation-not-release-lockbox"
 # reasoning a lockbox exists to refuse. That floor is spent; the release read uses a fresh one.
 # `710_000` was read once, for the `0.11.0` release, and is spent. Routing `0.7.0` changed the
 # estimate the residuals are taken around, so `0.12.0` is a different calibration and needs a
-# lockbox that has never been generated, not a second look at one that has.
-SPENT_LOCKBOX_SEED_FLOORS: tuple[int, ...] = (610_000, 710_000)
-RELEASE_LOCKBOX_SEED_FLOOR = 810_000
+# lockbox that has never been generated, not a second look at one that has. `810_000` was that
+# read. `910_000`-`930_000` were generated for the ADR 0009 routing confirmation and are spent
+# for the same reason. `0.13.0` reads from `1_010_000`.
+SPENT_LOCKBOX_SEED_FLOORS: tuple[int, ...] = (610_000, 710_000, 810_000, 910_000)
+RELEASE_LOCKBOX_SEED_FLOOR = 1_010_000
 
 
 def _populations(
@@ -898,7 +902,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--capacity-model",
         type=Path,
-        default=Path(__file__).parent / "artifacts/capacity-estimator-0.6.0.json",
+        default=Path(__file__).parent / "artifacts/capacity-estimator-0.7.0.json",
     )
     parser.add_argument(
         "--preregistration",

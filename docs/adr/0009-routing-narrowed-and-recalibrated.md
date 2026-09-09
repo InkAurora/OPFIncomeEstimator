@@ -1,6 +1,13 @@
 # ADR 0009: Routing narrowed to partial coverage, and recalibrated around it
 
-- Status: Accepted
+- Status: Superseded by [ADR 0010](0010-coverage-oracle-removed.md)
+
+The measured improvement this ADR promoted was the coverage oracle: routing fired on
+`effective_consent_coverage_basis_points`, a ratio only the simulator's withheld-record counts
+could produce, and the cash-flow component it routed *to* divided observed income by the same
+ratio. Re-measured on receiver-knowable coverage the rule fired on no row. See ADR 0010 for the
+removal and the corrected figures.
+
 - Date: 2026-09-08
 - Supersedes: the routing rule of
   [ADR 0008](0008-conditional-selector-promotion-and-abstention.md), `deterministic-routing-0.6.0`,

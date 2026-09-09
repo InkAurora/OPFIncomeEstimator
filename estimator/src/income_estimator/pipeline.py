@@ -47,11 +47,11 @@ from income_estimator.transaction_intelligence import (
     extract_transaction_features,
 )
 
-ESTIMATOR_VERSION = "rule-based-0.1.0"
-RECURRING_ESTIMATOR_VERSION = "recurring-streams-0.2.0"
+ESTIMATOR_VERSION = "rule-based-0.1.1"
+RECURRING_ESTIMATOR_VERSION = "recurring-streams-0.3.0"
 RECURRING_FEATURE_VERSION = "income-stream-features-1.0.0"
 SUPERVISED_ESTIMATOR_VERSION = "supervised-transactions-0.3.0"
-ENSEMBLE_ESTIMATOR_VERSION = "ensemble-0.7.0"
+ENSEMBLE_ESTIMATOR_VERSION = "ensemble-0.8.0"
 
 
 def _baseline_reconstruction_audit(
@@ -66,16 +66,15 @@ def _baseline_reconstruction_audit(
             amount_by_id[transaction_id]
             for transaction_id in estimate.contributing_transaction_ids
         )
-        adjustment = estimate.estimated_income_minor - observed
+        # The 0.1 baseline reports observed income as is; since 0.1.1 nothing scales it, so the
+        # coverage adjustment is always zero and stays in the audit only for schema stability.
         reasons = ["OBSERVED_INCOME"] if observed else ["NO_INCOME_EVIDENCE"]
-        if adjustment:
-            reasons.append("COVERAGE_SCALING_APPLIED")
         result.append(
             MonthlyReconstructionAudit(
                 month=estimate.month,
                 observed_income_minor=observed,
                 imputed_income_minor=0,
-                coverage_adjustment_minor=adjustment,
+                coverage_adjustment_minor=0,
                 estimated_income_minor=estimate.estimated_income_minor,
                 contributing_transaction_ids=estimate.contributing_transaction_ids,
                 reason_codes=tuple(reasons),

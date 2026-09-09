@@ -53,7 +53,7 @@ from training.uncertainty_boosting import WidthObservation, fit_width_recalibrat
 
 # The pair the runtime loads today. Tests that exercise wiring rather than history use this.
 CURRENT_ARTIFACT_PATH = (
-    Path(__file__).parents[1] / "training" / "artifacts" / "quantile-calibration-0.12.0.json"
+    Path(__file__).parents[1] / "training" / "artifacts" / "quantile-calibration-0.13.0.json"
 )
 # Superseded, kept for the historical assertions below. The runtime refuses to construct with it:
 # it records no routing rule, and every artifact before schema `1.6` was fitted around one this
@@ -79,6 +79,11 @@ BASELINE_REPORT_PATH = (
     / "quantile-calibration-0.8.0-report.json"
 )
 CAPACITY_MODEL_PATH = (
+    Path(__file__).parents[1] / "training" / "artifacts" / "capacity-estimator-0.7.0.json"
+)
+# `0.9` is historical evidence fitted against the capacity model that shipped as `0.6.0`. Its
+# binding assertion checks against those bytes specifically, not whatever the runtime loads today.
+HISTORICAL_CAPACITY_MODEL_PATH = (
     Path(__file__).parents[1] / "training" / "artifacts" / "capacity-estimator-0.6.0.json"
 )
 
@@ -567,7 +572,7 @@ def test_frozen_calibration_artifact_matches_report_and_is_complete() -> None:
     # against. A version string alone does not establish that: the contract 1.6 refit changed the
     # model while leaving `capacity-gbdt-stumps-0.5.0` in place.
     assert (
-        hashlib.sha256(CAPACITY_MODEL_PATH.read_bytes()).hexdigest()
+        hashlib.sha256(HISTORICAL_CAPACITY_MODEL_PATH.read_bytes()).hexdigest()
         == artifact.capacity_artifact_sha256
     )
     # No customer may appear in more than one stage's population.
@@ -717,7 +722,7 @@ def test_ensemble_publishes_calibrated_quantiles(request_payload, transaction) -
     )
     month = estimator.estimate_v1_1(payload).monthly_estimates[-1]
 
-    assert "conditional-selector-intervals-0.12.0" in estimator.model_versions
+    assert "conditional-selector-intervals-0.13.0" in estimator.model_versions
     assert month.quantile_unavailable_reason is None
     assert month.sustainable_income_p10_minor is not None
     assert month.sustainable_income_p90_minor is not None
@@ -1441,19 +1446,19 @@ def test_an_out_of_support_row_is_refused_rather_than_answered(
 
 
 PROMOTED_ARTIFACT_PATH = (
-    Path(__file__).parents[1] / "training" / "artifacts" / "quantile-calibration-0.12.0.json"
+    Path(__file__).parents[1] / "training" / "artifacts" / "quantile-calibration-0.13.0.json"
 )
 PROMOTED_REPORT_PATH = (
     Path(__file__).parents[1]
     / "training"
     / "artifacts"
-    / "quantile-calibration-0.12.0-report.json"
+    / "quantile-calibration-0.13.0-report.json"
 )
 LOCKBOX_REPORT_PATH = (
     Path(__file__).parents[1]
     / "training"
     / "artifacts"
-    / "lockbox-conditional-selector-intervals-0.12.0-report.json"
+    / "lockbox-conditional-selector-intervals-0.13.0-report.json"
 )
 
 
@@ -1472,16 +1477,17 @@ def test_the_promoted_artifact_passed_every_gate_and_the_lockbox() -> None:
     assert lockbox["status"] == "RELEASE_CONFIRMED"
     assert lockbox["read_once"] is True
     # The lockbox is not the validation population, and says which seeds it drew.
-    assert all(suite["seed"] >= 810_000 for suite in lockbox["suites"])
+    assert all(suite["seed"] >= 1_010_000 for suite in lockbox["suites"])
 
 
 def test_the_lockbox_read_the_exact_bytes_that_ship() -> None:
-    """`0.11.0` needed two lockbox readings; `0.12.0` needs one.
+    """One lockbox reading is enough, because the support envelope ships in the bytes it reads.
 
-    Back then the support envelope was attached after the lockbox had been read, so the reading that
-    promoted the calibration described bytes no deployment ran, and additivity had to be argued
-    field by field. `0.12.0` is written with its envelope already in place. One reading names the
-    digest that ships, so there is nothing left to argue.
+    `0.11.0` needed two lockbox readings: the support envelope was attached after the lockbox had
+    been read, so the reading that promoted the calibration described bytes no deployment ran, and
+    additivity had to be argued field by field. Every promoted calibration since `0.12.0`, `0.13.0`
+    included, is written with its envelope already in place. One reading names the digest that
+    ships, so there is nothing left to argue.
     """
 
     artifact_bytes = PROMOTED_ARTIFACT_PATH.read_bytes()
@@ -1510,7 +1516,7 @@ def test_the_promoted_artifact_is_the_pair_the_runtime_loads() -> None:
         CAPACITY_MODEL_PATH, calibration_path=PROMOTED_ARTIFACT_PATH
     )
 
-    assert "conditional-selector-intervals-0.12.0" in estimator.model_versions
+    assert "conditional-selector-intervals-0.13.0" in estimator.model_versions
     assert estimator.intervals.artifact.conditional_selector is not None
     assert estimator.intervals.artifact.support_envelope is not None
     # The selector never reads a scenario label, only a feature and a band.

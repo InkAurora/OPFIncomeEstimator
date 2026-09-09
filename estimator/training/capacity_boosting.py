@@ -31,7 +31,7 @@ from training.capacity_datasets import (
 )
 from training.datasets import DATASET_VERSION as TRANSACTION_DATASET_VERSION
 
-CAPACITY_MODEL_VERSION = "capacity-gbdt-stumps-0.6.0"
+CAPACITY_MODEL_VERSION = "capacity-gbdt-stumps-0.7.0"
 MISSING_BIN = -1
 ANCHOR_FEATURE_NAME = "income_mean_3m_minor"
 
@@ -202,7 +202,7 @@ def fit_capacity_model(
     minimum_leaf_size: int = 20,
     maximum_bins: int = 32,
     anchor_feature_name: str = ANCHOR_FEATURE_NAME,
-    input_contract_version: str = "1.2",
+    input_contract_version: str = "1.3",
     simulator_version: str = "0.7.0",
     source_contract_versions: tuple[str, ...] = ("1.3", "1.4", "1.5"),
 ) -> CapacityEstimatorArtifact:

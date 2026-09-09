@@ -24,20 +24,22 @@ from typing import Any
 from finances_simulator.config import load_scenario_config
 from finances_simulator.generation import GeneratedScenario, generate_scenario
 from finances_simulator.ground_truth.income_targets import project_income_targets
-from finances_simulator.integration.adapter import build_estimator_input_v1_2
+from finances_simulator.integration.adapter import build_estimator_input_v1_3
+from income_estimator.consent_scope import fetched_window_basis_points
 from income_estimator.contracts.explanation_v1 import EstimationExplanationV1
 from income_estimator.contracts.output_v1_1 import IncomeEstimateV11
+from income_estimator.models.cashflow import _month_sequence
 from income_estimator.production import BundleError, ProductionIncomeEstimator
 
 from demo_app.profiles import Profile, get_profile, supported_months
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 BUNDLE_DIRECTORY = REPOSITORY_ROOT / "estimator" / "bundles"
-PROMOTED_BUNDLE_PATH = BUNDLE_DIRECTORY / "production-0.12.0"
-EXPECTED_BUNDLE_ID = "production-0.12.0"
+PROMOTED_BUNDLE_PATH = BUNDLE_DIRECTORY / "production-0.13.0"
+EXPECTED_BUNDLE_ID = "production-0.13.0"
 EXPECTED_MODEL_VERSIONS: tuple[str, ...] = (
-    "capacity-gbdt-stumps-0.6.0",
-    "conditional-selector-intervals-0.12.0",
+    "capacity-gbdt-stumps-0.7.0",
+    "conditional-selector-intervals-0.13.0",
 )
 
 # Field names that exist only inside the simulator's private layers. The demo asserts none of them
@@ -156,8 +158,27 @@ class BalanceRow:
 
 
 @dataclass(frozen=True, slots=True)
-class CoverageRow:
-    """How much of one account's eligible history the consent actually exposed."""
+class ConsentScopeRow:
+    """What the receiver's own fetch log says it collected for one account.
+
+    This is the estimator's-eye view of coverage: a date range and a completeness flag, both
+    written by the receiver. It carries no simulator record counts, because a receiver of Open
+    Finance data has no way to produce them.
+    """
+
+    account_id: str
+    fetched_from: str
+    fetched_through: str
+    pagination_complete: bool
+
+
+@dataclass(frozen=True, slots=True)
+class SimulatedCoverageRow:
+    """Simulator ground truth about how much of an account's eligible history was withheld.
+
+    Not visible to the estimator under contract 1.3. Shown here separately, and labelled, so it is
+    never mistaken for something the estimator was given.
+    """
 
     account_id: str
     configured_coverage_percent: int
@@ -168,10 +189,12 @@ class CoverageRow:
 
 @dataclass(frozen=True, slots=True)
 class DataQuality:
-    """Feed health, as the estimator saw it."""
+    """Feed health, as the estimator saw it - plus, separately, what the simulator withheld."""
 
-    coverage_rows: tuple[CoverageRow, ...]
+    consent_scope_rows: tuple[ConsentScopeRow, ...]
+    simulated_coverage_rows: tuple[SimulatedCoverageRow, ...]
     coverage_is_declared: bool
+    fetched_window_basis_points: int | None
     observed_transaction_count: int
     duplicate_count: int
     reversal_count: int
@@ -183,13 +206,15 @@ class DataQuality:
     abstention_reasons: tuple[str, ...]
 
     @property
-    def overall_coverage_basis_points(self) -> int | None:
-        if not self.coverage_rows:
+    def simulated_coverage_basis_points(self) -> int | None:
+        """Simulator ground truth only. The estimator never sees this number."""
+
+        if not self.simulated_coverage_rows:
             return None
-        eligible = sum(row.eligible_record_count for row in self.coverage_rows)
+        eligible = sum(row.eligible_record_count for row in self.simulated_coverage_rows)
         if not eligible:
-            return min(row.effective_coverage_basis_points for row in self.coverage_rows)
-        observed = sum(row.observed_record_count for row in self.coverage_rows)
+            return min(row.effective_coverage_basis_points for row in self.simulated_coverage_rows)
+        observed = sum(row.observed_record_count for row in self.simulated_coverage_rows)
         return round(observed / eligible * 10_000)
 
 
@@ -310,9 +335,9 @@ def generate_world(profile: Profile, *, seed: int, months: int) -> GeneratedScen
 
 
 def build_request(world: GeneratedScenario) -> Any:
-    """Adapt the observed layer into estimator input 1.2. No private layer is read."""
+    """Adapt the observed layer into estimator input 1.3. No private layer is read."""
 
-    return build_estimator_input_v1_2(world)
+    return build_estimator_input_v1_3(world)
 
 
 @lru_cache(maxsize=1)
@@ -459,16 +484,30 @@ def _collect_data_quality(
     estimate: IncomeEstimateV11,
 ) -> DataQuality:
     declared = bool(getattr(world.observations, "observation_coverage", ()))
-    coverage_rows = tuple(
-        CoverageRow(
+    consent_scope_rows = tuple(
+        ConsentScopeRow(
+            account_id=item.account_id,
+            fetched_from=item.fetched_from,
+            fetched_through=item.fetched_through,
+            pagination_complete=item.pagination_complete,
+        )
+        for item in sorted(request.consent_scopes, key=lambda item: item.account_id)
+    )
+    simulated_coverage_rows = tuple(
+        SimulatedCoverageRow(
             account_id=item.account_id,
             configured_coverage_percent=item.configured_coverage_percent,
             eligible_record_count=item.eligible_record_count,
             observed_record_count=item.observed_original_record_count,
             effective_coverage_basis_points=item.effective_coverage_basis_points,
         )
-        for item in sorted(request.coverage, key=lambda item: item.account_id)
+        for item in sorted(
+            getattr(world.observations, "observation_coverage", ()),
+            key=lambda item: item.account_id,
+        )
     )
+    months = _month_sequence(request.window_start, request.months)
+    fetched_window = fetched_window_basis_points(request, months)
 
     duplicates = reversals = reposts = late = 0
     max_late = 0
@@ -497,8 +536,10 @@ def _collect_data_quality(
         if month.sustainable_income_p10_minor is not None
     )
     return DataQuality(
-        coverage_rows=coverage_rows,
+        consent_scope_rows=consent_scope_rows,
+        simulated_coverage_rows=simulated_coverage_rows,
         coverage_is_declared=declared,
+        fetched_window_basis_points=fetched_window,
         observed_transaction_count=len(world.observations.transactions),
         duplicate_count=duplicates,
         reversal_count=reversals,
@@ -637,13 +678,14 @@ __all__ = [
     "PROMOTED_BUNDLE_PATH",
     "PRIVATE_FIELD_NAMES",
     "BalanceRow",
-    "CoverageRow",
+    "ConsentScopeRow",
     "DataQuality",
     "DemoConfigurationError",
     "DemoResult",
     "Inference",
     "LifeEventRow",
     "MonthRow",
+    "SimulatedCoverageRow",
     "build_request",
     "generate_world",
     "join_truth",

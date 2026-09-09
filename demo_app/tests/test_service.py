@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import shutil
 import time
+from dataclasses import fields
 
 import pytest
 from demo_app.export import build_evidence, evidence_json
@@ -19,6 +20,7 @@ from demo_app.service import (
     EXPECTED_MODEL_VERSIONS,
     PRIVATE_FIELD_NAMES,
     PROMOTED_BUNDLE_PATH,
+    ConsentScopeRow,
     DemoConfigurationError,
     build_request,
     generate_world,
@@ -28,6 +30,8 @@ from demo_app.service import (
     run_demo,
     run_inference,
 )
+from income_estimator.consent_scope import fetched_window_basis_points
+from income_estimator.models.cashflow import _month_sequence
 from income_estimator.production import ProductionIncomeEstimator
 
 ALL_PROFILE_KEYS = [profile.key for profile in PROFILES]
@@ -115,6 +119,32 @@ def _keys_in(value: object) -> set[str]:
     return set()
 
 
+def test_consent_scope_row_never_carries_eligible_or_observed_counts() -> None:
+    """The estimator's-eye view of coverage carries no simulator record counts.
+
+    Contract 1.3 forbids ``eligible_record_count`` / ``observed_original_record_count`` on the
+    request; this holds the demo's own row type to the same rule so a later edit cannot quietly
+    smuggle a simulator count back into what is rendered as "what the estimator saw".
+    """
+
+    field_names = {item.name for item in fields(ConsentScopeRow)}
+    assert field_names == {"account_id", "fetched_from", "fetched_through", "pagination_complete"}
+    assert "eligible_record_count" not in field_names
+    assert "observed_record_count" not in field_names
+
+
+def test_fetched_window_basis_points_is_full_for_a_default_generated_world() -> None:
+    """``build_estimator_input_v1_3`` declares one full-window consent scope per account."""
+
+    profile = get_profile("mixed_income_professional")
+    months_count = supported_months(profile.key)[0]
+    world = generate_world(profile, seed=profile.default_seed, months=months_count)
+    request = build_request(world)
+
+    months = _month_sequence(request.window_start, request.months)
+    assert fetched_window_basis_points(request, months) == 10_000
+
+
 def test_the_truth_is_joined_only_after_inference(estimator) -> None:
     """Inference is reachable with the request alone, and the join needs a finished inference.
 
@@ -153,8 +183,8 @@ def test_the_exact_promoted_pair_answers_and_is_named_in_the_output(estimator) -
     result = run_demo("mixed_income_professional", seed=1234, months=12)
     assert result.model_versions == EXPECTED_MODEL_VERSIONS
     assert result.bundle_id == EXPECTED_BUNDLE_ID
-    assert result.bundle_version == "0.12.0"
-    assert result.estimator_package_version == "0.12.0"
+    assert result.bundle_version == "0.13.0"
+    assert result.estimator_package_version == "0.13.0"
     assert result.bundle_digest == estimator.bundle_digest
     assert set(EXPECTED_MODEL_VERSIONS) <= set(result.explanation.model_versions)
 
@@ -163,8 +193,8 @@ def test_the_exact_promoted_pair_answers_and_is_named_in_the_output(estimator) -
     assert evidence["promotion_bundle"]["bundle_id"] == EXPECTED_BUNDLE_ID
     assert evidence["promotion_bundle"]["bundle_digest"] == estimator.bundle_digest
     assert evidence["artifact_versions"]["model_versions"] == list(EXPECTED_MODEL_VERSIONS)
-    assert evidence["artifact_versions"]["estimator_version"] == "ensemble-0.7.0"
-    assert evidence["artifact_versions"]["input_contract_version"] == "1.2"
+    assert evidence["artifact_versions"]["estimator_version"] == "ensemble-0.8.0"
+    assert evidence["artifact_versions"]["input_contract_version"] == "1.3"
     assert evidence["artifact_versions"]["output_contract_version"] == "1.2"
 
 
@@ -199,7 +229,7 @@ def test_an_altered_bundle_is_refused_with_a_readable_message(
 
     altered = tmp_path / EXPECTED_BUNDLE_ID
     shutil.copytree(PROMOTED_BUNDLE_PATH, altered)
-    target = altered / "artifacts" / "quantile-calibration-0.12.0.json"
+    target = altered / "artifacts" / "quantile-calibration-0.13.0.json"
     target.write_bytes(target.read_bytes() + b"\n")
     monkeypatch.setattr(service, "PROMOTED_BUNDLE_PATH", altered)
     service.load_estimator.cache_clear()
@@ -255,7 +285,7 @@ def test_the_bundle_the_demo_names_is_the_promoted_one() -> None:
     payload = json.loads(
         (PROMOTED_BUNDLE_PATH / manifest["capacity"]["path"]).read_text(encoding="utf-8")
     )
-    assert payload["model_version"] == "capacity-gbdt-stumps-0.6.0"
+    assert payload["model_version"] == "capacity-gbdt-stumps-0.7.0"
 
 
 @pytest.mark.parametrize("profile_key", ALL_PROFILE_KEYS)

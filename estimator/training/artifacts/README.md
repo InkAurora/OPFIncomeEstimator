@@ -1,5 +1,38 @@
 # Frozen training artifacts
 
+## Capacity estimator 0.7 and quantile calibration 0.13 — current, PROMOTED
+
+[ADR 0010](../../docs/adr/0010-coverage-oracle-removed.md) removed the coverage oracle from the
+feature set, the recurring-income rules, and routing. `capacity-gbdt-stumps-0.7.0` is the retrain on
+feature set `customer-month-features-1.3.0`; `conditional-selector-intervals-0.13.0` is refitted
+around it and around routing `deterministic-routing-0.8.0`.
+
+- `capacity-estimator-0.7.0.json` is the portable, dependency-free model artifact, same hurdle
+  method as `0.6.0`, retrained on feature set `1.3.0` (`effective_consent_coverage_basis_points` and
+  `minimum_account_coverage_basis_points` removed, `fetched_window_coverage_basis_points` added);
+- `capacity-estimator-0.7.0-report.json` records versions, artifact SHA-256, customer and row
+  counts, train/validation/test metrics, and the promotion decision. Test MAE `25374.23`, WAPE
+  `0.0502`, `PROMOTED` against `historical_median_12m`;
+- `quantile-calibration-0.13.0.json` and `quantile-calibration-0.13.0-report.json`: validation
+  coverage `0.8760` against nominal `0.80` on 8635/8640 rows, floor `0.75` cleared by every band,
+  `PROMOTED`;
+- `lockbox-conditional-selector-intervals-0.13.0-report.json`: coverage `0.8756` on 8639/8640 rows,
+  `RELEASE_CONFIRMED`, drawn from seed floor `1_010_000`. Floors `610_000`, `710_000`, `810_000`, and
+  `910_000` are already spent.
+
+`capacity-estimator-0.6.0.json` and `quantile-calibration-0.12.0.json` are retained below for
+comparison only — every consumer, calibration, stress evaluation, benchmark, and test now reads
+`0.7.0`/`0.13.0`.
+
+Reproduce from the `estimator` directory:
+
+```bash
+python -m training.train_capacity_estimator --population-size-per-suite 240 --workers 4
+python -m training.select_conditioner --population-size-per-suite 240 --workers 4
+python -m training.calibrate_quantiles --population-size-per-suite 240 --workers 4
+python -m training.evaluate_lockbox --population-size-per-suite 240 --workers 4
+```
+
 ## Quantile calibration 0.11 — conditional cell selector, PROMOTED
 
 `conditional-selector-intervals-0.11.0` is the promoted calibration. Artifact schema `1.5`; the
@@ -443,7 +476,12 @@ between consent segments until one pooled offset could no longer serve both. Its
 recorded coverage of `1.00`, `0.817`, and `0.412` across the high, medium, and low bands, which is
 the limitation `0.8` exists to remove.
 
-## Capacity estimator 0.6 — promoted
+## Capacity estimator 0.6 — superseded
+
+**Superseded by `capacity-gbdt-stumps-0.7.0`.** Trained on feature set `1.2.0`, which carried
+`effective_consent_coverage_basis_points` and `minimum_account_coverage_basis_points`, features only
+the simulator's withheld-record counts could populate. See
+[ADR 0010](../../docs/adr/0010-coverage-oracle-removed.md). Retained for comparison only.
 
 - `capacity-estimator-0.6.0.json` is the portable, dependency-free model artifact;
 - `capacity-estimator-0.6.0-report.json` records versions, artifact SHA-256, customer and row

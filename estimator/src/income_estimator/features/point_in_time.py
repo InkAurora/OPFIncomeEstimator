@@ -86,6 +86,20 @@ def slice_request(request: EstimatorInputV1, cutoff: date) -> EstimatorInputV1:
         update[collection_name] = tuple(
             item for item in records if getattr(item, date_field) <= cutoff_iso
         )
+    # Consent scope describes the receiver's own fetch; a fetch that ran past the cutoff had not
+    # happened yet at the cutoff. Clip the range so months after it read as unfetched, and keep
+    # every account's record so the contract invariant (one scope per account) still holds.
+    scopes = getattr(request, "consent_scopes", None)
+    if scopes:
+        update["consent_scopes"] = tuple(
+            item.model_copy(
+                update={
+                    "fetched_from": min(item.fetched_from, cutoff_iso),
+                    "fetched_through": min(item.fetched_through, cutoff_iso),
+                }
+            )
+            for item in scopes
+        )
     return request.model_copy(update=update)
 
 

@@ -7,9 +7,61 @@ opens with its promotion status; a card is not itself a promotion.
 All measurements come from synthetic populations. They describe behavior against a simulator, not
 accuracy on real clients, and no card here supports a production claim.
 
+Every metric quoted under `0.12.0` on `incomplete_observation` or `partial_consent` measured the
+coverage oracle and is withdrawn. See [ADR 0010](../../docs/adr/0010-coverage-oracle-removed.md).
+
 ---
 
-## `recurring-streams-0.2.0` — monthly realized income
+## `recurring-streams-0.3.0` — monthly realized income
+
+**Task.** Reconstruct `realized_income_month` from observed credits. Deterministic rules only, no
+trained model.
+
+**Inputs.** Estimator input `1.0` or later: accounts, transactions, coverage, loan and investment
+links. On contract `1.3`, `consent_scopes` replaces `coverage`.
+
+**Method.** Precedence-ordered rules classify each credit with a reason code, description-based
+clustering detects income streams, and a stable stream fills a due month only where that month also
+falls inside a receiver-known fetch gap of one of its accounts — a month the receiver fetched and
+found empty is a non-payment month, not a gap. Complete-coverage zero months stay zero, as before.
+
+**What changed from `0.2.0`.** Imputation used to fire on measured account coverage below a
+threshold, a ratio only the simulator's withheld-record counts could supply. It now fires only on a
+receiver-known gap read from `consent_scopes` (`fetched_from`, `fetched_through`,
+`pagination_complete`). Under the simulator's `build_estimator_input_v1_3` adapter, which declares
+full-window scopes because the simulator fetches everything it emits, `incomplete_observation` has no
+receiver-known gaps and this component matches the unscaled baseline exactly — correctly, since the
+simulator withholds records without telling the receiver. See
+[ADR 0010](../../docs/adr/0010-coverage-oracle-removed.md).
+
+**Measured.** On `stress-0.13.0-report.json`, `capacity-estimator-0.7.0` +
+`quantile-calibration-0.13.0`: realized WAPE `0.0` on `clean`, `normal`, `life_events`, and
+`high_volatility`; `0.1083` on `partial_consent` and `0.0167` on `noisy`. Zero false-income months
+on every suite.
+
+**Known failure modes.**
+- The noisy suite remains its only nonzero realized error under contract `1.6`. What is left is
+  timing, not classification: a reversal's corrected re-post that has not arrived by the request
+  cutoff carries income the estimator cannot yet see, and the reversed original it repairs is
+  correctly excluded.
+- Non-income credits shaped like income remain a structural weak point. The noisy suite contains an
+  asset sale, a merchant refund, and an own transfer described as a PIX receipt.
+- Stream clustering falls back to normalized description because no adapter populates the optional
+  counterparty fields of input `1.1`. Two payers sharing a description merge.
+- Imputation requires a receiver-known fetch gap. A provider that under-fetches without recording it
+  in its own request log produces silent under-estimation; this is no longer a coverage-ratio defect,
+  it is the honest limit of what a receiver can know.
+
+**Intended use.** Default realized-income estimate, and the anchor every later component builds on.
+
+---
+
+## `recurring-streams-0.2.0` — monthly realized income, superseded
+
+**Status: superseded by `recurring-streams-0.3.0`.** It imputed by dividing by
+`eligible_record_count`/`observed_original_record_count`, counts only the simulator could produce
+because it had generated and withheld the records. See
+[ADR 0010](../../docs/adr/0010-coverage-oracle-removed.md).
 
 **Task.** Reconstruct `realized_income_month` from observed credits. Deterministic rules only, no
 trained model.
@@ -46,7 +98,54 @@ observed feed, not a property of these rules. See
 
 ---
 
-## `capacity-gbdt-stumps-0.6.0` — sustainable monthly income
+## `capacity-gbdt-stumps-0.7.0` — sustainable monthly income
+
+**Task.** Predict `sustainable_monthly_income` for one customer-month.
+
+**Inputs.** Feature set `customer-month-features-1.3.0`, 103 point-in-time features. Requires
+estimator input `1.2` for the capacity group; on `1.0` or `1.1` those six features report
+`CONTRACT_DOMAIN_UNAVAILABLE` and the model routes on what remains.
+
+**Labels.** Private contract `income-targets-1.0`, joined only after observed features are built.
+Requires simulator contract `1.3` or later.
+
+**Method.** Hurdle. A logistic gate decides whether sustainable income is zero; an anchored
+regressor boosts `log1p(sustainable)` around `log1p(income_mean_3m_minor)`. Decision stumps over
+binned features, with a per-stump direction for missing values. Unchanged from `0.6.0`.
+
+**Data.** 720 customers across `income_diverse`, `life_events`, and `incomplete_observation`, split
+70/15/15 by customer. Customer-disjoint from every population used to fit or gate the interval.
+
+**What changed from `0.6.0`.** [ADR 0010](../../docs/adr/0010-coverage-oracle-removed.md) removed
+`effective_consent_coverage_basis_points` and `minimum_account_coverage_basis_points` from the
+feature set and added `fetched_window_coverage_basis_points`. Retrained on feature set `1.3.0`,
+same seeds and split.
+
+**Measured.** Held-out MAE `25,374.23` against `84,089.40` for the best deterministic baseline, WAPE
+`0.0502`. Against `0.6.0` (MAE `25,217.44`, WAPE `0.0499`) the model's own error barely moves — the
+two removed features were not what it was fitting on. `PROMOTED` by the unchanged gate against
+`historical_median_12m`. By the simulator's private coverage label, `partial_high` rows move from
+`13,469.21` to `11,647.99` and `complete` rows from `32,582.00` to `33,978.74`.
+
+**Known failure modes.**
+- Still loses narrowly to the trivial cash-flow baseline on perfectly stable salaried income.
+  Routing `0.8.0` routes around this deliberately.
+- Degrades sharply on income conditions absent from training. On the held-out high-volatility suite
+  sustainable WAPE is `0.410`, an order of magnitude worse than on its training conditions.
+- Trained on three suites only. Income profiles outside them are out of distribution and nothing
+  currently detects that at inference time.
+
+**Intended use.** Sustainable-income component inside routing `0.8.0`. Not a standalone product
+output.
+
+---
+
+## `capacity-gbdt-stumps-0.6.0` — sustainable monthly income, superseded
+
+**Status: superseded by `capacity-gbdt-stumps-0.7.0`.** Trained on feature set `1.2.0`, which
+carried `effective_consent_coverage_basis_points` and `minimum_account_coverage_basis_points`; the
+model itself did not lean on either, but the two components measured downstream of it did. See
+[ADR 0010](../../docs/adr/0010-coverage-oracle-removed.md).
 
 **Task.** Predict `sustainable_monthly_income` for one customer-month.
 
@@ -94,10 +193,86 @@ product output.
 
 ---
 
-## `conditional-selector-intervals-0.12.0` — sustainable income interval, promoted
+## `deterministic-routing-0.8.0` — routing, promoted
 
-**Status: PROMOTED.** Every gate passes on the validation population and on a release lockbox read
-once. See [ADR 0009](../../docs/adr/0009-routing-narrowed-and-recalibrated.md).
+**Status: PROMOTED.** Selects the capacity model wherever it is available. See
+[ADR 0010](../../docs/adr/0010-coverage-oracle-removed.md).
+
+**Task.** Choose, per customer-month, whether `sustainable_monthly_income` comes from the capacity
+model or from last month's realized-income reconstruction.
+
+**Method.** The `0.7.0` stable-income rule was re-pointed at `fetched_window_coverage_basis_points`
+(receiver-known fetch coverage) instead of the withdrawn `effective_consent_coverage_basis_points`,
+and re-measured on the same benchmark. It fired on zero of 312 rows: the simulator's
+`build_estimator_input_v1_3` adapter declares full-window scopes, so no row is receiver-known
+partial. The benchmark's own gate reported `NOT_PROMOTED` for the re-pointed rule ("improves no
+segment"), which is the result that removes it. No rule now routes away from the capacity model.
+
+**Measured.** Held-out, 312 rows: routed MAE `13,973.25`, identical to the capacity model alone.
+Against the withdrawn `0.7.0` oracle rule, which scored `12,179.10` by dividing by the exact hidden
+fraction on `partial_high` rows (`1,720.56` against `9,612.08` for the model alone): that number was
+the oracle being read twice, once by the feature that fired the rule and once by the component the
+rule selected, and no receiver of Open Finance data has it.
+
+The benchmark's "improves a segment" gate now applies only when some rule actually routed away from
+the model on the population, because with no such rule the condition is unsatisfiable by
+construction.
+
+**Known failure modes.**
+- Reason codes still report coverage and volatility so a reviewer sees the evidence the earlier
+  rules acted on, even though no rule currently acts on it.
+- Removing the rule removes its failure mode too: the previous rule's cost on the `noisy` stress
+  suite (see `evaluation/baselines/README.md`) does not recur, because nothing routes away from the
+  capacity model there either.
+
+**Intended use.** Default routing inside the ensemble estimator and every bundle.
+
+---
+
+## `conditional-selector-intervals-0.13.0` — sustainable income interval, promoted
+
+**Status: PROMOTED.** Bound to `capacity-gbdt-stumps-0.7.0` and `deterministic-routing-0.8.0`. See
+[ADR 0010](../../docs/adr/0010-coverage-oracle-removed.md).
+
+**Why a refit.** Residuals are taken around the estimate `combine_month` publishes, routing
+included. Both halves of what the residuals were taken around moved — the capacity model to `0.7.0`
+and routing to `0.8.0` — so the calibration is refitted rather than re-pointed, drawn from lockbox
+seed floor `1_010_000`. Floors `610_000`, `710_000`, `810_000`, and `910_000` are already spent by
+earlier releases. The method is unchanged from `0.12.0`: same conditional cell selector, same
+pre-registered conditioner, same gates.
+
+**Measured.** Conditioner re-selected inside the uncertainty population: `observed_domain_count`,
+cuts `[2, 3, 5]`, worst-seed tail miss `0.1343` (next best `transaction_count_1m` `0.1574`).
+Validation, seeds `410_000`+/`510_000`+, 240/suite: coverage `0.8760` against nominal `0.80`, floor
+`0.75`, on 8635/8640 rows; tails lower `0.0573` upper `0.0667` against `0.10`; bands high `0.8824`,
+medium `0.8796`, low `0.8151`. By suite: `income_diverse` `0.8092` (width `162766.85`, WAPE
+`0.1245`), `incomplete_observation` `0.8186` (width `51490.40`, WAPE `0.0225`), `life_events`
+`1.0000` (width `10594.17`, WAPE `0.0062`). Zero-truth coverage `0.9983` on 600 rows. Support
+envelope fences 9 features, 5/8640 rows out of support. Sharpness non-inferiority passed on all
+three suites. `PROMOTED`.
+
+Lockbox, read once, seeds `1_010_000`+, 240/suite, 8640 rows: coverage `0.8756` on 8639/8640; tails
+lower `0.0581` upper `0.0663`; bands high `0.8723` low `0.8418` medium `0.8863`. By suite:
+`income_diverse` `0.8014`, `incomplete_observation` `0.8253`, `life_events` `1.0000`. Sharpness
+passed on all three. `RELEASE_CONFIRMED`. Report:
+`training/artifacts/lockbox-conditional-selector-intervals-0.13.0-report.json`.
+
+**Known failure modes.** Out-of-distribution coverage collapses on `noisy` and `high_volatility`
+(`0.09` / `0.19` against `0.80`); in-distribution over-covers (`0.876` against `0.80`), the same
+symptom as `0.12.0`. The conditioner is still `observed_domain_count`, which barely varies in
+distribution — the regime-conditioned selector is plan order 4.
+
+**Intended use.** The runtime default, bound to `capacity-gbdt-stumps-0.7.0` by version and digest.
+The rollback is no intervals.
+
+---
+
+## `conditional-selector-intervals-0.12.0` — sustainable income interval, superseded
+
+**Status: superseded by `conditional-selector-intervals-0.13.0`.** Fitted around
+`capacity-gbdt-stumps-0.6.0` and `deterministic-routing-0.7.0`, the routing rule ADR 0010 found was
+reading the coverage oracle twice; every figure below inherits that. See
+[ADR 0010](../../docs/adr/0010-coverage-oracle-removed.md).
 
 **Why a refit.** Residuals are taken around the estimate `combine_month` publishes, routing
 included. `deterministic-routing-0.7.0` narrowed routing to stable income under declared partial

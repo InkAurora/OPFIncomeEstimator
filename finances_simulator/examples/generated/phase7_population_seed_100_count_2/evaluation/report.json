@@ -3,8 +3,8 @@
   "by_consent_coverage": [
     {
       "count": 6,
-      "mean_absolute_error_minor": 200024.166667,
-      "median_absolute_error_minor": 120029.0,
+      "mean_absolute_error_minor": 100000.0,
+      "median_absolute_error_minor": 0.0,
       "schema_version": "1.0",
       "value": "83.33%"
     }
@@ -12,8 +12,8 @@
   "by_income_range": [
     {
       "count": 6,
-      "mean_absolute_error_minor": 200024.166667,
-      "median_absolute_error_minor": 120029.0,
+      "mean_absolute_error_minor": 100000.0,
+      "median_absolute_error_minor": 0.0,
       "schema_version": "1.0",
       "value": "500000-999999"
     }
@@ -21,8 +21,8 @@
   "by_income_type": [
     {
       "count": 6,
-      "mean_absolute_error_minor": 200024.166667,
-      "median_absolute_error_minor": 120029.0,
+      "mean_absolute_error_minor": 100000.0,
+      "median_absolute_error_minor": 0.0,
       "schema_version": "1.0",
       "value": "SALARIED"
     }
@@ -67,16 +67,16 @@
     },
     "outside_events": {
       "count": 6,
-      "mean_absolute_error_minor": 200024.166667,
-      "median_absolute_error_minor": 120029.0,
+      "mean_absolute_error_minor": 100000.0,
+      "median_absolute_error_minor": 0.0,
       "schema_version": "1.0"
     },
     "schema_version": "1.0"
   },
   "overall": {
     "count": 6,
-    "mean_absolute_error_minor": 200024.166667,
-    "median_absolute_error_minor": 120029.0,
+    "mean_absolute_error_minor": 100000.0,
+    "median_absolute_error_minor": 0.0,
     "schema_version": "1.0"
   },
   "population_size": 2,

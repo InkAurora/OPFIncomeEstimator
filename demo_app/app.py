@@ -718,8 +718,8 @@ with quality_tab:
     quality_columns = st.columns(4)
     quality_columns[0].metric(
         "Consent coverage",
-        basis_points(quality.overall_coverage_basis_points),
-        help="Share of eligible records the consent actually exposed.",
+        basis_points(quality.fetched_window_basis_points),
+        help="What the estimator saw: receiver fetch coverage",
     )
     quality_columns[1].metric("Observed transactions", f"{quality.observed_transaction_count:,}")
     quality_columns[2].metric(
@@ -734,23 +734,49 @@ with quality_tab:
             "account rather than measured."
         )
 
-    st.markdown("##### Per-account consent coverage")
+    st.markdown("##### Per-account consent scope")
+    st.caption("What the estimator saw: receiver fetch coverage")
     st.dataframe(
         pd.DataFrame.from_records(
             [
                 {
                     "Account": row.account_id,
-                    "Configured coverage": f"{row.configured_coverage_percent}%",
-                    "Eligible records": row.eligible_record_count,
-                    "Observed records": row.observed_record_count,
-                    "Effective coverage": basis_points(row.effective_coverage_basis_points),
+                    "Fetched from": row.fetched_from,
+                    "Fetched through": row.fetched_through,
+                    "Pagination complete": row.pagination_complete,
                 }
-                for row in quality.coverage_rows
+                for row in quality.consent_scope_rows
             ]
         ),
         width="stretch",
         hide_index=True,
     )
+
+    with st.expander("Simulator ground truth (not visible to the estimator)"):
+        st.caption(
+            "The estimator cannot see these numbers. Earlier versions (\u2264 0.12.0) could - "
+            "that was a leak, closed by contract 1.3."
+        )
+        st.metric(
+            "Simulated overall coverage",
+            basis_points(quality.simulated_coverage_basis_points),
+        )
+        st.dataframe(
+            pd.DataFrame.from_records(
+                [
+                    {
+                        "Account": row.account_id,
+                        "Configured coverage": f"{row.configured_coverage_percent}%",
+                        "Eligible records": row.eligible_record_count,
+                        "Observed records": row.observed_record_count,
+                        "Effective coverage": basis_points(row.effective_coverage_basis_points),
+                    }
+                    for row in quality.simulated_coverage_rows
+                ]
+            ),
+            width="stretch",
+            hide_index=True,
+        )
 
     st.markdown("##### Feed artifacts")
     st.dataframe(

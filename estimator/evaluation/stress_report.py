@@ -23,7 +23,7 @@ from statistics import fmean
 from finances_simulator.batch import generate_population
 from finances_simulator.config import load_scenario_config
 from finances_simulator.ground_truth import project_income_targets
-from finances_simulator.integration import build_estimator_input_v1_2
+from finances_simulator.integration import build_estimator_input_v1_3
 
 from income_estimator.pipeline import EnsembleIncomeEstimator
 
@@ -128,7 +128,7 @@ def evaluate_suite(
     targets_available = True
 
     for generated in population.members:
-        request = build_estimator_input_v1_2(generated)
+        request = build_estimator_input_v1_3(generated)
         estimate = estimator.estimate_v1_1(request)
         realized_truth = {
             item.month: item.true_income_minor
@@ -199,12 +199,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--capacity-model",
         type=Path,
-        default=Path(__file__).parents[1] / "training/artifacts/capacity-estimator-0.6.0.json",
+        default=Path(__file__).parents[1] / "training/artifacts/capacity-estimator-0.7.0.json",
     )
     parser.add_argument(
         "--calibration",
         type=Path,
-        default=Path(__file__).parents[1] / "training/artifacts/quantile-calibration-0.12.0.json",
+        default=Path(__file__).parents[1] / "training/artifacts/quantile-calibration-0.13.0.json",
     )
     parser.add_argument("--output", type=Path, default=Path(__file__).parent / "baselines")
     parser.add_argument("--population-size", type=int, default=20)

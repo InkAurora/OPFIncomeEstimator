@@ -37,25 +37,43 @@ def _salary_months(transaction, count: int, *, amount_minor: int = 500_000):
     ]
 
 
-def _incomplete_coverage() -> list[dict[str, object]]:
-    return [
-        {
-            "schema_version": "1.0",
-            "customer_id": "customer-test",
-            "account_id": "checking",
-            "configured_coverage_percent": 100,
-            "eligible_record_count": 10,
-            "observed_original_record_count": 9,
-            "effective_coverage_basis_points": 9_000,
-        }
+def _scope(
+    account_id: str,
+    fetched_from: str,
+    fetched_through: str,
+    *,
+    pagination_complete: bool = True,
+) -> dict[str, object]:
+    """A contract-1.3 consent scope: what the receiver itself fetched for one account."""
+
+    return {
+        "schema_version": "1.3",
+        "customer_id": "customer-test",
+        "account_id": account_id,
+        "fetched_from": fetched_from,
+        "fetched_through": fetched_through,
+        "pagination_complete": pagination_complete,
+    }
+
+
+def _to_v1_3(payload: dict[str, object], scopes: list[dict[str, object]]) -> dict[str, object]:
+    """Upgrade a request built by ``request_payload`` to contract 1.3 with consent scopes."""
+
+    payload = dict(payload)
+    payload["schema_version"] = "1.3"
+    payload["accounts"] = [dict(item, schema_version="1.3") for item in payload["accounts"]]
+    payload["transactions"] = [
+        dict(item, schema_version="1.3") for item in payload["transactions"]
     ]
+    payload["consent_scopes"] = scopes
+    return payload
 
 
 def test_feature_set_version_and_schema_fingerprint_are_frozen() -> None:
-    assert FEATURE_SET_VERSION == "customer-month-features-1.2.0"
-    assert FEATURE_SCHEMA_FINGERPRINT == "e54e70affc30a6fad10282e62463a936"
+    assert FEATURE_SET_VERSION == "customer-month-features-1.3.0"
+    assert FEATURE_SCHEMA_FINGERPRINT == "41bacb36c7277be61ac2b737b673bf31"
     assert feature_schema_fingerprint(FEATURE_SCHEMA) == FEATURE_SCHEMA_FINGERPRINT
-    assert len(FEATURE_NAMES) == len(set(FEATURE_NAMES)) == 104
+    assert len(FEATURE_NAMES) == len(set(FEATURE_NAMES)) == 103
 
 
 def test_every_row_carries_the_full_versioned_schema(request_payload, transaction) -> None:
@@ -65,7 +83,7 @@ def test_every_row_carries_the_full_versioned_schema(request_payload, transactio
 
     assert table.feature_set_version == FEATURE_SET_VERSION
     assert table.feature_schema_fingerprint == FEATURE_SCHEMA_FINGERPRINT
-    assert table.estimator_version == "recurring-streams-0.2.0"
+    assert table.estimator_version == "recurring-streams-0.3.0"
     assert table.input_contract_version == "1.0"
     assert tuple(row.reference_month for row in table.rows) == ("2026-01", "2026-02", "2026-03")
     for row in table.rows:
@@ -244,7 +262,15 @@ def test_source_structure_reports_concentration_and_largest_share(
 
 def test_coverage_and_activity_describe_observable_scope(request_payload, transaction) -> None:
     payload = request_payload(transactions=_salary_months(transaction, 12), months=12)
-    payload["coverage"] = _incomplete_coverage()
+    payload = _to_v1_3(
+        payload,
+        [
+            _scope("checking", "2026-01-01", "2026-12-31"),
+            # January is a receiver-known gap for this account, so the fetched window covers
+            # 23 of 24 account-months rather than trivially all of them.
+            _scope("savings", "2026-02-01", "2026-12-31"),
+        ],
+    )
 
     values = _values(build_customer_month_features(payload), "2026-12")
 
@@ -255,10 +281,11 @@ def test_coverage_and_activity_describe_observable_scope(request_payload, transa
     assert values["accounts_observed"] == 1
     assert values["institutions_observed"] == 1
     assert values["active_accounts_3m"] == 1
-    assert values["effective_consent_coverage_basis_points"] == 9_000
-    assert values["minimum_account_coverage_basis_points"] == 9_000
+    assert values["fetched_window_coverage_basis_points"] == 9_583
+    assert "effective_consent_coverage_basis_points" not in values
+    assert "minimum_account_coverage_basis_points" not in values
     assert values["observed_domain_count"] == 1
-    assert values["data_completeness_score_basis_points"] == 6_500
+    assert values["data_completeness_score_basis_points"] == 6_645
     assert values["days_since_last_credit"] == 26
 
 

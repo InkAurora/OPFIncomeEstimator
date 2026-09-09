@@ -7,31 +7,46 @@ from finances_simulator.integration.contracts import (
     EstimatorAccountV1,
     EstimatorAccountV11,
     EstimatorAccountV12,
+    EstimatorAccountV13,
     EstimatorBalanceV11,
     EstimatorBalanceV12,
+    EstimatorBalanceV13,
     EstimatorCardInvoiceV12,
+    EstimatorCardInvoiceV13,
     EstimatorCardTransactionV12,
+    EstimatorCardTransactionV13,
+    EstimatorConsentScopeV13,
     EstimatorCoverageV1,
     EstimatorCoverageV11,
     EstimatorCoverageV12,
     EstimatorCreditCardV12,
+    EstimatorCreditCardV13,
     EstimatorCreditLimitV12,
+    EstimatorCreditLimitV13,
     EstimatorInputV1,
     EstimatorInputV11,
     EstimatorInputV12,
+    EstimatorInputV13,
     EstimatorInvestmentBalanceV12,
+    EstimatorInvestmentBalanceV13,
     EstimatorInvestmentTransactionV1,
     EstimatorInvestmentTransactionV11,
     EstimatorInvestmentTransactionV12,
+    EstimatorInvestmentTransactionV13,
     EstimatorInvestmentV12,
+    EstimatorInvestmentV13,
     EstimatorLoanBalanceV12,
+    EstimatorLoanBalanceV13,
     EstimatorLoanPaymentV12,
+    EstimatorLoanPaymentV13,
     EstimatorLoanV1,
     EstimatorLoanV11,
     EstimatorLoanV12,
+    EstimatorLoanV13,
     EstimatorTransactionV1,
     EstimatorTransactionV11,
     EstimatorTransactionV12,
+    EstimatorTransactionV13,
 )
 from finances_simulator.validation.v7 import validate_generated_boundary
 
@@ -397,8 +412,63 @@ def build_estimator_input_v1_2(generated: GeneratedScenario) -> EstimatorInputV1
     )
 
 
+def build_estimator_input_v1_3(generated: GeneratedScenario) -> EstimatorInputV13:
+    """Replace the coverage oracle with receiver-knowable consent scope.
+
+    The simulator's withheld-record counts (``eligible_record_count``,
+    ``observed_original_record_count``) are private labels describing records the receiver never
+    fetched, so they are deliberately not forwarded here. The receiver-knowable scope is the full
+    observation window, because the simulator "fetches" everything it emits: every account gets one
+    consent scope spanning ``window_start``...``window_end`` with pagination reported complete.
+    """
+
+    base = build_estimator_input_v1_2(generated)
+
+    consent_scopes = tuple(
+        EstimatorConsentScopeV13(
+            customer_id=base.customer_id,
+            account_id=account.account_id,
+            fetched_from=base.window_start,
+            fetched_through=base.window_end,
+            pagination_complete=True,
+        )
+        for account in base.accounts
+    )
+
+    return EstimatorInputV13(
+        source_contract_schema_version=base.source_contract_schema_version,
+        run_id=base.run_id,
+        customer_id=base.customer_id,
+        currency=base.currency,
+        window_start=base.window_start,
+        window_end=base.window_end,
+        months=base.months,
+        accounts=_upgrade_records(base.accounts, EstimatorAccountV13),
+        transactions=_upgrade_records(base.transactions, EstimatorTransactionV13),
+        balances=_upgrade_records(base.balances, EstimatorBalanceV13),
+        loans=_upgrade_records(base.loans, EstimatorLoanV13),
+        investment_transactions=_upgrade_records(
+            base.investment_transactions,
+            EstimatorInvestmentTransactionV13,
+        ),
+        credit_cards=_upgrade_records(base.credit_cards, EstimatorCreditCardV13),
+        credit_limits=_upgrade_records(base.credit_limits, EstimatorCreditLimitV13),
+        card_transactions=_upgrade_records(base.card_transactions, EstimatorCardTransactionV13),
+        card_invoices=_upgrade_records(base.card_invoices, EstimatorCardInvoiceV13),
+        loan_payments=_upgrade_records(base.loan_payments, EstimatorLoanPaymentV13),
+        loan_balances=_upgrade_records(base.loan_balances, EstimatorLoanBalanceV13),
+        investments=_upgrade_records(base.investments, EstimatorInvestmentV13),
+        investment_balances=_upgrade_records(
+            base.investment_balances,
+            EstimatorInvestmentBalanceV13,
+        ),
+        consent_scopes=consent_scopes,
+    )
+
+
 __all__ = [
     "build_estimator_input",
     "build_estimator_input_v1_1",
     "build_estimator_input_v1_2",
+    "build_estimator_input_v1_3",
 ]

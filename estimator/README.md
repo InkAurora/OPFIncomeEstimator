@@ -28,22 +28,27 @@ contract changes, milestones, evaluation metrics, and acceptance criteria.
 
 ## Current milestone
 
-Estimator `0.11` is the promoted milestone. One answer is produced by three artifacts read
-together: realized income from the frozen `recurring-streams-0.2.0` reconstruction, sustainable
-income from capacity model `capacity-gbdt-stumps-0.6.0`, and that estimate's interval from
-calibration `conditional-selector-intervals-0.12.0`, routed by `ensemble-0.7.0` over feature set
-`customer-month-features-1.2.0`. Input contracts `1.0` through `1.2` are accepted; the estimate is
+Estimator `0.13` is the promoted milestone. One answer is produced by three artifacts read
+together: realized income from the frozen `recurring-streams-0.3.0` reconstruction, sustainable
+income from capacity model `capacity-gbdt-stumps-0.7.0`, and that estimate's interval from
+calibration `conditional-selector-intervals-0.13.0`, routed by `ensemble-0.8.0` over feature set
+`customer-month-features-1.3.0`. Input contracts `1.0` through `1.3` are accepted; the estimate is
 output contract `1.1` and the explanation is contract `1.0`.
 
 ```bash
-income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.12.0.json request.json
+income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.7.0.json --calibration training/artifacts/quantile-calibration-0.13.0.json request.json
 ```
 
 The two artifacts are a bound pair. The calibration records the capacity `model_version` and the
 SHA-256 of its exact bytes, and the runtime refuses any other combination when the estimator is
-constructed. `capacity-estimator-0.6.0.json` with `quantile-calibration-0.12.0.json` is the only
-pair in this repository whose binding resolves; `quantile-calibration-0.8.0.json` names capacity
-bytes that no longer exist here and cannot be loaded against anything.
+constructed. `capacity-estimator-0.7.0.json` with `quantile-calibration-0.13.0.json` is the only
+pair in this repository whose binding resolves; earlier calibration artifacts name capacity bytes
+that no longer exist here and cannot be loaded against anything.
+
+[ADR 0010](../docs/adr/0010-coverage-oracle-removed.md) removed the coverage oracle from every
+input path this component reads. Nothing here scales an estimate by a ratio a receiver could not
+have written; every routing and stress figure quoted under `0.12.0` on `incomplete_observation` or
+`partial_consent` measured that oracle and is withdrawn.
 
 This is a research baseline, not a production release. Every number below was measured against the
 synthetic simulator. Nothing here has been validated against real consented client data, and no
@@ -56,27 +61,26 @@ The command above names two artifacts and trusts whoever typed it. A deployment 
 manifest pinning every file by SHA-256:
 
 ```text
-bundles/production-0.12.0/
+bundles/production-0.13.0/
 |-- manifest.json                                   bundle contract 1.0
 |-- artifacts/
-|   |-- capacity-estimator-0.6.0.json               read at inference
-|   `-- quantile-calibration-0.12.0.json            read at inference
+|   |-- capacity-estimator-0.7.0.json               read at inference
+|   `-- quantile-calibration-0.13.0.json            read at inference
 `-- provenance/
-    |-- capacity-estimator-0.6.0-report.json        why this model
-    |-- quantile-calibration-0.12.0-report.json     why this calibration
-    `-- lockbox-...-0.12.0-report.json              RELEASE_CONFIRMED, these exact bytes
+    |-- capacity-estimator-0.7.0-report.json        why this model
+    |-- quantile-calibration-0.13.0-report.json     why this calibration
+    `-- lockbox-...-0.13.0-report.json              RELEASE_CONFIRMED, these exact bytes
 ```
 
-The two lockbox readings measured different artifacts. The first promoted the calibration; the
-support envelope was added afterwards, so the second was taken against exactly what this bundle
-ships. It confirms, having withheld `14` of `8,640` rows and altered no published bound.
+Seeds `1_010_000`+; floors `610_000`, `710_000`, `810_000`, and `910_000` are already spent by
+earlier releases. Lockbox result: coverage `0.8756` on 8639/8640 rows, `RELEASE_CONFIRMED`.
 
 The bundle's identity is the SHA-256 of `manifest.json`. Because the manifest pins every other file
 by digest, that one number covers the whole directory, and it is what the result reports.
 
 ```bash
-income-estimator request.json --bundle bundles/production-0.12.0
-income-estimator request.json --bundle bundles/production-0.12.0 --explain
+income-estimator request.json --bundle bundles/production-0.13.0
+income-estimator request.json --bundle bundles/production-0.13.0 --explain
 ```
 
 Both emit production result contract `1.0`: an unmodified output `1.2` estimate or explanation `1.0`
@@ -92,10 +96,10 @@ got before.
 ```json
 {
   "schema_version": "1.0",
-  "bundle_id": "production-0.12.0",
-  "bundle_digest": "1f4f8fe3a59eb23ac96568f328c87ee20f5fb4ea90f3fa6b90ae839795f73787",
-  "estimator_package_version": "0.12.0",
-  "model_versions": ["capacity-gbdt-stumps-0.6.0", "conditional-selector-intervals-0.12.0"],
+  "bundle_id": "production-0.13.0",
+  "bundle_digest": "c2c2c47dc65298d3a62fcd75af5e9e221959e16d940d7cad26571958e9371dd3",
+  "estimator_package_version": "0.13.0",
+  "model_versions": ["capacity-gbdt-stumps-0.7.0", "conditional-selector-intervals-0.13.0"],
   "estimate": { "schema_version": "1.2", "assessment_status": "SUPPORTED", "...": "..." }
 }
 ```
@@ -105,7 +109,7 @@ from pathlib import Path
 
 from income_estimator import ProductionIncomeEstimator
 
-estimator = ProductionIncomeEstimator.from_bundle(Path("bundles/production-0.12.0"))
+estimator = ProductionIncomeEstimator.from_bundle(Path("bundles/production-0.13.0"))
 result = estimator.estimate_production(request)
 result.bundle_digest
 ```
@@ -114,7 +118,7 @@ result.bundle_digest
 
 `EnsembleIncomeEstimator` answers with whatever it can load and records the shortfall in the routing
 reasons. That is right for a laboratory and wrong for a deployment: a caller holding a number cannot
-tell that the capacity model failed to load and the answer came from `recurring-streams-0.2.0`
+tell that the capacity model failed to load and the answer came from `recurring-streams-0.3.0`
 instead. `from_bundle` refuses instead, and there is no partial success. Checks run cheapest-first
 and stop at the first failure, so an operator gets one actionable error:
 
@@ -133,7 +137,7 @@ rather than an equality check, so a newer loader keeps reading an older bundle.
 ### Building one
 
 ```bash
-python -m release.build_bundle --output bundles/production-0.12.0
+python -m release.build_bundle --output bundles/production-0.13.0
 ```
 
 Deterministic: two builds from the same artifacts produce byte-identical output, and a test asserts
@@ -165,10 +169,12 @@ IncomeStreamDetector
 MonthlyIncomeReconstructor
 ```
 
-Estimator `0.1.0` remains frozen as comparison baseline. Estimator `0.2.0` keeps observed classified
-income at face value and imputes only evidence-backed gaps from stable streams when measured account
-coverage is incomplete. Full-coverage zero months remain zero. Every imputation records amount,
-stream IDs, supporting transaction IDs, and reason codes.
+Estimator `0.1.1` remains frozen as comparison baseline; `rule-based-0.1.1` no longer scales its
+estimate by any coverage ratio. Estimator `0.3.0` (`recurring-streams-0.3.0`) keeps observed
+classified income at face value and imputes only into a stream's due months that also fall inside a
+receiver-known fetch gap of one of its accounts — a month the receiver fetched and found empty is a
+non-payment month, not a gap. Every imputation records amount, stream IDs, supporting transaction
+IDs, and reason codes. See [ADR 0010](../docs/adr/0010-coverage-oracle-removed.md).
 
 Input contract `1.1` is a backward-compatible extension with optional observed counterparty name or
 document hash, provider transaction type, transaction balance-after, and balance snapshots. Stream
@@ -184,6 +190,18 @@ reported as unobserved rather than as zero. Product records carry their provider
 simulator adapter `build_estimator_input_v1_2` maps every domain its scenario contract exposes and
 reads no private field.
 
+Input contract `1.3` forbids `coverage` — typed as an always-empty tuple, so a payload still
+carrying the simulator's withheld-record counts fails validation with a message rather than being
+silently ignored — and requires one `consent_scopes` record per account: `fetched_from`,
+`fetched_through`, and `pagination_complete`, all three drawn from the receiver's own request log.
+Contracts `1.0` through `1.2` still validate; their `coverage` records are no longer read anywhere,
+so they behave as if they declared no receiver-known fetch gaps. `income_estimator.consent_scope` is
+the one module that turns a consent scope and a reference month into a gap decision, and
+`slice_request` clips each scope to that month's cutoff so a fetch that ran later cannot be read
+earlier. The simulator adapter `build_estimator_input_v1_3` declares full-window scopes with
+`pagination_complete=True`, because the simulator fetches everything it emits. See
+[ADR 0010](../docs/adr/0010-coverage-oracle-removed.md).
+
 Estimator `0.3` is implemented as an experimental supervised transaction-classifier candidate. Its
 training zone extracts point-in-time observed features before joining private synthetic labels,
 splits by customer, trains deterministic gradient-boosted decision stumps, and exports a validated
@@ -194,7 +212,7 @@ and recall `0.99108734`; both recorded zero critical false positives. Because pr
 strict F1 improvement, `0.3` is **not promoted** and `0.2` remains the default. See
 [`training/artifacts`](training/artifacts/README.md) for the reproducible artifact and report.
 
-## Customer-month features (0.4, schema 1.2.0)
+## Customer-month features (0.4, schema 1.3.0)
 
 `build_customer_month_features` produces one point-in-time row per `customer_id` and
 `reference_month`, keyed to the last observable day of that month:
@@ -223,7 +241,7 @@ observable at that cutoff, so point-in-time safety is a property of the input ra
 formula. A transaction posted in January but observed in March is invisible to January, February,
 and every rolling window computed before it arrived.
 
-The versioned schema holds 104 features in seven groups:
+The versioned schema holds 103 features in seven groups:
 
 - **cash flow:** gross credits, debits, probability-weighted probable income, and reconstructed
   income over trailing 1, 3, 6, and 12 months, plus imputed income and excluded own transfers, loan
@@ -253,10 +271,15 @@ Product domains are themselves point-in-time: a loan counts only once its disbur
 or its own dated product record is visible, so a later product cannot make an earlier month look
 better covered.
 
-One documented exception to per-cutoff recomputation: `effective_consent_coverage_basis_points` and
-`minimum_account_coverage_basis_points` come from provider-declared consent records that describe
-the whole window. Contract `1.1` exposes no monthly coverage measurement, so those two features
-carry window-level metadata and say so in their schema formula.
+Coverage is receiver-side. `fetched_window_coverage_basis_points` is the share of account-months
+through the cutoff that the receiver fully fetched, read from the `consent_scopes` it declared in
+contract `1.3` (`fetched_from`, `fetched_through`, `pagination_complete`) and clipped to each
+cutoff. Requests on `1.0`–`1.2` carry no consent scope and report it as
+`CONTRACT_DOMAIN_UNAVAILABLE`; their `coverage` records are not read. Until `0.12` two features
+were built from `eligible_record_count` and `observed_original_record_count`, counts only the
+simulator could produce because it had generated and withheld the records, and the cash-flow
+reconstruction divided by the same ratio. [ADR 0010](../docs/adr/0010-coverage-oracle-removed.md)
+records the removal and what it cost the quoted numbers.
 
 `FEATURE_SET_VERSION` and `FEATURE_SCHEMA_FINGERPRINT` freeze every name, unit, window, and formula.
 The fingerprint is asserted in tests, so changing a formula fails until the version is bumped
@@ -273,7 +296,7 @@ row.missing_features
 
 ```bash
 income-estimator --features request.json
-income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.12.0.json request.json
+income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.7.0.json --calibration training/artifacts/quantile-calibration-0.13.0.json request.json
 ```
 
 The default estimator is promoted `0.2`. The rejected `0.3` classifier stays optional and is
@@ -332,7 +355,7 @@ from pathlib import Path
 from income_estimator import GradientBoostedCapacityModel, build_customer_month_features
 
 model = GradientBoostedCapacityModel.from_path(
-    Path("training/artifacts/capacity-estimator-0.6.0.json")
+    Path("training/artifacts/capacity-estimator-0.7.0.json")
 )
 row = build_customer_month_features(request).row("2026-06")
 model.predict_minor(row.to_mapping())
@@ -352,16 +375,15 @@ Routing is deterministic and documented. A learned meta-model needs out-of-fold 
 which do not exist yet; fitting one on in-sample component output would leak training performance
 into the weights.
 
-Realized income keeps the promoted `0.2` reconstruction, with frozen `0.1` visible at zero weight.
-Sustainable income goes to the capacity model except where income is stable, where last month's
-reconstruction is already the answer and the model only adds noise. Conditioning that exception on
-full coverage as well was measured and rejected: on the intersection the model wins again, and the
-narrower rule made the ensemble worse than its own best component.
+Realized income keeps the promoted `0.3` reconstruction, with frozen `0.1` visible at zero weight.
+Routing `0.8.0` selects the capacity model wherever it is available. The earlier stable-income rule
+was re-pointed at receiver-known fetch coverage and re-measured; it never fired on the benchmark
+population and improved no segment, so it was removed rather than kept dormant. See
+[ADR 0010](../docs/adr/0010-coverage-oracle-removed.md).
 
-Held-out, 312 rows: routed MAE `21,227` against `23,236` for the best individual component, WAPE
-`0.0388`. Routing improves the stable, partial-consent, short-history, middle-income, and
-high-income segments; the complete-coverage segment is `0.35%` worse, which the report records
-rather than hides.
+Held-out, 312 rows: routed MAE `13,973.25`, identical to the capacity model alone, `0` of `312` rows
+routed away. See
+[`evaluation/baselines/ensemble-0.8.0-report.json`](evaluation/baselines/ensemble-0.8.0-report.json).
 
 ```bash
 python -m evaluation.ensemble_benchmark --population-size-per-suite 80 --workers 4
@@ -377,7 +399,7 @@ from pathlib import Path
 from income_estimator import EnsembleIncomeEstimator
 
 estimate = EnsembleIncomeEstimator(
-    Path("training/artifacts/capacity-estimator-0.6.0.json")
+    Path("training/artifacts/capacity-estimator-0.7.0.json")
 ).estimate_v1_1(request)
 month = estimate.monthly_estimates[-1]
 month.realized_income_estimate_minor
@@ -408,9 +430,22 @@ customers the quantile model never saw, so the lower bound is a `p10` claim and 
 `p90` claim rather than two halves of one `80%` claim. Four customer-disjoint populations train the
 point model, train the quantile model, correct it, and gate it.
 
+Reproduce the full chain, from the `estimator` directory:
+
 ```bash
+python -m training.train_capacity_estimator --population-size-per-suite 240 --workers 4
+python -m training.select_conditioner --population-size-per-suite 240 --workers 4
 python -m training.calibrate_quantiles --population-size-per-suite 240 --workers 4
+python -m training.evaluate_lockbox --population-size-per-suite 240 --workers 4
+python -m evaluation.ensemble_benchmark --population-size-per-suite 80 --workers 4
+python -m release.build_bundle --output bundles/production-0.13.0
+python -m release.record_fixtures
 ```
+
+`conditional-selector-intervals-0.13.0` is refitted around capacity `0.7.0` and routing `0.8.0`,
+drawn from lockbox seed floor `1_010_000`; measured coverage `0.8760` against nominal `0.80` on
+8635/8640 rows, tails lower `0.0573` upper `0.0667` against `0.10`, `PROMOTED`; lockbox confirms
+`0.8756` on 8639/8640, `RELEASE_CONFIRMED`.
 
 The `0.9` candidate covers `0.9039` against a nominal `0.80` on **8640 of 8640** final-test rows
 from 720 customers. Every band publishes and every band clears its `0.75` floor: high `0.9174`,
@@ -484,8 +519,8 @@ from pathlib import Path
 from income_estimator import EnsembleIncomeEstimator
 
 estimator = EnsembleIncomeEstimator(
-    Path("training/artifacts/capacity-estimator-0.6.0.json"),
-    calibration_path=Path("training/artifacts/quantile-calibration-0.12.0.json"),
+    Path("training/artifacts/capacity-estimator-0.7.0.json"),
+    calibration_path=Path("training/artifacts/quantile-calibration-0.13.0.json"),
 )
 month = estimator.estimate_v1_1(request).monthly_estimates[-1]
 month.sustainable_income_p10_minor, month.sustainable_income_p90_minor
@@ -508,7 +543,7 @@ remainder folded into a single entry, so the printed decomposition still reconst
 prediction. The contract rejects one that does not.
 
 ```bash
-income-estimator --explain --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.12.0.json request.json
+income-estimator --explain --capacity-model training/artifacts/capacity-estimator-0.7.0.json --calibration training/artifacts/quantile-calibration-0.13.0.json request.json
 ```
 
 [Model cards](docs/model-cards.md) cover every promoted artifact, each with its measured results and
@@ -524,9 +559,14 @@ they measure generalization to new conditions rather than to new customers.
 python -m evaluation.stress_report --population-size 20 --workers 4
 ```
 
-Measured on `capacity-gbdt-stumps-0.6.0` with `conditional-selector-intervals-0.12.0`, 20 customers
-and 12 months per suite. Recorded in
-[`evaluation/baselines/stress-0.12.0-report.json`](evaluation/baselines/stress-0.12.0-report.json).
+**Superseded — measured under the coverage oracle.** The table below, `capacity-gbdt-stumps-0.6.0`
+with `conditional-selector-intervals-0.12.0`, 20 customers and 12 months per suite, recorded in
+[`evaluation/baselines/stress-0.12.0-report.json`](evaluation/baselines/stress-0.12.0-report.json),
+carries every field that instance of the oracle could touch: `partial_consent`'s sustainable WAPE
+and every column downstream of coverage-scaled income. See
+[ADR 0010](../docs/adr/0010-coverage-oracle-removed.md). It is kept for its `clean`, `normal`,
+`life_events`, `noisy`, and `high_volatility` shapes, which the oracle's removal does not by itself
+explain away.
 
 | suite | in training | realized WAPE | sustainable WAPE | intervals published | interval coverage | mean confidence |
 |---|---|---|---|---|---|---|
@@ -536,6 +576,13 @@ and 12 months per suite. Recorded in
 | life_events | yes | 0.000 | 0.021 | 240/240 | 0.975 | 0.706 |
 | noisy | no | 0.017 | 0.030 | 224/240 | 0.348 | 0.744 |
 | high_volatility | no | 0.000 | 0.410 | 234/240 | 0.158 | 0.546 |
+
+`capacity-gbdt-stumps-0.7.0` with `conditional-selector-intervals-0.13.0`, on contract `1.3`,
+`consent_scopes` only: normal `0.8042`, partial_consent `0.7875`, life_events `1.0`, noisy `0.0917`,
+high_volatility `0.1917`, against nominal `0.80`; `partial_consent` realized WAPE moved from `0.0`
+under `0.12.0`'s oracle read to `0.1083` now that the receiver has no evidence of the withheld
+~10%. No suite produced a false-income month. Recorded in
+[`evaluation/baselines/stress-0.13.0-report.json`](evaluation/baselines/stress-0.13.0-report.json).
 
 The held-out suites expose real weakness, and the support envelope does not currently repair it.
 The noisy suite carries the only nonzero realized error, now timing rather than classification: a
@@ -589,7 +636,7 @@ one input-contract file and prints either view:
 income-estimator request.json
 income-estimator --audit request.json
 income-estimator --features request.json
-income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.6.0.json --calibration training/artifacts/quantile-calibration-0.12.0.json request.json
+income-estimator --ensemble --capacity-model training/artifacts/capacity-estimator-0.7.0.json --calibration training/artifacts/quantile-calibration-0.13.0.json request.json
 income-estimator --baseline-0.1 request.json
 income-estimator --model training/artifacts/transaction-classifier-0.3.0.json request.json
 ```

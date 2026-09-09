@@ -40,13 +40,22 @@ def test_estimator_runs_through_simulator_boundary() -> None:
 
     evaluation = evaluate_population(population, RuleBasedIncomeEstimator())
 
-    assert evaluation.report.estimator_version == "rule-based-0.1.0"
+    assert evaluation.report.estimator_version == "rule-based-0.1.1"
     assert evaluation.report.overall.count == 3
     assert evaluation.report.overall.mean_absolute_error_minor == 0
     assert evaluation.report.false_income_classification.false_classification_count == 0
 
 
-def test_recurring_reconstruction_improves_incomplete_observation() -> None:
+def test_recurring_reconstruction_matches_baseline_without_a_consent_scope() -> None:
+    """Without a receiver-known fetch gap, gap-filling has nothing honest to fill.
+
+    This boundary runs through `evaluate_population`, which builds contract-1.0 requests: no
+    `consent_scopes`, so `fetch_gap_months_by_account` reports no gaps at all (contract 1.3 requires
+    at least one). The recurring estimator therefore reconstructs identically to the baseline here.
+    Beating the baseline used to come from dividing observed income by the simulator's own withheld-
+    record ratio, which is exactly the number a real receiver never has.
+    """
+
     simulator_root = Path(__file__).parents[2] / "finances_simulator"
     config = load_scenario_config(
         simulator_root / "configs/scenarios/incomplete_observation.yaml"
@@ -62,8 +71,10 @@ def test_recurring_reconstruction_improves_incomplete_observation() -> None:
     baseline = evaluate_population(population, RuleBasedIncomeEstimator()).report
     recurring = evaluate_population(population, RecurringIncomeEstimator()).report
 
-    assert recurring.estimator_version == "recurring-streams-0.2.0"
-    assert recurring.overall.mean_absolute_error_minor < baseline.overall.mean_absolute_error_minor
+    assert recurring.estimator_version == "recurring-streams-0.3.0"
+    assert (
+        recurring.overall.mean_absolute_error_minor == baseline.overall.mean_absolute_error_minor
+    )
     assert recurring.false_income_classification.false_classification_count == 0
 
 
@@ -169,8 +180,8 @@ def test_stress_suites_are_reported_separately_with_training_provenance() -> Non
     project_root = Path(__file__).parents[2]
     artifacts = project_root / "estimator" / "training" / "artifacts"
     estimator = EnsembleIncomeEstimator(
-        artifacts / "capacity-estimator-0.6.0.json",
-        calibration_path=artifacts / "quantile-calibration-0.12.0.json",
+        artifacts / "capacity-estimator-0.7.0.json",
+        calibration_path=artifacts / "quantile-calibration-0.13.0.json",
     )
     held_out = [suite for suite in SUITES if not suite.in_training_distribution]
     assert {suite.name for suite in held_out} >= {"noisy", "high_volatility"}

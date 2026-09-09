@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 ESTIMATOR_CONTRACT_VERSION = "1.0"
 ESTIMATOR_INPUT_CONTRACT_VERSION = "1.1"
 ESTIMATOR_INPUT_CONTRACT_VERSION_1_2 = "1.2"
+ESTIMATOR_INPUT_CONTRACT_VERSION_1_3 = "1.3"
 
 
 class EstimatorContractModel(BaseModel):
@@ -349,6 +350,125 @@ class EstimatorInputV12(EstimatorInputV11):
         return self
 
 
+class EstimatorAccountV13(EstimatorAccountV12):
+    schema_version: Literal["1.3"] = "1.3"
+
+
+class EstimatorTransactionV13(EstimatorTransactionV12):
+    schema_version: Literal["1.3"] = "1.3"
+
+
+class EstimatorLoanV13(EstimatorLoanV12):
+    schema_version: Literal["1.3"] = "1.3"
+
+
+class EstimatorInvestmentTransactionV13(EstimatorInvestmentTransactionV12):
+    schema_version: Literal["1.3"] = "1.3"
+
+
+class EstimatorBalanceV13(EstimatorBalanceV12):
+    schema_version: Literal["1.3"] = "1.3"
+
+
+class EstimatorCreditCardV13(EstimatorCreditCardV12):
+    schema_version: Literal["1.3"] = "1.3"
+
+
+class EstimatorCreditLimitV13(EstimatorCreditLimitV12):
+    schema_version: Literal["1.3"] = "1.3"
+
+
+class EstimatorCardTransactionV13(EstimatorCardTransactionV12):
+    schema_version: Literal["1.3"] = "1.3"
+
+
+class EstimatorCardInvoiceV13(EstimatorCardInvoiceV12):
+    schema_version: Literal["1.3"] = "1.3"
+
+
+class EstimatorLoanPaymentV13(EstimatorLoanPaymentV12):
+    schema_version: Literal["1.3"] = "1.3"
+
+
+class EstimatorLoanBalanceV13(EstimatorLoanBalanceV12):
+    schema_version: Literal["1.3"] = "1.3"
+
+
+class EstimatorInvestmentV13(EstimatorInvestmentV12):
+    schema_version: Literal["1.3"] = "1.3"
+
+
+class EstimatorInvestmentBalanceV13(EstimatorInvestmentBalanceV12):
+    schema_version: Literal["1.3"] = "1.3"
+
+
+class EstimatorConsentScopeV13(EstimatorContractModel):
+    """What the receiver fetched for one consented account.
+
+    ``fetched_from`` and ``fetched_through`` bound the transaction history the receiver actually
+    requested and received; ``pagination_complete`` is false when the provider returned fewer pages
+    than it advertised. Every one of these is written by the receiver from its own request log.
+    """
+
+    schema_version: Literal["1.3"] = "1.3"
+    customer_id: str
+    account_id: str
+    fetched_from: str
+    fetched_through: str
+    pagination_complete: bool = True
+
+    @model_validator(mode="after")
+    def validate_range(self) -> Self:
+        start = date.fromisoformat(self.fetched_from)
+        end = date.fromisoformat(self.fetched_through)
+        if end < start:
+            raise ValueError("fetched_through must not precede fetched_from")
+        return self
+
+
+class EstimatorInputV13(EstimatorInputV12):
+    """Contract 1.2 with the coverage oracle removed and receiver consent scope required."""
+
+    schema_version: Literal["1.3"] = "1.3"
+    accounts: tuple[EstimatorAccountV13, ...]
+    transactions: tuple[EstimatorTransactionV13, ...]
+    loans: tuple[EstimatorLoanV13, ...] = ()
+    investment_transactions: tuple[EstimatorInvestmentTransactionV13, ...] = ()
+    balances: tuple[EstimatorBalanceV13, ...] = ()
+    credit_cards: tuple[EstimatorCreditCardV13, ...] = ()
+    credit_limits: tuple[EstimatorCreditLimitV13, ...] = ()
+    card_transactions: tuple[EstimatorCardTransactionV13, ...] = ()
+    card_invoices: tuple[EstimatorCardInvoiceV13, ...] = ()
+    loan_payments: tuple[EstimatorLoanPaymentV13, ...] = ()
+    loan_balances: tuple[EstimatorLoanBalanceV13, ...] = ()
+    investments: tuple[EstimatorInvestmentV13, ...] = ()
+    investment_balances: tuple[EstimatorInvestmentBalanceV13, ...] = ()
+    # Typed as an always-empty tuple so a payload carrying the oracle fails validation with a clear
+    # message instead of being silently accepted and ignored.
+    coverage: tuple[()] = ()
+    consent_scopes: tuple[EstimatorConsentScopeV13, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_consent_scopes(self) -> Self:
+        if any(record.customer_id != self.customer_id for record in self.consent_scopes):
+            raise ValueError("all consent scopes must belong to customer_id")
+        account_ids = {record.account_id for record in self.accounts}
+        scoped = [record.account_id for record in self.consent_scopes]
+        if len(scoped) != len(set(scoped)):
+            raise ValueError("consent_scopes must declare each account at most once")
+        if set(scoped) != account_ids:
+            raise ValueError("consent_scopes must declare exactly the accounts in the request")
+        window_start = self.window_start
+        window_end = self.window_end
+        for record in self.consent_scopes:
+            if record.fetched_through < window_start or record.fetched_from > window_end:
+                raise ValueError(
+                    f"consent scope for account {record.account_id} lies entirely outside the "
+                    f"observation window {window_start}...{window_end}"
+                )
+        return self
+
+
 class MonthlyIncomeEstimateV1(EstimatorContractModel):
     month: str = Field(pattern=r"^\d{4}-\d{2}$")
     estimated_income_minor: int = Field(ge=0)
@@ -429,6 +549,22 @@ __all__ = [
     "EstimatorLoanPaymentV12",
     "EstimatorLoanV12",
     "EstimatorTransactionV12",
+    "ESTIMATOR_INPUT_CONTRACT_VERSION_1_3",
+    "EstimatorAccountV13",
+    "EstimatorBalanceV13",
+    "EstimatorCardInvoiceV13",
+    "EstimatorCardTransactionV13",
+    "EstimatorConsentScopeV13",
+    "EstimatorCreditCardV13",
+    "EstimatorCreditLimitV13",
+    "EstimatorInputV13",
+    "EstimatorInvestmentBalanceV13",
+    "EstimatorInvestmentTransactionV13",
+    "EstimatorInvestmentV13",
+    "EstimatorLoanBalanceV13",
+    "EstimatorLoanPaymentV13",
+    "EstimatorLoanV13",
+    "EstimatorTransactionV13",
     "IncomeEstimateV1",
     "IncomeEstimator",
     "MonthlyIncomeEstimateV1",

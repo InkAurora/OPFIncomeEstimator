@@ -26,9 +26,11 @@ python -m pip install -e finances_simulator -e estimator
 
 1. You pick a client profile, a seed, and a history length, then press one button.
 2. The simulator generates a complete hidden financial life for one client.
-3. Only the observable projection of that life is adapted into estimator input `1.2`.
-4. The promoted pair answers: capacity model `capacity-gbdt-stumps-0.6.0` and interval calibration
-   `conditional-selector-intervals-0.11.0`, under estimator `ensemble-0.6.0`.
+3. Only the observable projection of that life is adapted into estimator input `1.3`. The
+   estimator receives receiver-knowable consent scope (fetched range and pagination completeness
+   per account) and never the simulator's withheld-record counts.
+4. The promoted pair answers: capacity model `capacity-gbdt-stumps-0.7.0` and interval calibration
+   `conditional-selector-intervals-0.13.0`, under estimator `ensemble-0.8.0`.
 5. The private income targets are projected **after** inference and joined on, so the page can show
    how far from the truth the estimate landed.
 

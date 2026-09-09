@@ -1,0 +1,123 @@
+{
+  "bundle_digest": "c2c2c47dc65298d3a62fcd75af5e9e221959e16d940d7cad26571958e9371dd3",
+  "bundle_id": "production-0.13.0",
+  "model_versions": [
+    "capacity-gbdt-stumps-0.7.0",
+    "conditional-selector-intervals-0.13.0"
+  ],
+  "months": 12,
+  "months_detail": [
+    {
+      "confidence_score_basis_points": 5912,
+      "month": "2024-01",
+      "quantile_unavailable_reason": null,
+      "realized_income_estimate_minor": 546953,
+      "sustainable_income_p10_minor": 333049,
+      "sustainable_income_p50_minor": 465768,
+      "sustainable_income_p90_minor": 666832
+    },
+    {
+      "confidence_score_basis_points": 6344,
+      "month": "2024-02",
+      "quantile_unavailable_reason": null,
+      "realized_income_estimate_minor": 342827,
+      "sustainable_income_p10_minor": 300389,
+      "sustainable_income_p50_minor": 420092,
+      "sustainable_income_p90_minor": 601439
+    },
+    {
+      "confidence_score_basis_points": 6138,
+      "month": "2024-03",
+      "quantile_unavailable_reason": null,
+      "realized_income_estimate_minor": 241936,
+      "sustainable_income_p10_minor": 291157,
+      "sustainable_income_p50_minor": 407181,
+      "sustainable_income_p90_minor": 582954
+    },
+    {
+      "confidence_score_basis_points": 6296,
+      "month": "2024-04",
+      "quantile_unavailable_reason": null,
+      "realized_income_estimate_minor": 717644,
+      "sustainable_income_p10_minor": 284346,
+      "sustainable_income_p50_minor": 397656,
+      "sustainable_income_p90_minor": 569318
+    },
+    {
+      "confidence_score_basis_points": 5129,
+      "month": "2024-05",
+      "quantile_unavailable_reason": null,
+      "realized_income_estimate_minor": 0,
+      "sustainable_income_p10_minor": 268432,
+      "sustainable_income_p50_minor": 375401,
+      "sustainable_income_p90_minor": 537455
+    },
+    {
+      "confidence_score_basis_points": 6675,
+      "month": "2024-06",
+      "quantile_unavailable_reason": null,
+      "realized_income_estimate_minor": 316173,
+      "sustainable_income_p10_minor": 279159,
+      "sustainable_income_p50_minor": 390402,
+      "sustainable_income_p90_minor": 558932
+    },
+    {
+      "confidence_score_basis_points": 6659,
+      "month": "2024-07",
+      "quantile_unavailable_reason": null,
+      "realized_income_estimate_minor": 507794,
+      "sustainable_income_p10_minor": 215377,
+      "sustainable_income_p50_minor": 301204,
+      "sustainable_income_p90_minor": 431229
+    },
+    {
+      "confidence_score_basis_points": 6653,
+      "month": "2024-08",
+      "quantile_unavailable_reason": null,
+      "realized_income_estimate_minor": 152844,
+      "sustainable_income_p10_minor": 244680,
+      "sustainable_income_p50_minor": 342184,
+      "sustainable_income_p90_minor": 489899
+    },
+    {
+      "confidence_score_basis_points": 7581,
+      "month": "2024-09",
+      "quantile_unavailable_reason": null,
+      "realized_income_estimate_minor": 405900,
+      "sustainable_income_p10_minor": 319261,
+      "sustainable_income_p50_minor": 354873,
+      "sustainable_income_p90_minor": 391304
+    },
+    {
+      "confidence_score_basis_points": 7624,
+      "month": "2024-10",
+      "quantile_unavailable_reason": null,
+      "realized_income_estimate_minor": 565962,
+      "sustainable_income_p10_minor": 343538,
+      "sustainable_income_p50_minor": 381858,
+      "sustainable_income_p90_minor": 421059
+    },
+    {
+      "confidence_score_basis_points": 6630,
+      "month": "2024-11",
+      "quantile_unavailable_reason": null,
+      "realized_income_estimate_minor": 0,
+      "sustainable_income_p10_minor": 227688,
+      "sustainable_income_p50_minor": 318420,
+      "sustainable_income_p90_minor": 455877
+    },
+    {
+      "confidence_score_basis_points": 7812,
+      "month": "2024-12",
+      "quantile_unavailable_reason": null,
+      "realized_income_estimate_minor": 562172,
+      "sustainable_income_p10_minor": 291110,
+      "sustainable_income_p50_minor": 323582,
+      "sustainable_income_p90_minor": 356801
+    }
+  ],
+  "published_interval_count": 12,
+  "result_sha256": "fe29cf3c5c6d8cf44cdbef581c56e47a9202e157b8888b6a402d2cc588a8b8b2",
+  "scenario": "income_diverse.yaml",
+  "seed": 42
+}

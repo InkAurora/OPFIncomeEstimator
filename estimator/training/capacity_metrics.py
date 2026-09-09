@@ -89,7 +89,9 @@ def regression_metrics(
 
 
 def _coverage_band(row: CapacityRow) -> str:
-    value = _feature(row, "effective_consent_coverage_basis_points")
+    # Segmentation reads the simulator's private coverage label, joined after inference. The
+    # estimator's own coverage feature is receiver-side and says nothing about withheld records.
+    value = row.declared_coverage_basis_points
     if value is None:
         return "undeclared"
     if value >= 10_000:

@@ -1,16 +1,27 @@
-"""Coverage-aware reconstruction from stable observed income streams."""
+"""Gap-aware reconstruction from stable observed income streams.
+
+A stable stream that skips a month has either stopped or was not fetched. The two are told apart
+by the receiver's own consent scope: a month the receiver did not fetch for the stream's account is
+a gap and may be filled from the stream's established cadence; a month it did fetch and found
+nothing in is a non-payment and stays empty. Before contract 1.3 this module read a provider
+coverage ratio the simulator had computed from withheld records; it no longer reads anything a
+receiver could not have written.
+"""
 
 from __future__ import annotations
 
 from collections import defaultdict
 
+from income_estimator.consent_scope import fetch_gap_months_by_account
 from income_estimator.contracts.audit import (
     IncomeStream,
     MonthlyReconstructionAudit,
     TransactionDecision,
 )
 from income_estimator.contracts.v1 import EstimatorInputV1, MonthlyIncomeEstimateV1
-from income_estimator.models.cashflow import _coverage_by_account, _month_sequence
+from income_estimator.models.cashflow import _month_sequence
+
+FETCH_GAP_IMPUTATION_UNCERTAINTY_BASIS_POINTS = 2_500
 
 
 def _active_months(
@@ -94,34 +105,35 @@ def reconstruct_recurring_income(
     tuple[MonthlyIncomeEstimateV1, ...],
     tuple[MonthlyReconstructionAudit, ...],
 ]:
-    """Use observed amounts directly; fill evidence-backed gaps under incomplete coverage."""
+    """Use observed amounts directly; fill due months the receiver knows it did not fetch."""
 
     months = _month_sequence(request.window_start, request.months)
     posted_month_by_id = {
         item.transaction_id: item.posted_at[:7] for item in request.transactions
     }
-    coverage_by_account = _coverage_by_account(request)
+    gaps_by_account = fetch_gap_months_by_account(request, months)
     included_by_month: dict[str, list[TransactionDecision]] = defaultdict(list)
     for decision in decisions:
         if decision.classification == "INCOME":
             included_by_month[decision.posted_month].append(decision)
 
-    eligible_streams: list[tuple[IncomeStream, set[str], int]] = []
+    eligible_streams: list[tuple[IncomeStream, set[str]]] = []
     withheld_months: set[str] = set()
     for stream in streams:
-        stream_coverage = min(
-            (coverage_by_account.get(account_id, 10_000) for account_id in stream.account_ids),
-            default=10_000,
-        )
+        # A stream may be filled only into months the receiver did not fetch for one of the
+        # accounts it pays into. An account without a declared scope has no known gaps.
+        stream_gaps: set[str] = set()
+        for account_id in stream.account_ids:
+            stream_gaps.update(gaps_by_account.get(account_id, frozenset()))
         if (
             stream.pattern in {"RECURRING_SOURCE", "INCOME_ECOSYSTEM"}
             and stream.recurrence_score_basis_points >= 7_000
             and len(stream.observed_months) >= 3
-            and stream_coverage < 10_000
+            and stream_gaps
         ):
             active = _active_months(stream, months, has_incomplete_coverage=True)
-            due = _due_months(stream, active)
-            eligible_streams.append((stream, due, stream_coverage))
+            due = _due_months(stream, active) & stream_gaps
+            eligible_streams.append((stream, due))
             # A month inside an eligible stream's span that its cadence does not call due is a
             # non-payment month, not a hidden payment. Recording it keeps the difference between
             # "nothing was due" and "nothing was found" visible to a reviewer.
@@ -141,7 +153,7 @@ def reconstruct_recurring_income(
         imputed_stream_ids: list[str] = []
         imputation_uncertainty_basis_points: list[int] = []
 
-        for stream, due_months, stream_coverage in eligible_streams:
+        for stream, due_months in eligible_streams:
             if month not in due_months or month in stream.observed_months:
                 continue
             imputed += stream.expected_monthly_amount_minor
@@ -149,8 +161,7 @@ def reconstruct_recurring_income(
             contributors.update(_supporting_ids(stream, month, posted_month_by_id))
             imputation_uncertainty_basis_points.append(
                 max(
-                    1_000,
-                    10_000 - stream_coverage,
+                    FETCH_GAP_IMPUTATION_UNCERTAINTY_BASIS_POINTS,
                     round(stream.amount_coefficient_of_variation * 10_000),
                 )
             )

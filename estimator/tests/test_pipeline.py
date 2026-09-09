@@ -39,39 +39,61 @@ def test_pipeline_is_deterministic_and_detects_monthly_stream(request_payload, t
     assert first.metadata.model_versions == ()
 
 
-def test_account_coverage_adjusts_visible_income(request_payload, transaction) -> None:
+def _scope(
+    account_id: str,
+    fetched_from: str,
+    fetched_through: str,
+    *,
+    pagination_complete: bool = True,
+) -> dict[str, object]:
+    """A contract-1.3 consent scope: what the receiver itself fetched for one account."""
+
+    return {
+        "schema_version": "1.3",
+        "customer_id": "customer-test",
+        "account_id": account_id,
+        "fetched_from": fetched_from,
+        "fetched_through": fetched_through,
+        "pagination_complete": pagination_complete,
+    }
+
+
+def _to_v1_3(payload: dict[str, object], scopes: list[dict[str, object]]) -> dict[str, object]:
+    """Upgrade a request built by ``request_payload`` to contract 1.3 with consent scopes."""
+
+    payload = dict(payload)
+    payload["schema_version"] = "1.3"
+    payload["accounts"] = [dict(item, schema_version="1.3") for item in payload["accounts"]]
+    payload["transactions"] = [
+        dict(item, schema_version="1.3") for item in payload["transactions"]
+    ]
+    payload["consent_scopes"] = scopes
+    return payload
+
+
+def test_observed_income_is_not_scaled_by_declared_coverage(request_payload, transaction) -> None:
+    """Coverage 1.3 forbids the field that used to scale observed income upward.
+
+    A receiver fetched R$400,000 and knows nothing about accounts outside its consent; the
+    estimate is what was observed, not a multiple of it.
+    """
+
     payload = request_payload(transactions=[transaction("salary", amount_minor=400_000)])
-    payload["coverage"] = [
-        {
-            "schema_version": "1.0",
-            "customer_id": "customer-test",
-            "account_id": "checking",
-            "configured_coverage_percent": 40,
-            "eligible_record_count": 10,
-            "observed_original_record_count": 4,
-            "effective_coverage_basis_points": 4_000,
-        }
-    ]
+    payload = _to_v1_3(
+        payload,
+        [
+            _scope("checking", "2026-01-01", "2026-02-28"),
+            _scope("savings", "2026-01-01", "2026-02-28"),
+        ],
+    )
 
-    estimate = RuleBasedIncomeEstimator().estimate(payload).monthly_estimates[0]
+    audit = RuleBasedIncomeEstimator().explain(payload)
+    estimate = audit.estimate.monthly_estimates[0]
+    reconstruction = audit.monthly_reconstructions[0]
 
-    assert estimate.estimated_income_minor == 1_000_000
-    assert estimate.confidence_lower_minor == 400_000
-    assert estimate.confidence_upper_minor == 1_600_000
-
-
-def _incomplete_coverage() -> list[dict[str, object]]:
-    return [
-        {
-            "schema_version": "1.0",
-            "customer_id": "customer-test",
-            "account_id": "checking",
-            "configured_coverage_percent": 100,
-            "eligible_record_count": 10,
-            "observed_original_record_count": 9,
-            "effective_coverage_basis_points": 9_000,
-        }
-    ]
+    assert estimate.estimated_income_minor == 400_000
+    assert reconstruction.coverage_adjustment_minor == 0
+    assert "COVERAGE_SCALING_APPLIED" not in reconstruction.reason_codes
 
 
 def test_recurring_estimator_imputes_internal_gap(request_payload, transaction) -> None:
@@ -85,7 +107,15 @@ def test_recurring_estimator_imputes_internal_gap(request_payload, transaction) 
             transaction("salary-6", posted_at="2026-06-05"),
         ],
     )
-    payload["coverage"] = _incomplete_coverage()
+    payload = _to_v1_3(
+        payload,
+        [
+            # Pagination never completed for checking, so the receiver cannot tell a due month it
+            # did fetch from one it did not: every due month in the stream's active span is a gap.
+            _scope("checking", "2026-01-01", "2026-06-30", pagination_complete=False),
+            _scope("savings", "2026-01-01", "2026-06-30"),
+        ],
+    )
 
     audit = RecurringIncomeEstimator().explain(payload)
 
@@ -103,6 +133,41 @@ def test_recurring_estimator_imputes_internal_gap(request_payload, transaction) 
     assert march.imputed_income_minor == 500_000
     assert march.reason_codes == ("RECURRING_STREAM_GAP_IMPUTED",)
     assert march.imputed_stream_ids == (audit.income_streams[0].stream_id,)
+
+
+def test_recurring_estimator_does_not_impute_into_fetched_months(
+    request_payload,
+    transaction,
+) -> None:
+    """A month the receiver fetched and found nothing in is a non-payment, not a hidden one."""
+
+    payload = request_payload(
+        months=6,
+        transactions=[
+            transaction("salary-1", posted_at="2026-01-05"),
+            transaction("salary-2", posted_at="2026-02-05"),
+            transaction("salary-4", posted_at="2026-04-05"),
+            transaction("salary-5", posted_at="2026-05-05"),
+            transaction("salary-6", posted_at="2026-06-05"),
+        ],
+    )
+    payload = _to_v1_3(
+        payload,
+        [
+            _scope("checking", "2026-01-01", "2026-06-30"),
+            _scope("savings", "2026-01-01", "2026-06-30"),
+        ],
+    )
+
+    audit = RecurringIncomeEstimator().explain(payload)
+
+    march = audit.monthly_reconstructions[2]
+    assert march.observed_income_minor == 0
+    assert march.imputed_income_minor == 0
+    assert "RECURRING_STREAM_GAP_IMPUTED" not in march.reason_codes
+    assert sum(item.estimated_income_minor for item in audit.estimate.monthly_estimates) == (
+        5 * 500_000
+    )
 
 
 def test_recurring_estimator_does_not_invent_full_coverage_income(
@@ -138,7 +203,15 @@ def test_recurring_estimator_imputes_single_missing_edge_month(
             transaction("salary-5", posted_at="2026-05-05"),
         ],
     )
-    payload["coverage"] = _incomplete_coverage()
+    payload = _to_v1_3(
+        payload,
+        [
+            # Fetched from month 2 onward, so January is the one month the receiver knows it
+            # never fetched for this account.
+            _scope("checking", "2026-02-01", "2026-05-31"),
+            _scope("savings", "2026-01-01", "2026-05-31"),
+        ],
+    )
 
     estimate = RecurringIncomeEstimator().estimate(payload)
 
