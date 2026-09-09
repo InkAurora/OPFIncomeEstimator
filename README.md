@@ -119,6 +119,13 @@ once.
 - **High-volatility sustainable income is weak.** Sustainable WAPE `0.410` on that suite.
 - **No annual quantiles.** `annual_income_p10/p50/p90` stay absent because the dependence structure
   across months has not been measured, and multiplying monthly quantiles by twelve would invent one.
+- **Synthetic metrics are partly generator inversion.** The estimator input carries per-account
+  record counts that only the simulator can know, and the promoted routing rule wins its benchmark
+  by reading them; two further feature-to-label identities make the headline WAPE figures
+  tautological on the training scenarios. See
+  [`docs/project-review-2026-09-09-and-plan.md`](docs/project-review-2026-09-09-and-plan.md) for
+  the evidence and the ordered plan that follows from it. The routing and stress numbers quoted
+  above describe `0.11` and are superseded by [ADR 0009](docs/adr/0009-routing-narrowed-and-recalibrated.md).
 
 See [`docs/estimator-implementation-plan.md`](docs/estimator-implementation-plan.md) for target
 definitions and acceptance criteria, and
