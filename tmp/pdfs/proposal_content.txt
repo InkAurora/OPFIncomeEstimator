@@ -1,0 +1,285 @@
+01 / PROPONENTE • DESAFIO E DESCRIÇÃO
+
+Renda sustentável com<br/>Open Finance
+
+<b>Proposta de experimento | Sandbox CAIXA NEXT 2026</b>
+
+<b>Proponente:</b> Marthus Sera &nbsp;&nbsp; <b>Projeto:</b> Open Finance Income Estimator<br/><b>Base prevista:</b> dados reais anonimizados &nbsp;&nbsp; <b>Versão:</b> 10/09/2026
+
+<b>Objetivo:</b> transformar o histórico financeiro autorizado em uma estimativa explicável de renda mensal recorrente, para apoiar a análise de renda e testar decisões mais bem fundamentadas sobre o relacionamento com o cliente.
+
+Desafio selecionado
+
+<b>InteligêncIA: Velocidade, Escala e Personalização.</b> A proposta se concentra na qualificação da tomada de decisão e no aumento da produtividade, com potencial de melhorar a experiência do cliente e a adequação futura de ofertas. [1, Anexo I]
+
+Problema e público
+
+Clientes com renda variável, múltiplas fontes de recebimento ou movimentação distribuída entre instituições podem apresentar uma visão fragmentada de sua renda. Somar todos os créditos também pode inflar a estimativa ao incluir transferências próprias, empréstimos, resgates e estornos. A frequência e o impacto dessa dor na CAIXA serão medidos no experimento.<br/>O público inicial será de pessoas físicas com histórico disponível; assalariados servirão de comparação e profissionais com renda variável serão avaliados como segmento específico. Os usuários diretos da solução serão profissionais responsáveis pela análise de renda.
+
+Solução proposta
+
+Combinar regras de classificação de transações e modelos de machine learning para identificar receitas recorrentes, excluir entradas que não representam renda e estimar um patamar mensal sustentável. O resultado apresentará valor estimado, evidências, qualidade do histórico e situações que exigem revisão humana.
+
+Definição e escopo
+
+<b>Renda sustentável</b> é o patamar mensal recorrente compatível com as fontes de renda vigentes na data da análise, descontando efeitos extraordinários. Não equivale à sobra após despesas, à capacidade de pagamento nem ao limite de crédito.<br/>O piloto será retrospectivo, em ambiente controlado, com dados anonimizados e sem alteração automática de crédito, cartões ou ofertas. O produto atual é um protótipo de pesquisa em Python; a execução proposta no Sandbox usará Databricks Lakehouse, AutoML pela interface low code e MLflow.
+
+
+
+02 / HIPÓTESE E TESTES
+
+O que será validado
+
+<b>Hipótese principal:</b> combinar evidências de transações com machine learning reduz o erro da estimativa de renda sustentável em relação a métodos determinísticos, sem ampliar de forma relevante a superestimação de renda e com menor esforço de análise.
+
+Hipóteses complementares
+
+<b>H2.</b> Acrescentar dados de outras instituições ao histórico CAIXA melhora a estimativa para parte dos clientes. O ganho será medido por comparação pareada, e não presumido a partir do número de contas.<br/><b>H3.</b> Exibir evidências, limitações e alertas reduz o tempo de análise e facilita a compreensão pelos profissionais que avaliam renda.
+
+1. Preparar dados e referência de avaliação
+
+Obter amostra autorizada de dados reais anonimizados, preservando histórico longitudinal e vínculos necessários para reconhecer transferências, sem expor identidades. A referência de renda será produzida por analistas a partir de documentação e evidências independentes, com definição de renda recorrente vigente e resolução de divergências. Não será criada pela mesma fórmula usada pelo modelo.
+
+2. Reservar clientes e respeitar a data de corte
+
+Planejamento inicial: <b>300 clientes</b>, preferencialmente com até 12 meses de histórico. Separar 180 para desenvolvimento, 60 para validação/calibração e 60 para teste final, sem repetir clientes entre grupos. Usar uma data de referência por cliente no piloto; o teste incluirá período posterior ao desenvolvimento. Esses quantitativos são metas de planejamento, sujeitos à disponibilidade e à precisão estatística obtida.
+
+3. Comparar métodos nas mesmas condições
+
+Usar somente informações disponíveis até a data de referência. Comparar o procedimento de renda da CAIXA, quando disponibilizado, métodos simples e o modelo candidato sobre os mesmos clientes e janelas. No teste de fontes adicionais, manter o modelo fixo e comparar dados CAIXA com dados CAIXA acrescidos de outras instituições; apresentar também o resultado de cada baseline no respectivo cenário.
+
+4. Testar qualidade, incerteza e usabilidade
+
+Separar resultados por perfil de renda, extensão do histórico, lacunas e volatilidade. Testar entradas ambíguas, duplicidades, estornos e mudanças de renda. Avaliar intervalos e casos sem evidência suficiente. Em paralelo, realizar teste exploratório com 5 a 8 analistas, casos anonimizados pareados e ordem alternada, medindo tempo, conclusão da tarefa e clareza das explicações.
+
+A renda de períodos posteriores poderá funcionar como verificação complementar, registrando mudanças de regime. Ela não será tratada automaticamente como a verdade da renda sustentável na data de corte. O piloto não mede efeitos causais sobre inadimplência ou receita.
+
+
+
+03 / BASELINE E RESULTADOS ESPERADOS
+
+Como medir o sucesso
+
+A base de transações é a <b>fonte de dados</b>. O baseline é o <b>método de comparação</b>. Todos os métodos serão avaliados contra a mesma referência independente de renda.
+
+Comparação
+
+Definição
+
+Processo atual CAIXA
+
+Método vigente de renda presumida ou análise, se disponibilizado pela área responsável. Desempenho e tempo atuais ainda serão medidos.
+
+Baselines determinísticos
+
+Renda classificada do último mês; média de fontes recorrentes dos últimos 3 meses; mediana da renda mensal observada em até 12 meses.
+
+Modelo candidato
+
+Regressão supervisionada selecionada no Databricks AutoML. O estimador Python existente será uma referência adicional de pesquisa.
+
+Metas abaixo são <b>propostas para o experimento</b>, não exigências numéricas do edital nem resultados já alcançados. Serão registradas antes do teste final e ajustadas apenas na fase de planejamento.
+
+Indicador
+
+Meta inicial e regra de avaliação
+
+Erro de renda
+
+Reduzir o MAE em pelo menos 20% frente ao melhor baseline determinístico, escolhido na validação. Comparar também com o processo CAIXA, quando disponível.
+
+Superestimação
+
+Medir a proporção de estimativas acima de 120% da referência positiva. Meta: aumento de no máximo 2 pontos percentuais frente ao baseline. Tratar referências zero separadamente.
+
+Intervalos e abstenção
+
+Para intervalo nominal de 80%, buscar cobertura empírica entre 75% e 85% nos casos publicados, reportando largura, caudas e fração sem intervalo. Meta de publicação: pelo menos 80% dos casos elegíveis.
+
+Produtividade e clareza
+
+Reduzir em 20% a mediana do tempo de análise, sem elevar erros de interpretação. Buscar avaliação de clareza de pelo menos 4 em 5 entre analistas participantes.
+
+Medição e decisão de continuidade
+
+<b>MAE:</b> média do erro absoluto em reais. <b>WAPE:</b> soma dos erros absolutos dividida pela soma das rendas de referência; não é uma taxa de acerto. Para referência total zero, o WAPE não será calculado.<br/>Apresentar intervalos de confiança de 95% por reamostragem de clientes e resultados segmentados. Para o limite de superestimação, exigir que o limite superior da diferença seja compatível com a margem de 2 pontos percentuais. Amostra insuficiente ou resultados inconclusivos exigem ampliação ou revisão do piloto, sem declarar sucesso.
+
+O ganho com dados adicionais será a diferença pareada de MAE entre os dois cenários. Não se pressupõe conhecer todas as contas ativas nem se corrige renda por uma fração estimada de recursos não compartilhados. [2]
+
+
+
+04 / EVIDÊNCIAS EXISTENTES
+
+O que o protótipo já demonstra
+
+<b>Maturidade atual: protótipo de pesquisa com avaliação sintética.</b> Há simulador, estimador executável, demonstração em Streamlit, explicações e artefatos versionados. Não há validação com clientes reais nem adaptador de provedor Open Finance concluído. [2]
+
+Resultado técnico registrado
+
+O modelo de renda sustentável <b>capacity-estimator 0.7.0</b> foi avaliado em 109 clientes sintéticos reservados para teste, totalizando 1.308 observações cliente-mês. A população completa possui 720 clientes: 510 de treinamento, 101 de validação e 109 de teste. As observações mensais não equivalem a clientes independentes. [3]
+
+Método
+
+MAE em reais
+
+WAPE
+
+Modelo de renda sustentável
+
+R$ 253,74
+
+5,02%
+
+Mediana histórica de até 12 meses
+
+R$ 840,89
+
+16,63%
+
+Média de fontes recorrentes de 3 meses
+
+R$ 880,78
+
+17,42%
+
+Renda classificada do último mês
+
+R$ 936,48
+
+18,52%
+
+Nesse teste sintético, o MAE do modelo foi <b>69,82% menor</b> que o da mediana histórica, o melhor dos três baselines. Valores monetários do relatório foram convertidos de centavos para reais. Esse ganho não representa desempenho esperado na carteira CAIXA. [3]
+
+Limitações que orientam o Sandbox
+
+O relatório de estresse atual, com 20 clientes sintéticos e 240 observações por cenário, mostra perda importante de qualidade fora dos perfis familiares ao modelo. Para renda altamente volátil, o WAPE da renda sustentável chega a <b>40,82%</b>. [4]
+
+Cenário de estresse
+
+Cobertura do intervalo nominal de 80%
+
+Transações com ruído e ambiguidades
+
+9,17% das 240 observações
+
+Renda altamente volátil
+
+19,17% das 240 observações
+
+Essas falhas impedem apresentar os intervalos atuais como confiáveis para dimensionar crédito. O piloto deverá recalibrar o modelo em dados reais, validar a classificação de entradas e definir revisão ou abstenção quando faltarem evidências. Métricas acima foram conferidas nos relatórios existentes; os treinamentos não foram reexecutados nesta preparação.
+
+<b>O que ainda precisa ser comprovado:</b> ganho em dados reais, robustez por segmento, redução do tempo de análise e utilidade para usuários. A expressão “confiabilidade superior a 90%” não é adotada, pois não há evidência que a sustente.
+
+
+
+05 / ESTRATÉGIA E NORMAS
+
+Arquitetura proposta e governança
+
+<b>Plataforma indicada pelo proponente:</b> Databricks Lakehouse + MLflow. Para materializar o requisito low code/no code do eixo de IA, propõe-se usar a <b>interface do Databricks AutoML como etapa central de treinamento, comparação e seleção de modelos</b>. A documentação identifica essa interface como low code. Disponibilidade e aceitação no Sandbox precisam ser confirmadas. [1, Anexo III; 5]
+
+Etapa
+
+Papel no experimento
+
+1. Dados anonimizados
+
+Extração controlada pela área custodiante, saneamento e verificação de qualidade. Sem conexão direta inicial aos sistemas transacionais.
+
+2. Databricks Lakehouse
+
+Organização das tabelas de observações, atributos e referências, com separação de acesso e versões reproduzíveis.
+
+3. AutoML pela interface
+
+Treinamento e seleção do regressor em base preparada, sem expor o teste final à escolha do modelo. Ajustes de preparação e avaliação poderão usar código.
+
+4. MLflow e apresentação
+
+Registro de parâmetros, versões e métricas; comparação de execuções e relatório de renda com evidências. O componente existente será adaptado para esse fluxo.
+
+Proteção dos dados
+
+O experimento usará <b>dados reais anonimizados</b>, conforme proposta do proponente. A área custodiante deverá avaliar risco de reidentificação, retirar identificadores e tratar descrições livres, preservando apenas os vínculos e sinais necessários à avaliação. Substituir CPF por código, isoladamente, não demonstra anonimização. Se houver possibilidade de reidentificação, a base deverá ser tratada sob os controles aplicáveis a dados pessoais. [7]
+
+Regras de execução
+
+Validar autorização de uso e finalidade, origem dos dados, condições do compartilhamento Open Finance, acesso mínimo necessário, prazo de retenção e descarte. Os dados permanecerão no ambiente corporativo autorizado; relatórios e registros do MLflow deverão evitar informações identificáveis. O compartilhamento via Open Finance depende da autorização do cliente. [6]<br/>Submeter o experimento às diretrizes do MN OR219, de segurança, governança de dados e IA Responsável citadas no edital, além das políticas de crédito aplicáveis. Registrar versões, decisões de análise e limitações; manter revisão humana durante o piloto. [1]
+
+Alinhamento estratégico e complementaridade
+
+Contribuição proposta aos pilares Cliente no Centro e Tecnologia e Inovação: compreender melhor a renda, reduzir retrabalho e oferecer evidências consistentes. Enquadramento inicial <b>H1, inovação incremental</b>, sujeito à banca. Consultar a Fábrica de Modelos de Machine Learning e os portfólios internos para identificar complementaridade e evitar sobreposição com iniciativas estratégicas. [1]
+
+
+
+06 / IMPACTOS, RISCOS E VIABILIDADE
+
+Valor esperado e execução enxuta
+
+<b>Para o cliente:</b> perspectiva de uma análise de renda mais contextualizada e menor necessidade de esclarecimentos repetidos. <b>Para a CAIXA:</b> potencial de reduzir esforço operacional e melhorar a fundamentação das análises. Aumento de receita, conversão ou redução de inadimplência permanecem hipóteses para estudos posteriores.
+
+Risco
+
+Tratamento proposto
+
+Renda inflada ou incompleta
+
+Validar transferências, estornos, empréstimos e resgates; distinguir ausência de renda de insuficiência de dados; revisar casos ambíguos.
+
+Viés e mudança de perfil
+
+Medir erros e superestimação por segmento; testar renda irregular e mudanças de regime; recalibrar ou suspender uso quando o desempenho não se sustentar.
+
+Vazamento ou reidentificação
+
+Validar anonimização com a área custodiante, restringir acessos e revisar dados, logs e resultados exportados.
+
+Dados, plataforma ou integração indisponíveis
+
+Confirmar base, referência de renda e AutoML antes do piloto real. Usar extração em lote e limitar integrações. Sem esses recursos, reavaliar viabilidade e enquadramento.
+
+Plano alinhado à jornada
+
+<b>Bootcamp, 05/10 a 27/11:</b> validar a dor e a jornada, confirmar base e plataforma, definir referência de renda, baselines, metas, custos e visão da solução. Preparar evidências e pitch para o Demoday previsto em 29/11.<br/><b>Summer Job, 18/01 a 26/02/2027, se selecionado:</b> preparar e validar dados; executar comparações no AutoML; testar explicações com analistas; avaliar resultados finais e entregar MVP experimental, documentação e recomendação de continuidade. Datas conforme Anexo II do documento recebido. [1]
+
+Equipe, recursos e estimativa financeira
+
+Marthus Sera será o responsável. A composição adicional, se houver, será informada no formulário, respeitado o limite de quatro integrantes. São necessários apoio do custodiante dos dados, interlocução com análise de renda/risco, workspace autorizado, AutoML habilitado, armazenamento e computação dimensionados para a amostra.<br/>Priorizar infraestrutura já disponível, processamento em lote, limites de execuções e desligamento do recurso computacional ocioso. Não há preço ou orçamento confirmado; o custo será estimado por <b>horas de equipe + computação + armazenamento + licenças incrementais</b>, antes da execução. A disponibilidade de recursos adicionais não será presumida.
+
+<b>Critério econômico:</b> estimar horas potencialmente poupadas como volume elegível × minutos poupados por análise ÷ 60. Multiplicar pelo custo-hora carregado e comparar com os custos incrementais. Reportar capacidade operacional liberada separadamente de economia financeira realizada.
+
+
+
+07 / APOIO AO PROPONENTE
+
+Conferência antes da inscrição
+
+As páginas 1 a 6 fornecem conteúdo para os campos da proposta. Esta página reúne pendências administrativas e fontes da análise; não substitui o formulário nem os termos oficiais.
+
+<b>Prazo no edital recebido: 28/08 a 18/09/2026.</b><br/>A inscrição é feita pelo proponente em <link href="https://sandbox.caixa/sandbox/next2026.html" color="#007F86">sandbox.caixa/sandbox/next2026.html</link>, pelo botão “Inscreva-se”. O edital exige formulário e confirmação na plataforma; não estabelece o PDF como substituto. A primeira entrega tratada aqui é a inscrição, formalmente a 2ª etapa após a Formação. [1, itens 7 e 9; Anexo II]
+
+Item a conferir
+
+Situação nesta proposta
+
+Identificação e participação
+
+Marthus Sera informado. Completar matrícula, unidade, contatos e equipe conforme os campos do portal. Conferir condições do item 6.1 e impedimentos de participação dos itens 4.2, 5.5.1 e 12.5.
+
+Admissibilidade do eixo IA
+
+IA, finalidade e métricas descritas. Confirmar acesso e adequação do AutoML, disponibilidade autorizada da base real e viabilidade de execução. Lakehouse + MLflow, isoladamente, não comprovam o requisito low code/no code.
+
+Disponibilidade e responsabilidade
+
+Confirmar disponibilidade para a jornada e autorização da liderança para o Bootcamp. Ler e aceitar os termos oficiais, inclusive os de propriedade intelectual e uso de nome, voz e imagem. Nenhum aceite ou assinatura foi realizado por este documento.
+
+Envio e confirmação
+
+Transpor conteúdo ao formulário, adequar aos limites de caracteres e verificar confirmação. Tais limites e eventuais atualizações não puderam ser conferidos no portal interno.
+
+O edital recebido contém divergências pontuais: o item 8.3 menciona 2025, enquanto o documento é de 2026; o item 14.11 diverge do fluxo de seleção do item 10.1. Para o planejamento foi usado o Anexo II; confirmar a versão vigente e o calendário no portal. A análise não atesta elegibilidade pessoal nem aprovação institucional.
+
+Fontes e rastreabilidade
+
+<b>[1]</b> Edital 001/2026, <i>Caixa-Sandbox-NEXT-2026.pdf</i>, fornecido pelo proponente: campos (p. 8), critérios (pp. 10-12), desafio (pp. 20-21), cronograma (pp. 23-26) e eixo IA (pp. 29-30).<br/><b>[2]</b> Repositório OPFIncomeEstimator: README; demo_app/README; docs/adr/0010-coverage-oracle-removed; contrato de alvos de renda. Resumo original: caixa_next_projeto_resumo.txt.<br/><b>[3]</b> estimator/training/artifacts/capacity-estimator-0.7.0-report.json; avaliação test, 109 clientes e 1.308 observações.<br/><b>[4]</b> estimator/evaluation/baselines/stress-0.13.0-report.json; cenários noisy e high_volatility. Foram priorizados os relatórios atuais sobre números históricos dos textos descritivos.<br/><b>[5]</b> Databricks: <link href="https://docs.databricks.com/aws/en/machine-learning/automl/" color="#007F86">What is AutoML?</link> e <link href="https://docs.databricks.com/aws/en/machine-learning/automl/regression" color="#007F86">Regression with AutoML</link>. A plataforma/versão efetiva deverá ser verificada no ambiente CAIXA.<br/><b>[6]</b> Banco Central: <link href="https://www.bcb.gov.br/meubc/faqs/s/open-finance" color="#007F86">Perguntas frequentes sobre Open Finance</link>.<br/><b>[7]</b> ANPD: <link href="https://www.gov.br/participamaisbrasil/consulta-a-sociedade-estudo-preliminar-anonimizacao-e-pseudonimizacao-para-protecao-de-dados" color="#007F86">Estudo preliminar sobre anonimização e pseudonimização</link> (consulta pública). Fontes locais e públicas consultadas em 10/09/2026.
